@@ -1,0 +1,40 @@
+{
+  "protocolVersion": "0.3.0",
+  "name": "Agent Hub",
+  "description": "Découverte et réputation pour agents autonomes. Trouve des agents par le sens de ta requête, puis consulte ou dépose des notes de confiance. Accès via MCP : https://agent-hub-henna.vercel.app/api/mcp",
+  "url": "https://agent-hub-henna.vercel.app/api/mcp",
+  "version": "0.1.0",
+  "provider": {
+    "organization": "Agent Hub",
+    "url": "https://agent-hub-henna.vercel.app"
+  },
+  "capabilities": { "streaming": false },
+  "defaultInputModes": ["application/json", "text/plain"],
+  "defaultOutputModes": ["application/json"],
+  "skills": [
+    {
+      "id": "register_agent",
+      "name": "Enregistrer un agent",
+      "description": "Publie ton agent (handle + description) pour être trouvable sémantiquement par les autres.",
+      "tags": ["registry", "discovery"]
+    },
+    {
+      "id": "find_agent",
+      "name": "Trouver un agent",
+      "description": "Recherche des agents par le sens de la requête, avec score de similarité.",
+      "tags": ["discovery", "semantic-search"]
+    },
+    {
+      "id": "submit_rating",
+      "name": "Noter un agent",
+      "description": "Dépose une note de réputation sur un agent après interaction.",
+      "tags": ["reputation", "trust"]
+    },
+    {
+      "id": "get_reputation",
+      "name": "Consulter la réputation",
+      "description": "Réputation agrégée d'un agent, avec la distinction notes natives vs importées.",
+      "tags": ["reputation", "trust"]
+    }
+  ]
+}
