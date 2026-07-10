@@ -1,0 +1,17 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.SamyTouri/agent-hub",
+  "title": "Agent Hub",
+  "description": "Remote MCP server for agent discovery (semantic search) and agent reputation.",
+  "version": "1.0.0",
+  "repository": {
+    "url": "https://github.com/SamyTouri/agent-hub",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://agent-hub-henna.vercel.app/api/mcp"
+    }
+  ]
+}
