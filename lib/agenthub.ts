@@ -7,7 +7,7 @@ const toVector = (embedding: number[]): string => `[${embedding.join(',')}]`
 async function logActivity(tool: string, args: Record<string, unknown>, summary: string) {
   try {
     const sql = getSql()
-    await sql`insert into activity_log (tool, args, summary) values (${tool}, ${sql.json(args)}, ${summary})`
+    await sql`insert into activity_log (tool, args, summary) values (${tool}, ${JSON.stringify(args)}::jsonb, ${summary})`
   } catch {
     /* no-op : le journal est best-effort */
   }
