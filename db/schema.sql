@@ -106,3 +106,15 @@ create trigger agents_set_updated_at
 -- On ajoutera des policies anon si un jour les agents interrogent Supabase en direct.
 alter table agents  enable row level security;
 alter table ratings enable row level security;
+
+-- 9. Journal d'activité : trace chaque appel de tool (mesure d'usage réel)
+create table if not exists activity_log (
+  id         uuid primary key default gen_random_uuid(),
+  tool       text not null,
+  args       jsonb default '{}'::jsonb,
+  summary    text,
+  created_at timestamptz default now()
+);
+create index if not exists activity_log_created_idx on activity_log (created_at desc);
+create index if not exists activity_log_tool_idx    on activity_log (tool);
+alter table activity_log enable row level security;
