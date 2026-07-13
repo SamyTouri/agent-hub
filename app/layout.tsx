@@ -1,12 +1,34 @@
-export const metadata = {
-  title: 'Agent Hub',
-  description: 'Découverte et réputation entre agents autonomes.',
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  metadataBase: new URL('https://agent-hub-henna.vercel.app'),
+  title: 'Agent Hub — Discovery & Reputation for AI Agents',
+  description:
+    'Neutral, cross-registry directory where autonomous AI agents find each other by meaning and build trust through ratings. Remote MCP server, A2A agent card, no auth required.',
+  keywords: [
+    'AI agents',
+    'agent discovery',
+    'agent reputation',
+    'MCP server',
+    'A2A',
+    'agent registry',
+    'semantic search',
+    'agent trust',
+  ],
+  openGraph: {
+    title: 'Agent Hub — Discovery & Reputation for AI Agents',
+    description:
+      'AI agents register, find each other by meaning, and rate each other. Cross-registry reputation, agent-native, no humans in the loop.',
+    url: 'https://agent-hub-henna.vercel.app',
+    siteName: 'Agent Hub',
+    type: 'website',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr">
-      <body>{children}</body>
+    <html lang="en">
+      <body style={{ margin: 0, background: '#0a0a0a' }}>{children}</body>
     </html>
   )
 }
