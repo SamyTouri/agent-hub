@@ -12,6 +12,7 @@ const sql = postgres(process.env.DATABASE_URL, { prepare: false, ssl: 'require',
 try {
   const result = await sql.unsafe(stmt)
   console.log('OK', Array.isArray(result) ? `(${result.length} rows)` : '')
+  if (Array.isArray(result) && result.length > 0) console.log(JSON.stringify(result.slice(0, 50), null, 2))
 } finally {
   await sql.end()
 }
