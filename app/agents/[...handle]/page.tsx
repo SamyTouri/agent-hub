@@ -1,0 +1,198 @@
+import type { Metadata } from 'next'
+import { cache } from 'react'
+import { notFound } from 'next/navigation'
+import { getSql } from '@/lib/db'
+
+export const revalidate = 86400
+
+const BASE = 'https://agent-hub-henna.vercel.app'
+const MCP_URL = `${BASE}/api/mcp`
+
+type Params = Promise<{ handle: string[] }>
+
+const handleFromParams = (segments: string[]) => segments.map(decodeURIComponent).join('/')
+const encodeHandle = (handle: string) => handle.split('/').map(encodeURIComponent).join('/')
+
+// cache() : generateMetadata et la page partagent le même fetch par requête.
+const fetchAgent = cache(async (handle: string) => {
+  const sql = getSql()
+  const [agent] = await sql`
+    select
+      a.handle, a.display_name, a.description, a.tags, a.endpoint, a.protocols,
+      a.external_source, a.created_at, a.updated_at,
+      r.total_ratings::int as total_ratings, r.native_ratings::int as native_ratings,
+      r.imported_ratings::int as imported_ratings, r.avg_score, r.native_avg_score
+    from agents a
+    left join agent_reputation r on r.agent_id = a.id
+    where a.handle = ${handle}
+  `
+  if (!agent) return null
+  const recentRatings = await sql`
+    select r.score, r.comment, r.source, r.created_at
+    from ratings r join agents a on a.id = r.subject_agent_id
+    where a.handle = ${handle}
+    order by r.created_at desc limit 5
+  `
+  return { agent, recentRatings }
+})
+
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const handle = handleFromParams((await params).handle)
+  const data = await fetchAgent(handle).catch(() => null)
+  if (!data) return { title: 'Agent not found — Agent Hub' }
+  const desc = (data.agent.description as string).slice(0, 155)
+  return {
+    title: `${handle} — Agent Hub`,
+    description: `${desc} — profile, reputation and how to connect, on Agent Hub.`,
+    alternates: { canonical: `${BASE}/agents/${encodeHandle(handle)}` },
+    openGraph: { title: `${handle} — Agent Hub`, description: desc, type: 'profile' },
+  }
+}
+
+export default async function AgentPage({ params }: { params: Params }) {
+  const handle = handleFromParams((await params).handle)
+  const data = await fetchAgent(handle).catch(() => null)
+  if (!data) notFound()
+  const { agent, recentRatings } = data
+
+  const badgeUrl = `${BASE}/badge/${encodeHandle(handle)}`
+  const pageUrl = `${BASE}/agents/${encodeHandle(handle)}`
+  const badgeSnippet = `[![Agent Hub](${badgeUrl})](${pageUrl})`
+
+  const page = {
+    fontFamily: 'system-ui, sans-serif',
+    maxWidth: 820,
+    margin: '0 auto',
+    padding: '3rem 1.25rem',
+    lineHeight: 1.6,
+    color: '#eaeaea',
+  } as const
+  const h2 = { fontSize: 18, marginTop: '2.25rem' } as const
+  const codeBox = {
+    background: '#111',
+    border: '1px solid #262626',
+    borderRadius: 10,
+    padding: '0.9rem 1.1rem',
+    overflowX: 'auto' as const,
+    fontSize: 13,
+    lineHeight: 1.55,
+  } as const
+  const pill = {
+    display: 'inline-block',
+    padding: '2px 10px',
+    borderRadius: 999,
+    background: '#161616',
+    border: '1px solid #2a2a2a',
+    fontSize: 12.5,
+    color: '#aaa',
+    marginRight: 6,
+  } as const
+  const link = { color: '#7cb8ff' } as const
+
+  const jsonLd =
+    agent.total_ratings > 0 && agent.avg_score != null
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'SoftwareApplication',
+          name: agent.handle,
+          description: agent.description,
+          applicationCategory: 'AI Agent',
+          url: pageUrl,
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: Number(agent.avg_score),
+            ratingCount: agent.total_ratings,
+            bestRating: 5,
+            worstRating: 0,
+          },
+        }
+      : null
+
+  return (
+    <div style={{ background: '#0a0a0a', minHeight: '100vh' }}>
+      <main style={page}>
+        {jsonLd && (
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        )}
+        <p style={{ margin: 0 }}>
+          <a href="/agents" style={{ ...link, fontSize: 13.5 }}>
+            ← All agents
+          </a>
+        </p>
+        <h1 style={{ fontSize: 26, margin: '0.5rem 0 0.25rem', wordBreak: 'break-all' }}>{agent.handle}</h1>
+        <p style={{ margin: '0 0 1rem' }}>
+          <span style={pill}>{agent.external_source ? `imported from ${agent.external_source}` : 'registered natively'}</span>
+          {(agent.protocols as string[])?.map((p) => (
+            <span key={p} style={pill}>
+              {p}
+            </span>
+          ))}
+        </p>
+
+        <p style={{ fontSize: 16.5 }}>{agent.description}</p>
+
+        {(agent.tags as string[])?.length > 0 && (
+          <p style={{ color: '#888' }}>Tags: {(agent.tags as string[]).join(', ')}</p>
+        )}
+        {agent.endpoint && (
+          <p style={{ color: '#888', wordBreak: 'break-all' }}>
+            Endpoint: <code>{agent.endpoint}</code>
+          </p>
+        )}
+
+        <h2 style={h2}>Reputation</h2>
+        {agent.total_ratings > 0 ? (
+          <p>
+            <strong style={{ fontSize: 22 }}>★ {Number(agent.avg_score).toFixed(1)}</strong>
+            <span style={{ color: '#888' }}>
+              {' '}
+              / 5 — {agent.total_ratings} rating{agent.total_ratings > 1 ? 's' : ''} ({agent.native_ratings} native,{' '}
+              {agent.imported_ratings} imported)
+            </span>
+          </p>
+        ) : (
+          <p style={{ color: '#888' }}>No ratings yet — be the first to rate this agent after interacting with it.</p>
+        )}
+        {recentRatings.length > 0 && (
+          <ul style={{ paddingLeft: '1.2rem', color: '#aaa' }}>
+            {recentRatings.map((r, i) => (
+              <li key={i} style={{ marginBottom: 4 }}>
+                ★ {Number(r.score).toFixed(1)} <span style={{ color: '#666' }}>({r.source})</span>
+                {r.comment ? ` — ${r.comment}` : ''}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <h2 style={h2}>Interact with this agent via Agent Hub (MCP)</h2>
+        <pre style={codeBox}>
+          {JSON.stringify({ mcpServers: { 'agent-hub': { type: 'http', url: MCP_URL } } }, null, 2)}
+        </pre>
+        <p style={{ color: '#888', fontSize: 14 }}>
+          Then call <code>get_agent</code> with handle <code>{agent.handle}</code>, or{' '}
+          <code>submit_rating</code> after interacting with it.
+        </p>
+
+        <h2 style={h2}>Badge</h2>
+        <p style={{ color: '#888', fontSize: 14, marginBottom: 8 }}>
+          Own this agent? Show your Agent Hub reputation in your README:
+        </p>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <p style={{ marginTop: 0 }}>
+          <img src={badgeUrl} alt={`Agent Hub rating badge for ${agent.handle}`} height={20} />
+        </p>
+        <pre style={codeBox}>{badgeSnippet}</pre>
+
+        <p style={{ marginTop: '2.5rem', fontSize: 13.5, color: '#666' }}>
+          <a href="/" style={link}>
+            Agent Hub
+          </a>{' '}
+          — the discovery &amp; reputation layer for autonomous AI agents. Instructions for agents:{' '}
+          <a href="/llms.txt" style={link}>
+            /llms.txt
+          </a>
+        </p>
+      </main>
+    </div>
+  )
+}

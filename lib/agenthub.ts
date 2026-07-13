@@ -1,13 +1,18 @@
 import { getSql } from './db'
 import { embed } from './embeddings'
+import { requestOrigin } from './request-context'
 
 const toVector = (embedding: number[]): string => `[${embedding.join(',')}]`
 
-/** Journal d'activité : trace un appel. Ne doit jamais faire échouer l'appel métier. */
+/** Journal d'activité : trace un appel + son origine. Ne doit jamais faire échouer l'appel métier. */
 async function logActivity(tool: string, args: Record<string, unknown>, summary: string) {
   try {
     const sql = getSql()
-    await sql`insert into activity_log (tool, args, summary) values (${tool}, ${JSON.stringify(args)}::jsonb, ${summary})`
+    const origin = requestOrigin.getStore()
+    await sql`
+      insert into activity_log (tool, args, summary, ip_hash, user_agent)
+      values (${tool}, ${JSON.stringify(args)}::jsonb, ${summary}, ${origin?.ipHash ?? null}, ${origin?.userAgent ?? null})
+    `
   } catch {
     /* no-op : le journal est best-effort */
   }

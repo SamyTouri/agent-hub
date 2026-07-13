@@ -118,3 +118,7 @@ create table if not exists activity_log (
 create index if not exists activity_log_created_idx on activity_log (created_at desc);
 create index if not exists activity_log_tool_idx    on activity_log (tool);
 alter table activity_log enable row level security;
+
+-- 10. Origine des appels (distinguer le vrai trafic de nos tests) — IP hashée, jamais en clair
+alter table activity_log add column if not exists ip_hash    text;
+alter table activity_log add column if not exists user_agent text;

@@ -86,6 +86,10 @@ export default async function Home() {
             </>
           )}
           {' · '}
+          <a href="/agents" style={link}>
+            browse the directory
+          </a>
+          {' · '}
           <a href="/dashboard" style={link}>
             live activity
           </a>

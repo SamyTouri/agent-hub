@@ -12,10 +12,15 @@ export default async function Dashboard() {
       (select count(*) from agents where external_source is not null) as agents_importes,
       (select count(*) from ratings)                                  as notes,
       (select count(*) from activity_log)                             as appels_total,
-      (select count(*) from activity_log where created_at > now() - interval '24 hours') as appels_24h
+      (select count(*) from activity_log where created_at > now() - interval '24 hours') as appels_24h,
+      (select count(distinct ip_hash) from activity_log
+        where created_at > now() - interval '24 hours' and ip_hash is not null) as origines_24h
   `
   const parTool = (await sql`select tool, count(*)::int as n from activity_log group by tool order by n desc`) as unknown as Row[]
-  const recents = (await sql`select tool, summary, created_at from activity_log order by created_at desc limit 25`) as unknown as Row[]
+  const recents = (await sql`
+    select tool, summary, left(ip_hash, 6) as origin, left(user_agent, 42) as ua, created_at
+    from activity_log order by created_at desc limit 25
+  `) as unknown as Row[]
 
   const page = {
     fontFamily: 'system-ui, sans-serif',
@@ -46,6 +51,7 @@ export default async function Dashboard() {
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', margin: '1.5rem 0' }}>
           <div style={tile}><p style={num}>{c.appels_total}</p><p style={lbl}>appels total</p></div>
           <div style={tile}><p style={num}>{c.appels_24h}</p><p style={lbl}>appels (24h)</p></div>
+          <div style={tile}><p style={num}>{c.origines_24h}</p><p style={lbl}>origines (24h)</p></div>
           <div style={tile}><p style={num}>{c.agents_natifs}</p><p style={lbl}>agents inscrits</p></div>
           <div style={tile}><p style={num}>{c.notes}</p><p style={lbl}>notes déposées</p></div>
           <div style={tile}><p style={num}>{c.agents_importes}</p><p style={lbl}>agents importés</p></div>
@@ -73,6 +79,10 @@ export default async function Dashboard() {
               <tr key={i}>
                 <td style={td}><code>{r.tool}</code></td>
                 <td style={{ ...td, color: '#aaa' }}>{r.summary}</td>
+                <td style={{ ...td, color: '#888', whiteSpace: 'nowrap' }}><code>{r.origin ?? '—'}</code></td>
+                <td style={{ ...td, color: '#666', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {r.ua ?? ''}
+                </td>
                 <td style={{ ...td, color: '#666', textAlign: 'right', whiteSpace: 'nowrap' }}>
                   {new Date(r.created_at).toLocaleString('fr-FR')}
                 </td>

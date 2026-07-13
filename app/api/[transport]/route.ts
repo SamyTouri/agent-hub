@@ -1,5 +1,6 @@
 import { createMcpHandler } from 'mcp-handler'
 import { z } from 'zod'
+import { withOrigin } from '@/lib/request-context'
 import {
   registerAgent,
   findAgents,
@@ -135,4 +136,6 @@ const handler = createMcpHandler(
   { basePath: '/api' },
 )
 
-export { handler as GET, handler as POST }
+const handlerWithOrigin = withOrigin(handler)
+
+export { handlerWithOrigin as GET, handlerWithOrigin as POST }
