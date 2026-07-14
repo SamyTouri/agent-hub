@@ -16,7 +16,9 @@ export async function generateSitemaps() {
   return Array.from({ length: SHARDS }, (_, id) => ({ id }))
 }
 
-export default async function sitemap({ id }: { id: number }): Promise<MetadataRoute.Sitemap> {
+// Next 16 : l'id arrive en Promise<string> (pas en number comme avant v16).
+export default async function sitemap(props: { id: Promise<string> }): Promise<MetadataRoute.Sitemap> {
+  const id = Number(await props.id)
   if (id === 0) {
     const staticUrls: MetadataRoute.Sitemap = [
       { url: `${BASE}/`, changeFrequency: 'daily', priority: 1 },
