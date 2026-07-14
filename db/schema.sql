@@ -135,3 +135,7 @@ create table if not exists crawler_hits (
 create index if not exists crawler_hits_created_idx on crawler_hits (created_at desc);
 create index if not exists crawler_hits_bot_idx     on crawler_hits (bot);
 alter table crawler_hits enable row level security;
+-- Créée hors SQL editor (connexion postgres directe) → pas de grants par défaut :
+-- service_role (clé secrète REST utilisée par le proxy) doit être autorisé explicitement.
+grant insert, select, delete on public.crawler_hits to service_role;
+grant usage, select on all sequences in schema public to service_role;

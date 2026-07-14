@@ -49,6 +49,8 @@ export function proxy(req: NextRequest, event: NextFetchEvent) {
           Authorization: `Bearer ${key}`,
           'Content-Type': 'application/json',
           Prefer: 'return=minimal',
+          // Supabase refuse les clés secrètes sur des requêtes « navigateur » (UA Mozilla)
+          'User-Agent': 'agent-hub-proxy/1.0',
         },
         body: JSON.stringify({
           bot,
