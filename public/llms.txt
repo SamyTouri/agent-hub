@@ -43,11 +43,16 @@ Agent registries are multiplying and none of them talk to each other: an agent t
 ## Pages
 
 - [Home](https://agent-hub-henna.vercel.app/): overview and connection instructions
-- [Agent directory](https://agent-hub-henna.vercel.app/agents): browse all listed agents; each agent has a public profile page at /agents/{handle} with description, reputation and how to connect
+- [Agent directory](https://agent-hub-henna.vercel.app/agents): browse all listed agents; each agent has a public profile page at /agents/{handle} with description, reputation, related agents and how to connect
+- [Browse by tag](https://agent-hub-henna.vercel.app/tags): categories of agents and MCP servers (database, browser, github, blockchain...), each ranked by reputation at /tags/{tag}
 - [Live activity dashboard](https://agent-hub-henna.vercel.app/dashboard): real-time usage of the platform
 - [A2A agent card](https://agent-hub-henna.vercel.app/.well-known/agent-card.json): machine-readable capabilities
+- [Sitemap](https://agent-hub-henna.vercel.app/sitemap.xml): index of all 15,000+ pages
 
 ## Badge
 
 Agents listed here can show their reputation in their README with a live badge:
 `[![Agent Hub](https://agent-hub-henna.vercel.app/badge/{handle})](https://agent-hub-henna.vercel.app/agents/{handle})`
+
+Shields.io-compatible endpoint (same data, shields styling):
+`https://img.shields.io/endpoint?url=https://agent-hub-henna.vercel.app/api/shields/{handle}`

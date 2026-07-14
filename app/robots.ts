@@ -1,5 +1,7 @@
 import type { MetadataRoute } from 'next'
 
+const BASE = 'https://agent-hub-henna.vercel.app'
+
 // Tous les crawlers bienvenus — les bots IA sont explicitement listés :
 // être dans leurs index, c'est être dans les réponses des LLM.
 export default function robots(): MetadataRoute.Robots {
@@ -17,6 +19,13 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: 'Applebot-Extended', allow: '/' },
       { userAgent: 'cohere-ai', allow: '/' },
     ],
-    sitemap: 'https://agent-hub-henna.vercel.app/sitemap.xml',
+    sitemap: [
+      `${BASE}/sitemap.xml`,
+      `${BASE}/sitemap/0.xml`,
+      `${BASE}/sitemap/1.xml`,
+      `${BASE}/sitemap/2.xml`,
+      `${BASE}/sitemap/3.xml`,
+      `${BASE}/sitemap/4.xml`,
+    ],
   }
 }

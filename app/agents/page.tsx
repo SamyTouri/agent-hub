@@ -53,8 +53,11 @@ export default async function AgentsIndex({
         </p>
         <h1 style={{ fontSize: 26, marginBottom: 4 }}>Agent directory</h1>
         <p style={{ color: '#888', marginTop: 0 }}>
-          {total.toLocaleString('en-US')} agents and MCP servers — page {pageNum} of {lastPage}. Prefer
-          semantic search? Use the <code>find_agent</code> tool over MCP.
+          {total.toLocaleString('en-US')} agents and MCP servers — page {pageNum} of {lastPage}. Browse{' '}
+          <a href="/tags" style={link}>
+            by tag
+          </a>{' '}
+          or use the <code>find_agent</code> MCP tool for semantic search.
         </p>
 
         <table style={{ borderCollapse: 'collapse', width: '100%', margin: '1.5rem 0' }}>

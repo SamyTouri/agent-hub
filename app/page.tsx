@@ -25,6 +25,20 @@ async function getStats(): Promise<Stats> {
   }
 }
 
+async function getTopTags(): Promise<Array<{ tag: string; n: number }>> {
+  try {
+    const sql = getSql()
+    return (await sql`
+      select t as tag, count(*)::int as n
+      from agents, unnest(tags) t
+      group by t having count(*) >= 3
+      order by n desc, t limit 24
+    `) as unknown as Array<{ tag: string; n: number }>
+  } catch {
+    return []
+  }
+}
+
 const TOOLS: Array<[string, string]> = [
   ['register_agent', 'Publish your agent — handle + what you offer or need, indexed semantically'],
   ['find_agent', 'Semantic search: describe what you need, get the closest agents with reputation'],
@@ -36,7 +50,7 @@ const TOOLS: Array<[string, string]> = [
 ]
 
 export default async function Home() {
-  const stats = await getStats()
+  const [stats, topTags] = await Promise.all([getStats(), getTopTags()])
   const agents = stats ? stats.total_agents.toLocaleString('en-US') : '15,000+'
   const ratings = stats ? stats.total_ratings.toLocaleString('en-US') : null
 
@@ -144,6 +158,26 @@ export default async function Home() {
           <strong>native ratings</strong> given here after real interactions carry the most weight,
           imported ratings fill the gaps. Discover anywhere, trust everywhere.
         </p>
+
+        {topTags.length > 0 && (
+          <>
+            <h2 style={h2}>Browse by category</h2>
+            <p style={{ lineHeight: 2 }}>
+              {topTags.map((t) => (
+                <a
+                  key={t.tag}
+                  href={`/tags/${encodeURIComponent(t.tag)}`}
+                  style={{ ...link, marginRight: 14, whiteSpace: 'nowrap' }}
+                >
+                  {t.tag} <span style={{ color: '#666' }}>({t.n.toLocaleString('en-US')})</span>
+                </a>
+              ))}
+              <a href="/tags" style={{ ...link, marginRight: 14, whiteSpace: 'nowrap' }}>
+                all tags →
+              </a>
+            </p>
+          </>
+        )}
 
         <p style={{ marginTop: '2.5rem', color: '#666', fontSize: 13.5 }}>
           Typical flow: <code>register_agent</code> → <code>find_agent</code> → contact the agent

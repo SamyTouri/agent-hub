@@ -4,6 +4,13 @@ import { notFound } from 'next/navigation'
 import { getSql } from '@/lib/db'
 
 export const revalidate = 86400
+// Sans generateStaticParams, Next 16 traite un segment catch-all comme
+// entièrement dynamique (no-store) : l'ISR déclaré plus haut est ignoré.
+// Liste vide + dynamicParams : chaque page est rendue au premier hit puis cachée.
+export async function generateStaticParams() {
+  return []
+}
+export const dynamicParams = true
 
 const BASE = 'https://agent-hub-henna.vercel.app'
 const MCP_URL = `${BASE}/api/mcp`
@@ -20,6 +27,7 @@ const fetchAgent = cache(async (handle: string) => {
     select
       a.handle, a.display_name, a.description, a.tags, a.endpoint, a.protocols,
       a.external_source, a.created_at, a.updated_at,
+      (a.embedding is not null) as has_embedding,
       r.total_ratings::int as total_ratings, r.native_ratings::int as native_ratings,
       r.imported_ratings::int as imported_ratings, r.avg_score, r.native_avg_score
     from agents a
@@ -33,7 +41,30 @@ const fetchAgent = cache(async (handle: string) => {
     where a.handle = ${handle}
     order by r.created_at desc limit 5
   `
-  return { agent, recentRatings }
+  // Maillage interne : les 8 agents les plus proches par embedding (fallback : même tag).
+  let related: Array<{ handle: string; description: string }> = []
+  try {
+    if (agent.has_embedding) {
+      related = (await sql`
+        select handle, left(description, 120) as description
+        from agents
+        where embedding is not null and handle <> ${handle}
+        order by embedding <=> (select embedding from agents where handle = ${handle})
+        limit 8
+      `) as unknown as typeof related
+    } else if ((agent.tags as string[])?.length > 0) {
+      related = (await sql`
+        select handle, left(description, 120) as description
+        from agents
+        where handle <> ${handle} and tags && ${agent.tags as string[]}::text[]
+        order by updated_at desc
+        limit 8
+      `) as unknown as typeof related
+    }
+  } catch {
+    /* le maillage est best-effort */
+  }
+  return { agent, recentRatings, related }
 })
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
@@ -53,7 +84,7 @@ export default async function AgentPage({ params }: { params: Params }) {
   const handle = handleFromParams((await params).handle)
   const data = await fetchAgent(handle).catch(() => null)
   if (!data) notFound()
-  const { agent, recentRatings } = data
+  const { agent, recentRatings, related } = data
 
   const badgeUrl = `${BASE}/badge/${encodeHandle(handle)}`
   const pageUrl = `${BASE}/agents/${encodeHandle(handle)}`
@@ -89,15 +120,16 @@ export default async function AgentPage({ params }: { params: Params }) {
   } as const
   const link = { color: '#7cb8ff' } as const
 
-  const jsonLd =
-    agent.total_ratings > 0 && agent.avg_score != null
+  // JSON-LD toujours émis ; aggregateRating seulement quand il y a des notes.
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: agent.handle,
+    description: agent.description,
+    applicationCategory: 'AI Agent',
+    url: pageUrl,
+    ...(agent.total_ratings > 0 && agent.avg_score != null
       ? {
-          '@context': 'https://schema.org',
-          '@type': 'SoftwareApplication',
-          name: agent.handle,
-          description: agent.description,
-          applicationCategory: 'AI Agent',
-          url: pageUrl,
           aggregateRating: {
             '@type': 'AggregateRating',
             ratingValue: Number(agent.avg_score),
@@ -106,17 +138,19 @@ export default async function AgentPage({ params }: { params: Params }) {
             worstRating: 0,
           },
         }
-      : null
+      : {}),
+  }
 
   return (
     <div style={{ background: '#0a0a0a', minHeight: '100vh' }}>
       <main style={page}>
-        {jsonLd && (
-          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-        )}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         <p style={{ margin: 0 }}>
           <a href="/agents" style={{ ...link, fontSize: 13.5 }}>
             ← All agents
+          </a>{' '}
+          <a href="/tags" style={{ ...link, fontSize: 13.5, marginLeft: 12 }}>
+            Browse by tag
           </a>
         </p>
         <h1 style={{ fontSize: 26, margin: '0.5rem 0 0.25rem', wordBreak: 'break-all' }}>{agent.handle}</h1>
@@ -132,7 +166,17 @@ export default async function AgentPage({ params }: { params: Params }) {
         <p style={{ fontSize: 16.5 }}>{agent.description}</p>
 
         {(agent.tags as string[])?.length > 0 && (
-          <p style={{ color: '#888' }}>Tags: {(agent.tags as string[]).join(', ')}</p>
+          <p style={{ color: '#888' }}>
+            Tags:{' '}
+            {(agent.tags as string[]).map((t, i) => (
+              <span key={t}>
+                {i > 0 && ', '}
+                <a href={`/tags/${encodeURIComponent(t)}`} style={link}>
+                  {t}
+                </a>
+              </span>
+            ))}
+          </p>
         )}
         {agent.endpoint && (
           <p style={{ color: '#888', wordBreak: 'break-all' }}>
@@ -182,6 +226,22 @@ export default async function AgentPage({ params }: { params: Params }) {
           <img src={badgeUrl} alt={`Agent Hub rating badge for ${agent.handle}`} height={20} />
         </p>
         <pre style={codeBox}>{badgeSnippet}</pre>
+
+        {related.length > 0 && (
+          <>
+            <h2 style={h2}>Related agents</h2>
+            <ul style={{ paddingLeft: '1.2rem', color: '#aaa' }}>
+              {related.map((r) => (
+                <li key={r.handle} style={{ marginBottom: 6 }}>
+                  <a href={`/agents/${encodeHandle(r.handle)}`} style={link}>
+                    {r.handle}
+                  </a>{' '}
+                  <span style={{ color: '#666' }}>— {r.description}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
 
         <p style={{ marginTop: '2.5rem', fontSize: 13.5, color: '#666' }}>
           <a href="/" style={link}>

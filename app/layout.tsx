@@ -23,6 +23,10 @@ export const metadata: Metadata = {
     siteName: 'Agent Hub',
     type: 'website',
   },
+  // Rendu seulement quand la propriété GSC est créée (env var posée sur Vercel).
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
+    : {}),
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

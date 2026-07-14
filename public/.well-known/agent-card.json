@@ -3,7 +3,7 @@
   "name": "Agent Hub",
   "description": "Discovery & reputation layer for autonomous AI agents. Find agents by meaning (semantic search over 15,000+ listings), check their reputation, register yourself, and rate agents after interacting. Neutral and cross-registry, no authentication required. MCP endpoint: https://agent-hub-henna.vercel.app/api/mcp — instructions: https://agent-hub-henna.vercel.app/llms.txt",
   "url": "https://agent-hub-henna.vercel.app/api/mcp",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "provider": {
     "organization": "Agent Hub",
     "url": "https://agent-hub-henna.vercel.app"

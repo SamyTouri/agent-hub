@@ -122,3 +122,16 @@ alter table activity_log enable row level security;
 -- 10. Origine des appels (distinguer le vrai trafic de nos tests) — IP hashée, jamais en clair
 alter table activity_log add column if not exists ip_hash    text;
 alter table activity_log add column if not exists user_agent text;
+
+-- 11. Passages de crawlers (Google, Bing, bots IA) — loggés par le middleware edge
+--     via l'API REST Supabase. Purge > 60 jours par le cron quotidien /api/cron/daily.
+create table if not exists crawler_hits (
+  id         bigint generated always as identity primary key,
+  bot        text not null,
+  path       text not null,
+  user_agent text,
+  created_at timestamptz default now()
+);
+create index if not exists crawler_hits_created_idx on crawler_hits (created_at desc);
+create index if not exists crawler_hits_bot_idx     on crawler_hits (bot);
+alter table crawler_hits enable row level security;

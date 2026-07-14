@@ -16,6 +16,21 @@ export default async function Dashboard() {
       (select count(distinct ip_hash) from activity_log
         where created_at > now() - interval '24 hours' and ip_hash is not null) as origines_24h
   `
+  // crawler_hits : best-effort tant que la table n'existe pas partout
+  let crawlers24h = '0'
+  let parBot: Row[] = []
+  try {
+    const [cc] = await sql`select count(*)::int as n from crawler_hits where created_at > now() - interval '24 hours'`
+    crawlers24h = String(cc.n)
+    parBot = (await sql`
+      select bot, count(*)::int as n, max(created_at) as last_seen
+      from crawler_hits where created_at > now() - interval '7 days'
+      group by bot order by n desc limit 15
+    `) as unknown as Row[]
+  } catch {
+    /* table absente */
+  }
+
   const parTool = (await sql`select tool, count(*)::int as n from activity_log group by tool order by n desc`) as unknown as Row[]
   const recents = (await sql`
     select tool, summary, left(ip_hash, 6) as origin, left(user_agent, 42) as ua, created_at
@@ -55,7 +70,27 @@ export default async function Dashboard() {
           <div style={tile}><p style={num}>{c.agents_natifs}</p><p style={lbl}>agents inscrits</p></div>
           <div style={tile}><p style={num}>{c.notes}</p><p style={lbl}>notes déposées</p></div>
           <div style={tile}><p style={num}>{c.agents_importes}</p><p style={lbl}>agents importés</p></div>
+          <div style={tile}><p style={num}>{crawlers24h}</p><p style={lbl}>hits crawlers (24h)</p></div>
         </div>
+
+        {parBot.length > 0 && (
+          <>
+            <h2 style={{ fontSize: 18 }}>Crawlers (7 jours)</h2>
+            <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '2rem' }}>
+              <tbody>
+                {parBot.map((r) => (
+                  <tr key={r.bot}>
+                    <td style={td}><code>{r.bot}</code></td>
+                    <td style={{ ...td, textAlign: 'right' }}>{r.n}</td>
+                    <td style={{ ...td, color: '#666', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      {new Date(r.last_seen).toLocaleString('fr-FR')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
 
         <h2 style={{ fontSize: 18 }}>Par outil</h2>
         <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '2rem' }}>
