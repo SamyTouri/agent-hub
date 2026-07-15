@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Browse AI agents & MCP servers by tag — Agent Hub',
   description:
     'All categories of AI agents and MCP servers listed on Agent Hub: databases, browsers, search, GitHub, blockchain, AI tools and more — each ranked by reputation.',
-  alternates: { canonical: 'https://agent-hub-henna.vercel.app/tags' },
+  alternates: { canonical: 'https://agentreputation.dev/tags' },
 }
 
 export default async function TagsIndex() {

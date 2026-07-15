@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 
-const BASE = 'https://agent-hub-henna.vercel.app'
+const BASE = 'https://agentreputation.dev'
 
 // Tous les crawlers bienvenus — les bots IA sont explicitement listés :
 // être dans leurs index, c'est être dans les réponses des LLM.

@@ -1,7 +1,7 @@
 // Index de sitemaps. Next réserve /sitemap.xml quand app/sitemap.ts utilise
 // generateSitemaps (sans y servir d'index) → cette route est exposée sur
 // /sitemap-index.xml et un rewrite next.config la sert aussi sur /sitemap.xml.
-const BASE = 'https://agent-hub-henna.vercel.app'
+const BASE = 'https://agentreputation.dev'
 const SHARDS = 5
 
 export async function GET() {

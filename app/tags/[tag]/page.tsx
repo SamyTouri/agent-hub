@@ -10,7 +10,7 @@ export async function generateStaticParams() {
 }
 export const dynamicParams = true
 
-const BASE = 'https://agent-hub-henna.vercel.app'
+const BASE = 'https://agentreputation.dev'
 const PER_PAGE = 100
 
 type Params = Promise<{ tag: string }>

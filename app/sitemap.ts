@@ -3,7 +3,7 @@ import { getSql } from '@/lib/db'
 
 export const revalidate = 86400
 
-const BASE = 'https://agent-hub-henna.vercel.app'
+const BASE = 'https://agentreputation.dev'
 // Shard 0 : pages statiques + tags. Shards 1..4 : agents par tranches de 5 000
 // (capacité 20 000 — relever SHARDS quand le catalogue dépasse). Nombre FIXE :
 // robots.txt et /sitemap.xml (index) les listent en dur ; un shard vide reste valide.

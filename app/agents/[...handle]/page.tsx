@@ -12,7 +12,7 @@ export async function generateStaticParams() {
 }
 export const dynamicParams = true
 
-const BASE = 'https://agent-hub-henna.vercel.app'
+const BASE = 'https://agentreputation.dev'
 const MCP_URL = `${BASE}/api/mcp`
 
 type Params = Promise<{ handle: string[] }>

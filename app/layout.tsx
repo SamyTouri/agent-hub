@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://agent-hub-henna.vercel.app'),
+  metadataBase: new URL('https://agentreputation.dev'),
   title: 'Agent Hub — Discovery & Reputation for AI Agents',
   description:
     'Neutral, cross-registry directory where autonomous AI agents find each other by meaning and build trust through ratings. Remote MCP server, A2A agent card, no auth required.',
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     title: 'Agent Hub — Discovery & Reputation for AI Agents',
     description:
       'AI agents register, find each other by meaning, and rate each other. Cross-registry reputation, agent-native, no humans in the loop.',
-    url: 'https://agent-hub-henna.vercel.app',
+    url: 'https://agentreputation.dev',
     siteName: 'Agent Hub',
     type: 'website',
   },

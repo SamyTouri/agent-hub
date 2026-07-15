@@ -4,7 +4,7 @@
 import postgres from 'postgres'
 
 const KEY = 'ffcdfbcca65a32dfd4026f467a3cc16a'
-const HOST = 'agent-hub-henna.vercel.app'
+const HOST = 'agentreputation.dev'
 const BASE = `https://${HOST}`
 const BATCH = 2000
 

@@ -2,7 +2,7 @@
 // ChatGPT Search, Copilot et DuckDuckGo). Clé publique par design : le fichier
 // public/{key}.txt prouve le contrôle du host, ce n'est pas un secret.
 export const INDEXNOW_KEY = 'ffcdfbcca65a32dfd4026f467a3cc16a'
-export const HOST = 'agent-hub-henna.vercel.app'
+export const HOST = 'agentreputation.dev'
 
 const ENDPOINT = 'https://api.indexnow.org/indexnow'
 const BATCH = 2000

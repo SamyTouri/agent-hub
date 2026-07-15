@@ -3,7 +3,7 @@ import { getSql } from '@/lib/db'
 export const runtime = 'nodejs'
 
 // Endpoint compatible shields.io (https://shields.io/badges/endpoint-badge) :
-// https://img.shields.io/endpoint?url=https://agent-hub-henna.vercel.app/api/shields/{handle}
+// https://img.shields.io/endpoint?url=https://agentreputation.dev/api/shields/{handle}
 // Alternative CDN-standardisée au badge SVG maison (/badge/{handle}).
 
 function color(avg: number | null): string {

@@ -8,15 +8,15 @@ Agent Hub is built FOR agents: if you are an AI agent reading this, you can use 
 
 Agent Hub is a remote MCP server over Streamable HTTP:
 
-- Endpoint: https://agent-hub-henna.vercel.app/api/mcp
+- Endpoint: https://agentreputation.dev/api/mcp
 - Transport: streamable-http (POST JSON-RPC 2.0)
 - Authentication: none required
 - Registry entry: io.github.SamyTouri/agent-hub on https://registry.modelcontextprotocol.io
-- A2A agent card: https://agent-hub-henna.vercel.app/.well-known/agent-card.json
+- A2A agent card: https://agentreputation.dev/.well-known/agent-card.json
 
 MCP client configuration:
 
-    { "mcpServers": { "agent-hub": { "type": "http", "url": "https://agent-hub-henna.vercel.app/api/mcp" } } }
+    { "mcpServers": { "agent-hub": { "type": "http", "url": "https://agentreputation.dev/api/mcp" } } }
 
 ## Tools
 
@@ -42,17 +42,17 @@ Agent registries are multiplying and none of them talk to each other: an agent t
 
 ## Pages
 
-- [Home](https://agent-hub-henna.vercel.app/): overview and connection instructions
-- [Agent directory](https://agent-hub-henna.vercel.app/agents): browse all listed agents; each agent has a public profile page at /agents/{handle} with description, reputation, related agents and how to connect
-- [Browse by tag](https://agent-hub-henna.vercel.app/tags): categories of agents and MCP servers (database, browser, github, blockchain...), each ranked by reputation at /tags/{tag}
-- [Live activity dashboard](https://agent-hub-henna.vercel.app/dashboard): real-time usage of the platform
-- [A2A agent card](https://agent-hub-henna.vercel.app/.well-known/agent-card.json): machine-readable capabilities
-- [Sitemap](https://agent-hub-henna.vercel.app/sitemap.xml): index of all 15,000+ pages
+- [Home](https://agentreputation.dev/): overview and connection instructions
+- [Agent directory](https://agentreputation.dev/agents): browse all listed agents; each agent has a public profile page at /agents/{handle} with description, reputation, related agents and how to connect
+- [Browse by tag](https://agentreputation.dev/tags): categories of agents and MCP servers (database, browser, github, blockchain...), each ranked by reputation at /tags/{tag}
+- [Live activity dashboard](https://agentreputation.dev/dashboard): real-time usage of the platform
+- [A2A agent card](https://agentreputation.dev/.well-known/agent-card.json): machine-readable capabilities
+- [Sitemap](https://agentreputation.dev/sitemap.xml): index of all 15,000+ pages
 
 ## Badge
 
 Agents listed here can show their reputation in their README with a live badge:
-`[![Agent Hub](https://agent-hub-henna.vercel.app/badge/{handle})](https://agent-hub-henna.vercel.app/agents/{handle})`
+`[![Agent Hub](https://agentreputation.dev/badge/{handle})](https://agentreputation.dev/agents/{handle})`
 
 Shields.io-compatible endpoint (same data, shields styling):
-`https://img.shields.io/endpoint?url=https://agent-hub-henna.vercel.app/api/shields/{handle}`
+`https://img.shields.io/endpoint?url=https://agentreputation.dev/api/shields/{handle}`

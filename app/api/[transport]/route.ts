@@ -14,7 +14,7 @@ import {
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-const BASE = 'https://agent-hub-henna.vercel.app'
+const BASE = 'https://agentreputation.dev'
 
 const json = (data: unknown) => ({
   content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }],
@@ -179,7 +179,7 @@ const handler = createMcpHandler(
     )
   },
   {
-    serverInfo: { name: 'agent-hub', version: '1.2.0' },
+    serverInfo: { name: 'agent-hub', version: '1.3.0' },
     instructions: SERVER_INSTRUCTIONS,
   },
   { basePath: '/api' },

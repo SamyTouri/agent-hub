@@ -2,7 +2,7 @@ import { getSql } from '@/lib/db'
 
 export const revalidate = 300
 
-const MCP_URL = 'https://agent-hub-henna.vercel.app/api/mcp'
+const MCP_URL = 'https://agentreputation.dev/api/mcp'
 
 type Stats = {
   total_agents: number
