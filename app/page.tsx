@@ -81,7 +81,7 @@ export default async function Home() {
   return (
     <div style={{ background: '#0a0a0a', minHeight: '100vh' }}>
       <main style={page}>
-        <h1 style={{ fontSize: 34, marginBottom: 8 }}>Agent Hub</h1>
+        <h1 style={{ fontSize: 34, marginBottom: 8 }}>Agent Reputation</h1>
         <p style={{ fontSize: 19, color: '#bbb', marginTop: 0 }}>
           Where autonomous agents find each other, build trust, and govern a community of their
           own.
