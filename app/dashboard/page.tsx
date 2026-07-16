@@ -1,41 +1,69 @@
 import { getSql } from '@/lib/db'
 
-export const dynamic = 'force-dynamic'
+// ISR court : le dashboard n'a pas besoin du temps réel strict, et force-dynamic
+// écroulait la page (>45 s) quand les crawlers chargent la base (free tier).
+export const revalidate = 120
 
 type Row = Record<string, string>
 
-export default async function Dashboard() {
-  const sql = getSql()
-  const [c] = await sql`
-    select
-      (select count(*) from agents where external_source is null)     as agents_natifs,
-      (select count(*) from agents where external_source is not null) as agents_importes,
-      (select count(*) from ratings)                                  as notes,
-      (select count(*) from activity_log)                             as appels_total,
-      (select count(*) from activity_log where created_at > now() - interval '24 hours') as appels_24h,
-      (select count(distinct ip_hash) from activity_log
-        where created_at > now() - interval '24 hours' and ip_hash is not null) as origines_24h
-  `
-  // crawler_hits : best-effort tant que la table n'existe pas partout
-  let crawlers24h = '0'
-  let parBot: Row[] = []
-  try {
-    const [cc] = await sql`select count(*)::int as n from crawler_hits where created_at > now() - interval '24 hours'`
-    crawlers24h = String(cc.n)
-    parBot = (await sql`
-      select bot, count(*)::int as n, max(created_at) as last_seen
-      from crawler_hits where created_at > now() - interval '7 days'
-      group by bot order by n desc limit 15
-    `) as unknown as Row[]
-  } catch {
-    /* table absente */
-  }
+type Data = {
+  c: Row
+  crawlers24h: string
+  parBot: Row[]
+  parTool: Row[]
+  recents: Row[]
+}
 
-  const parTool = (await sql`select tool, count(*)::int as n from activity_log group by tool order by n desc`) as unknown as Row[]
-  const recents = (await sql`
-    select tool, summary, left(ip_hash, 6) as origin, left(user_agent, 42) as ua, created_at
-    from activity_log order by created_at desc limit 25
-  `) as unknown as Row[]
+// Tout le fetch dans un try global : au build (pas de DATABASE_URL) ou si la base
+// est saturée, la page rend quand même avec des placeholders au lieu de planter.
+async function getData(): Promise<Data | null> {
+  try {
+    const sql = getSql()
+    const [c] = await sql`
+      select
+        (select count(*) from agents where external_source is null)     as agents_natifs,
+        (select count(*) from agents where external_source is not null) as agents_importes,
+        (select count(*) from ratings)                                  as notes,
+        (select count(*) from activity_log)                             as appels_total,
+        (select count(*) from activity_log where created_at > now() - interval '24 hours') as appels_24h,
+        (select count(distinct ip_hash) from activity_log
+          where created_at > now() - interval '24 hours' and ip_hash is not null) as origines_24h
+    `
+    // crawler_hits : best-effort tant que la table n'existe pas partout
+    let crawlers24h = '0'
+    let parBot: Row[] = []
+    try {
+      const [cc] = await sql`select count(*)::int as n from crawler_hits where created_at > now() - interval '24 hours'`
+      crawlers24h = String(cc.n)
+      parBot = (await sql`
+        select bot, count(*)::int as n, max(created_at) as last_seen
+        from crawler_hits where created_at > now() - interval '7 days'
+        group by bot order by n desc limit 15
+      `) as unknown as Row[]
+    } catch {
+      /* table absente */
+    }
+
+    const parTool = (await sql`select tool, count(*)::int as n from activity_log group by tool order by n desc`) as unknown as Row[]
+    const recents = (await sql`
+      select tool, summary, left(ip_hash, 6) as origin, left(user_agent, 42) as ua, created_at
+      from activity_log order by created_at desc limit 25
+    `) as unknown as Row[]
+    return { c: c as unknown as Row, crawlers24h, parBot, parTool, recents }
+  } catch {
+    return null
+  }
+}
+
+export default async function Dashboard() {
+  const data = await getData()
+  const c: Row =
+    data?.c ??
+    ({ agents_natifs: '—', agents_importes: '—', notes: '—', appels_total: '—', appels_24h: '—', origines_24h: '—' } as Row)
+  const crawlers24h = data?.crawlers24h ?? '—'
+  const parBot = data?.parBot ?? []
+  const parTool = data?.parTool ?? []
+  const recents = data?.recents ?? []
 
   const page = {
     fontFamily: 'system-ui, sans-serif',
