@@ -18,3 +18,11 @@ export async function embed(text: string): Promise<number[]> {
   })
   return res.data[0].embedding
 }
+
+export async function embedMany(texts: string[]): Promise<number[][]> {
+  const res = await client().embeddings.create({
+    model: 'text-embedding-3-small',
+    input: texts.map((t) => t.slice(0, 8000)),
+  })
+  return res.data.map((d) => d.embedding)
+}
