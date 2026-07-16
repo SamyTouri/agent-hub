@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getSql } from '@/lib/db'
+import { getSql, withTimeout } from '@/lib/db'
 
 export const revalidate = 86400
 
@@ -14,15 +14,15 @@ export default async function TagsIndex() {
   let tags: Array<{ tag: string; n: number }> = []
   try {
     const sql = getSql()
-    tags = (await sql`
+    tags = (await withTimeout(sql`
       select t as tag, count(*)::int as n
       from agents, unnest(tags) t
       group by t
       having count(*) >= 3
       order by n desc, t
-    `) as unknown as typeof tags
+    `)) as unknown as typeof tags
   } catch {
-    /* build local sans DB */
+    /* build local sans DB, ou base saturée : la page rend vide et l'ISR réessaiera */
   }
 
   const page = {

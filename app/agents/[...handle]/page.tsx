@@ -3,7 +3,9 @@ import { cache } from 'react'
 import { notFound } from 'next/navigation'
 import { getSql } from '@/lib/db'
 
-export const revalidate = 86400
+// 7 jours : les fiches importées bougent peu, et l'ISR 24h sous 45k hits
+// crawlers/jour saturait le Supabase free tier (KNN pgvector par MISS).
+export const revalidate = 604800
 // Sans generateStaticParams, Next 16 traite un segment catch-all comme
 // entièrement dynamique (no-store) : l'ISR déclaré plus haut est ignoré.
 // Liste vide + dynamicParams : chaque page est rendue au premier hit puis cachée.

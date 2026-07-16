@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { cache } from 'react'
 import { getSql } from '@/lib/db'
 
-export const revalidate = 86400
+export const revalidate = 604800
 // Même pattern que les pages agents : ISR au premier hit (cf. app/agents/[...handle]).
 export async function generateStaticParams() {
   return []
