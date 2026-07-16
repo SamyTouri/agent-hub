@@ -14,6 +14,18 @@ export function getSql(): Sql {
   if (_sql) return _sql
   const url = process.env.DATABASE_URL
   if (!url) throw new Error('DATABASE_URL manquant (pooler transaction Supabase)')
-  _sql = postgres(url, { prepare: false, ssl: 'require', max: 1, idle_timeout: 20 })
+  _sql = postgres(url, { prepare: false, ssl: 'require', max: 1, idle_timeout: 20, connect_timeout: 10 })
   return _sql
+}
+
+/**
+ * Borne une requête de page dans le temps : sous charge (vague de crawlers), une
+ * requête qui pend ne doit jamais bloquer un render ISR ni un prerender de build
+ * au-delà de quelques secondes — on préfère le fallback de la page.
+ */
+export function withTimeout<T>(p: Promise<T>, ms = 8000): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`db timeout ${ms}ms`)), ms)),
+  ])
 }

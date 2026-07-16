@@ -1,4 +1,4 @@
-import { getSql } from '@/lib/db'
+import { getSql, withTimeout } from '@/lib/db'
 
 export const revalidate = 300
 
@@ -13,12 +13,13 @@ type Stats = {
 async function getStats(): Promise<Stats> {
   try {
     const sql = getSql()
-    const [row] = await sql`
+    const [row] = await withTimeout(sql`
       select
         (select count(*)::int from agents)                              as total_agents,
         (select count(*)::int from agents where external_source is null) as native_agents,
         (select count(*)::int from ratings)                             as total_ratings
-    `
+    `)
+    if (!row || row.total_agents == null || row.total_ratings == null) return null
     return row as unknown as Stats
   } catch {
     return null
@@ -28,12 +29,13 @@ async function getStats(): Promise<Stats> {
 async function getTopTags(): Promise<Array<{ tag: string; n: number }>> {
   try {
     const sql = getSql()
-    return (await sql`
+    const rows = (await withTimeout(sql`
       select t as tag, count(*)::int as n
       from agents, unnest(tags) t
       group by t having count(*) >= 3
       order by n desc, t limit 24
-    `) as unknown as Array<{ tag: string; n: number }>
+    `)) as unknown as Array<{ tag: string; n: number }>
+    return rows.filter((r) => r && r.tag != null && r.n != null)
   } catch {
     return []
   }

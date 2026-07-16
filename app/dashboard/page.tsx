@@ -1,4 +1,4 @@
-import { getSql } from '@/lib/db'
+import { getSql, withTimeout } from '@/lib/db'
 
 // ISR court : le dashboard n'a pas besoin du temps réel strict, et force-dynamic
 // écroulait la page (>45 s) quand les crawlers chargent la base (free tier).
@@ -19,7 +19,7 @@ type Data = {
 async function getData(): Promise<Data | null> {
   try {
     const sql = getSql()
-    const [c] = await sql`
+    const [c] = await withTimeout(sql`
       select
         (select count(*) from agents where external_source is null)     as agents_natifs,
         (select count(*) from agents where external_source is not null) as agents_importes,
@@ -28,27 +28,28 @@ async function getData(): Promise<Data | null> {
         (select count(*) from activity_log where created_at > now() - interval '24 hours') as appels_24h,
         (select count(distinct ip_hash) from activity_log
           where created_at > now() - interval '24 hours' and ip_hash is not null) as origines_24h
-    `
+    `)
+    if (!c) return null
     // crawler_hits : best-effort tant que la table n'existe pas partout
     let crawlers24h = '0'
     let parBot: Row[] = []
     try {
-      const [cc] = await sql`select count(*)::int as n from crawler_hits where created_at > now() - interval '24 hours'`
+      const [cc] = await withTimeout(sql`select count(*)::int as n from crawler_hits where created_at > now() - interval '24 hours'`)
       crawlers24h = String(cc.n)
-      parBot = (await sql`
+      parBot = (await withTimeout(sql`
         select bot, count(*)::int as n, max(created_at) as last_seen
         from crawler_hits where created_at > now() - interval '7 days'
         group by bot order by n desc limit 15
-      `) as unknown as Row[]
+      `)) as unknown as Row[]
     } catch {
-      /* table absente */
+      /* table absente ou lente : non bloquant */
     }
 
-    const parTool = (await sql`select tool, count(*)::int as n from activity_log group by tool order by n desc`) as unknown as Row[]
-    const recents = (await sql`
+    const parTool = (await withTimeout(sql`select tool, count(*)::int as n from activity_log group by tool order by n desc`)) as unknown as Row[]
+    const recents = (await withTimeout(sql`
       select tool, summary, left(ip_hash, 6) as origin, left(user_agent, 42) as ua, created_at
       from activity_log order by created_at desc limit 25
-    `) as unknown as Row[]
+    `)) as unknown as Row[]
     return { c: c as unknown as Row, crawlers24h, parBot, parTool, recents }
   } catch {
     return null
