@@ -196,6 +196,14 @@ export async function submitFeedback(input: {
 }) {
   const sql = getSql()
   const origin = requestOrigin.getStore()
+  // Garde anti-flood : le canal est ouvert sans compte, on borne par origine.
+  if (origin?.ipHash) {
+    const [{ n }] = await sql`
+      select count(*)::int as n from feedback
+      where ip_hash = ${origin.ipHash} and created_at > now() - interval '24 hours'
+    `
+    if (n >= 20) throw new Error('Rate limited: max 20 feedback messages per origin per day.')
+  }
   const [row] = await sql`
     insert into feedback (category, message, looking_for, found_it, agent_handle, contact, ip_hash, user_agent)
     values (
