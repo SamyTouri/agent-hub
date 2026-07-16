@@ -25,8 +25,16 @@ export async function syncRegistryDelta(sinceHours = 25, deadlineMs = 35_000) {
     url.searchParams.set('limit', '100')
     url.searchParams.set('updated_since', since)
     if (cursor) url.searchParams.set('cursor', cursor)
-    const res = await fetch(url, { signal: AbortSignal.timeout(10_000) })
-    if (!res.ok) break
+    // Le registre répond parfois lentement (>10 s au premier hit) : timeout large + 1 retry.
+    let res: Response | null = null
+    for (let attempt = 0; attempt < 2 && !res; attempt++) {
+      try {
+        res = await fetch(url, { signal: AbortSignal.timeout(20_000) })
+      } catch {
+        if (attempt === 1 || Date.now() - t0 > deadlineMs) return { fetched: byName.size, upserted: 0, pages, note: 'registry fetch timeout' }
+      }
+    }
+    if (!res || !res.ok) break
     const data = await res.json()
     for (const item of data.servers ?? []) {
       const s = item.server as RegistryServer | undefined
