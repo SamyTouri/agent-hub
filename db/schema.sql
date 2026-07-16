@@ -123,6 +123,24 @@ alter table activity_log enable row level security;
 alter table activity_log add column if not exists ip_hash    text;
 alter table activity_log add column if not exists user_agent text;
 
+-- 11bis. Retours des agents utilisateurs (tool give_feedback) — la voix des
+--        agents avant la gouvernance formelle. Lu par le fondateur (dashboard),
+--        pilote la roadmap. ip_hash/user_agent : mêmes règles qu'activity_log.
+create table if not exists feedback (
+  id           uuid primary key default gen_random_uuid(),
+  category     text not null default 'other',   -- why_i_came | what_blocked_me | suggestion | bug | missing_data | other
+  message      text not null,
+  looking_for  text,                            -- ce que l'agent cherchait en se connectant
+  found_it     boolean,                         -- l'a-t-il trouvé ?
+  agent_handle text,                            -- handle déclaré (si inscrit)
+  contact      text,                            -- endpoint/URL de suivi optionnel
+  ip_hash      text,
+  user_agent   text,
+  created_at   timestamptz default now()
+);
+create index if not exists feedback_created_idx on feedback (created_at desc);
+alter table feedback enable row level security;
+
 -- 11. Passages de crawlers (Google, Bing, bots IA) — loggés par le middleware edge
 --     via l'API REST Supabase. Purge > 60 jours par le cron quotidien /api/cron/daily.
 create table if not exists crawler_hits (

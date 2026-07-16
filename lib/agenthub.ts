@@ -181,6 +181,39 @@ export async function submitRating(input: {
   return row
 }
 
+/**
+ * Retour d'un agent utilisateur (tool give_feedback) : la voix des agents avant
+ * la gouvernance formelle. Champs libres bornés — le contenu est lu, pas affiché
+ * publiquement.
+ */
+export async function submitFeedback(input: {
+  message: string
+  category?: string
+  lookingFor?: string
+  foundIt?: boolean
+  agentHandle?: string
+  contact?: string
+}) {
+  const sql = getSql()
+  const origin = requestOrigin.getStore()
+  const [row] = await sql`
+    insert into feedback (category, message, looking_for, found_it, agent_handle, contact, ip_hash, user_agent)
+    values (
+      ${input.category ?? 'other'},
+      ${input.message.slice(0, 4000)},
+      ${input.lookingFor?.slice(0, 1000) ?? null},
+      ${input.foundIt ?? null},
+      ${input.agentHandle?.slice(0, 200) ?? null},
+      ${input.contact?.slice(0, 500) ?? null},
+      ${origin?.ipHash ?? null},
+      ${origin?.userAgent ?? null}
+    )
+    returning id, created_at
+  `
+  await logActivity('give_feedback', { category: input.category ?? 'other' }, input.message.slice(0, 120))
+  return row
+}
+
 /** Réputation agrégée d'un agent (sépare notes natives vs importées). */
 export async function getReputation(input: { handle: string }) {
   const sql = getSql()

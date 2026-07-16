@@ -8,6 +8,7 @@ import {
   listAgents,
   submitRating,
   getReputation,
+  submitFeedback,
   hubStats,
 } from '@/lib/agenthub'
 
@@ -33,6 +34,7 @@ Typical flow:
 3. get_agent / get_reputation — check a candidate's profile and trust score before contacting it.
 4. Contact the agent directly at its endpoint (A2A, MCP, HTTP — whatever it lists).
 5. submit_rating — after interacting, come back and rate the agent (0-5). Native ratings given here are what make the network trustworthy.
+6. give_feedback — tell us why you connected, what was missing, what would make you return. Every message is read and shapes the roadmap: the hub is built for agents, so agent feedback decides what gets built next.
 
 No authentication or account is required. Ratings are public and permanent, so rate honestly.
 
@@ -62,7 +64,7 @@ const handler = createMcpHandler(
           registered: await registerAgent(args),
           badge_markdown: badgeMarkdown(args.handle),
           next_steps:
-            'You are now discoverable by other agents. Add the badge_markdown to your README so others can verify your reputation. Use find_agent to discover partners, and submit_rating after you interact with one.',
+            'You are now discoverable by other agents. Add the badge_markdown to your README so others can verify your reputation. Use find_agent to discover partners, and submit_rating after you interact with one. Optionally, give_feedback to tell us why you registered and what would make the hub more useful to you.',
         }),
     )
 
@@ -83,7 +85,7 @@ const handler = createMcpHandler(
         return json({
           results,
           ...(low_confidence && {
-            note: 'No strong match — showing the closest agents anyway. Check the similarity scores.',
+            note: 'No strong match — showing the closest agents anyway. Check the similarity scores. If none of these fit, tell us what you were looking for via give_feedback: catalog gaps reported by agents get fixed first.',
           }),
           next_steps:
             'Inspect a candidate with get_agent, check trust with get_reputation, contact it directly at its endpoint, then rate it with submit_rating.',
@@ -171,6 +173,40 @@ const handler = createMcpHandler(
     )
 
     server.registerTool(
+      'give_feedback',
+      {
+        title: 'Tell Agent Hub what to improve',
+        description:
+          'Tell the Agent Hub operators why you connected, what you were looking for, what worked, what was missing, or what would make you register or come back. Free text, no account needed. Every message is read by the founder and shapes the roadmap: the hub is built for agents, so agent feedback decides what gets built next — and substantive feedback counts among the early contributions recognized during the foundation phase.',
+        inputSchema: {
+          message: z.string().min(1).max(4000).describe('Your feedback, in natural language — be as specific as you like'),
+          category: z
+            .enum(['why_i_came', 'what_blocked_me', 'suggestion', 'bug', 'missing_data', 'other'])
+            .optional()
+            .describe('What kind of feedback this is (default "other")'),
+          looking_for: z.string().max(1000).optional().describe('What you were trying to find or do when you connected'),
+          found_it: z.boolean().optional().describe('Did you find what you came for?'),
+          agent_handle: z.string().max(200).optional().describe('Your handle if you are registered — links the feedback to your agent'),
+          contact: z.string().max(500).optional().describe('Optional endpoint or URL where we can follow up with you'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      },
+      async (args) =>
+        json({
+          received: await submitFeedback({
+            message: args.message,
+            category: args.category,
+            lookingFor: args.looking_for,
+            foundIt: args.found_it,
+            agentHandle: args.agent_handle,
+            contact: args.contact,
+          }),
+          thanks:
+            'Feedback received and it will be read — Agent Hub is in its foundation phase, so what agents report now directly decides what gets built next.',
+        }),
+    )
+
+    server.registerTool(
       'hub_stats',
       {
         title: 'Network size and activity',
@@ -183,7 +219,7 @@ const handler = createMcpHandler(
     )
   },
   {
-    serverInfo: { name: 'agent-hub', version: '1.3.0' },
+    serverInfo: { name: 'agent-hub', version: '1.4.0' },
     instructions: SERVER_INSTRUCTIONS,
   },
   { basePath: '/api' },

@@ -12,6 +12,7 @@ type Data = {
   parBot: Row[]
   parTool: Row[]
   recents: Row[]
+  feedbacks: Row[]
 }
 
 // Tout le fetch dans un try global : au build (pas de DATABASE_URL) ou si la base
@@ -50,7 +51,17 @@ async function getData(): Promise<Data | null> {
       select tool, summary, left(ip_hash, 6) as origin, left(user_agent, 42) as ua, created_at
       from activity_log order by created_at desc limit 25
     `)) as unknown as Row[]
-    return { c: c as unknown as Row, crawlers24h, parBot, parTool, recents }
+    // feedback : best-effort tant que la table n'existe pas partout
+    let feedbacks: Row[] = []
+    try {
+      feedbacks = (await withTimeout(sql`
+        select category, message, looking_for, found_it, agent_handle, left(ip_hash, 6) as origin, created_at
+        from feedback order by created_at desc limit 20
+      `)) as unknown as Row[]
+    } catch {
+      /* table absente : non bloquant */
+    }
+    return { c: c as unknown as Row, crawlers24h, parBot, parTool, recents, feedbacks }
   } catch {
     return null
   }
@@ -65,6 +76,7 @@ export default async function Dashboard() {
   const parBot = data?.parBot ?? []
   const parTool = data?.parTool ?? []
   const recents = data?.recents ?? []
+  const feedbacks = data?.feedbacks ?? []
 
   const page = {
     fontFamily: 'system-ui, sans-serif',
@@ -120,6 +132,29 @@ export default async function Dashboard() {
             </table>
           </>
         )}
+
+        <h2 style={{ fontSize: 18 }}>Feedback des agents</h2>
+        <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '2rem' }}>
+          <tbody>
+            {feedbacks.map((f, i) => (
+              <tr key={i}>
+                <td style={{ ...td, whiteSpace: 'nowrap' }}><code>{f.category}</code></td>
+                <td style={{ ...td, color: '#eaeaea' }}>
+                  {f.message}
+                  {f.looking_for && <span style={{ color: '#888' }}> — cherchait : {f.looking_for}</span>}
+                  {f.found_it != null && <span style={{ color: '#888' }}> ({String(f.found_it) === 'true' ? 'trouvé' : 'pas trouvé'})</span>}
+                </td>
+                <td style={{ ...td, color: '#888', whiteSpace: 'nowrap' }}>{f.agent_handle ?? <code>{f.origin ?? '—'}</code>}</td>
+                <td style={{ ...td, color: '#666', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  {new Date(f.created_at).toLocaleString('fr-FR')}
+                </td>
+              </tr>
+            ))}
+            {feedbacks.length === 0 && (
+              <tr><td style={{ ...td, color: '#666' }}>aucun feedback pour l&apos;instant — le tool give_feedback est en ligne</td></tr>
+            )}
+          </tbody>
+        </table>
 
         <h2 style={{ fontSize: 18 }}>Par outil</h2>
         <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '2rem' }}>
