@@ -54,7 +54,11 @@ export async function syncRegistryDelta(sinceHours = 25, deadlineMs = 35_000) {
   const sql = getSql()
   let upserted = 0
   const BATCH = 100
-  for (let i = 0; i < servers.length && Date.now() - t0 < deadlineMs; i += BATCH) {
+  // Budget séparé pour la phase upsert : le fetch du registre peut consommer tout
+  // deadlineMs à lui seul (pages lentes), il ne doit pas priver les inserts.
+  const t1 = Date.now()
+  const upsertBudgetMs = 25_000
+  for (let i = 0; i < servers.length && Date.now() - t1 < upsertBudgetMs; i += BATCH) {
     const chunk = servers.slice(i, i + BATCH)
     const vectors = await embedMany(chunk.map((s) => `${s.title || s.name}: ${s.description || ''}`))
     for (let j = 0; j < chunk.length; j++) {
