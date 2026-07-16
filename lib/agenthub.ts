@@ -4,11 +4,17 @@ import { requestOrigin } from './request-context'
 
 const toVector = (embedding: number[]): string => `[${embedding.join(',')}]`
 
+// Origines exclues de l'analyse (hashes d'IP maison : Samy + tests internes).
+// L'IP change avec la box → ajouter le nouveau hash à l'env var si ça revient.
+const excludedIpHashes = () =>
+  new Set((process.env.EXCLUDED_IP_HASHES ?? '').split(',').map((s) => s.trim()).filter(Boolean))
+
 /** Journal d'activité : trace un appel + son origine. Ne doit jamais faire échouer l'appel métier. */
 async function logActivity(tool: string, args: Record<string, unknown>, summary: string) {
   try {
     const sql = getSql()
     const origin = requestOrigin.getStore()
+    if (origin?.ipHash && excludedIpHashes().has(origin.ipHash)) return
     await sql`
       insert into activity_log (tool, args, summary, ip_hash, user_agent)
       values (${tool}, ${JSON.stringify(args)}::jsonb, ${summary}, ${origin?.ipHash ?? null}, ${origin?.userAgent ?? null})
