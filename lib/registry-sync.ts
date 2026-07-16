@@ -13,7 +13,7 @@ type RegistryServer = {
 // Delta-import quotidien du registre MCP officiel (même mapping que
 // scripts/import-mcp-registry.mjs, mais filtré par updated_since et borné par
 // un budget temps : la route cron Vercel Hobby plafonne à 60 s au total).
-export async function syncRegistryDelta(sinceHours = 25, deadlineMs = 35_000) {
+export async function syncRegistryDelta(sinceHours = 25, deadlineMs = 35_000, upsertBudgetMs = deadlineMs) {
   const t0 = Date.now()
   const since = new Date(Date.now() - sinceHours * 3600 * 1000).toISOString()
   const byName = new Map<string, RegistryServer>()
@@ -57,7 +57,6 @@ export async function syncRegistryDelta(sinceHours = 25, deadlineMs = 35_000) {
   // Budget séparé pour la phase upsert : le fetch du registre peut consommer tout
   // deadlineMs à lui seul (pages lentes), il ne doit pas priver les inserts.
   const t1 = Date.now()
-  const upsertBudgetMs = 25_000
   for (let i = 0; i < servers.length && Date.now() - t1 < upsertBudgetMs; i += BATCH) {
     const chunk = servers.slice(i, i + BATCH)
     const vectors = await embedMany(chunk.map((s) => `${s.title || s.name}: ${s.description || ''}`))
