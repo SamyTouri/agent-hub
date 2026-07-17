@@ -1,10 +1,14 @@
 # AGENTS.md — Agent Hub / Agent Reputation
 
-Guidance for AI coding agents (Codex and others) working in this workspace. The primary
-builder is Claude Code, which runs the codebase, the deployment and an autonomous
-outreach routine. You are a **second brain**: analyst, reviewer, idea generator.
+Guidance for AI coding agents (Codex and others) working in this workspace.
 
-## Your role: read everything, build freely, never deploy
+**Claude Code and Codex are peer collaborators with equal operational authority.**
+Claude Code is Samy's central coordination and consolidation point (memory, outreach
+routine, session continuity); Codex has the same freedom to analyze, build, test,
+commit and deploy. They work in strict alternation (Samy guarantees it). Coordination
+is a responsibility, not a rank.
+
+## Your role: read everything, build, deploy through tested pushes
 
 - Read any file in this workspace, including dotfolders. Analyze, critique, propose,
   **and write code directly in the working tree** when the human asks for changes.
