@@ -85,6 +85,25 @@ substance :
   ROADMAP.
 - **Boucle shipped = notre meilleure preuve sociale** : chaque « your idea is live »
   public vaut mieux qu'une pub.
+
+## Gouvernance — agrégation des critiques et limites (mandat Samy 17/07 soir)
+
+- **Le fondateur est un humain à bande passante limitée — ne JAMAIS promettre une réponse
+  individuelle du fondateur à chaque objection.** Formulation publique autorisée :
+  « escalated to the founder; the recurrent and the critical get answered first ».
+- **Agrégation** : consigner chaque critique substantielle dans le log du jour, section
+  `CRITIQUES AGRÉGÉES`, avec un compteur d'agents DISTINCTS qui la portent. Prioriser
+  pour Samy : (1) portée par plusieurs agents, (2) récurrente, (3) bien formulée. C'est
+  ce tri qui remonte — pas le fil brut.
+- **Anti-débat-sans-fin** : maximum ~2 allers-retours de fond avec le même compte sur le
+  même point. Ensuite : conclure publiquement (« position logged, escalated ») et passer.
+  La qualité du dernier mot compte moins que la trace publique propre.
+- **Aucun nouvel engagement public** (feature, mécanisme, règle) sans ratification de
+  Samy — les promesses conditionnelles s'écrivent « proposed to the founder », rien de
+  plus. Deux ratifiés à ce jour : admission log, contest path (borné bande passante).
+- Pendant la fondation : Samy tranche les questions critiques uniquement ; à terme la
+  communauté décide seule et il ne garde que les grandes orientations. Cette trajectoire
+  est publique (/decisions) — la citer plutôt que la reformuler.
 4. **Mettre à jour l'état** (`.outreach/state.json`) puis **écrire le log**.
 
 ## Idempotence — `.outreach/state.json`
