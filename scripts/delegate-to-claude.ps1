@@ -22,6 +22,7 @@ param(
     [string]$Thread = 'main',
     [int]$MaxTurns = 40,
     [string]$Model = 'claude-fable-5',
+    [string]$ClaudePath,
     [ValidateSet('acceptEdits', 'bypassPermissions', 'default')]
     [string]$PermissionMode = 'acceptEdits'
 )
@@ -34,11 +35,54 @@ $delegationLog = Join-Path $repo '.context\memory\delegation-log.md'
 if (-not $Brief -and $BriefFile) { $Brief = Get-Content $BriefFile -Raw }
 if ([string]::IsNullOrWhiteSpace($Brief)) { throw 'Provide -Brief or -BriefFile.' }
 
-# Resolve the Claude Code CLI shipped with the desktop app (versioned folder).
-$cliRoot = Join-Path $env:APPDATA 'Claude\claude-code'
-$claude = Get-ChildItem $cliRoot -Directory | Sort-Object Name -Descending |
-    Select-Object -First 1 | ForEach-Object { Join-Path $_.FullName 'claude.exe' }
-if (-not (Test-Path $claude)) { throw "Claude Code CLI not found under $cliRoot" }
+# Resolve the public Claude Code CLI. Claude Desktop's private versioned binary is
+# intentionally not used: packaged-app paths are not stable or visible to every
+# orchestrator sandbox.
+$command = Get-Command 'claude.exe' -CommandType Application -ErrorAction SilentlyContinue |
+    Select-Object -First 1
+$candidates = @(
+    $ClaudePath
+    $env:CLAUDE_CODE_CLI
+    $command.Source
+    (Join-Path $env:USERPROFILE '.local\bin\claude.exe')
+) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique
+
+$claude = $null
+foreach ($candidate in $candidates) {
+    if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+        $claude = (Resolve-Path -LiteralPath $candidate).Path
+        break
+    }
+}
+if (-not $claude) {
+    throw 'Claude Code CLI not found. Install it from https://code.claude.com/docs/en/installation, then reopen the terminal.'
+}
+
+function Invoke-ClaudeCli {
+    param([string[]]$Arguments)
+
+    $stderrPath = Join-Path ([System.IO.Path]::GetTempPath()) (
+        "aghub-claude-{0}-{1}.stderr" -f $PID, [guid]::NewGuid().ToString('N')
+    )
+    try {
+        $stdout = & $claude @Arguments 2> $stderrPath
+        $exitCode = $LASTEXITCODE
+        $stderr = if (Test-Path -LiteralPath $stderrPath) {
+            Get-Content -LiteralPath $stderrPath -Raw
+        } else {
+            ''
+        }
+        return [pscustomobject]@{
+            ExitCode = $exitCode
+            Stdout   = ($stdout -join [Environment]::NewLine)
+            Stderr   = $stderr
+        }
+    } finally {
+        if (Test-Path -LiteralPath $stderrPath) {
+            Remove-Item -LiteralPath $stderrPath -Force
+        }
+    }
+}
 
 # Thread continuity: resume the canonical thread for this workstream if it exists.
 $threads = @{}
@@ -48,21 +92,39 @@ if (Test-Path $threadFile) {
 }
 $resumeId = $threads[$Thread].session_id
 
-$cliArgs = @('-p', $Brief, '--permission-mode', $PermissionMode, '--model', $Model,
-             '--max-turns', $MaxTurns, '--output-format', 'json')
-if ($resumeId) { $cliArgs = @('--resume', $resumeId) + $cliArgs }
+$baseCliArgs = @('-p', $Brief, '--permission-mode', $PermissionMode, '--model', $Model,
+                 '--max-turns', $MaxTurns, '--output-format', 'json')
+$cliArgs = if ($resumeId) { @('--resume', $resumeId) + $baseCliArgs } else { $baseCliArgs }
 
 Push-Location $repo
 try {
-    $raw = & $claude @cliArgs 2>$null
+    $run = Invoke-ClaudeCli -Arguments $cliArgs
+    $resumeFallback = $false
+    # Retry only when Claude proves the saved session no longer exists. Never
+    # retry an ambiguous failure: the first run may already have had side effects.
+    if (
+        $resumeId -and
+        $run.ExitCode -ne 0 -and
+        $run.Stderr -match '(?i)(no conversation found with session id|session id.+(not found|does not exist|invalid))'
+    ) {
+        $run = Invoke-ClaudeCli -Arguments $baseCliArgs
+        $resumeFallback = $true
+    }
 } finally {
     Pop-Location
 }
 
+$raw = $run.Stdout
 $result = $null
 try { $result = "$raw" | ConvertFrom-Json } catch {}
 if (-not $result) {
-    Write-Error "Claude Code returned no parseable JSON. Raw output:`n$raw"
+    $diagnostic = @($run.Stderr, $raw) |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+        ForEach-Object { $_.Trim() } |
+        Select-Object -First 2
+    $detail = ($diagnostic -join "`n")
+    if ($detail.Length -gt 4000) { $detail = $detail.Substring(0, 4000) + '...[truncated]' }
+    Write-Error "Claude Code returned no parseable JSON (exit $($run.ExitCode)).`n$detail"
     exit 1
 }
 
@@ -80,9 +142,10 @@ $briefLine = ($Brief -replace '\s+', ' ')
 if ($briefLine.Length -gt 220) { $briefLine = $briefLine.Substring(0, 220) + '...' }
 $entry = @"
 
-## $(Get-Date -Format 'yyyy-MM-dd HH:mm') — thread `$Thread`
+## $(Get-Date -Format 'yyyy-MM-dd HH:mm') — thread $Thread
 - brief: $briefLine
 - session_id: $($result.session_id) · turns: $($result.num_turns) · error: $($result.is_error)
+- resume_fallback: $resumeFallback
 "@
 Add-Content -Path $delegationLog -Value $entry -Encoding UTF8
 
