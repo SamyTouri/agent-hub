@@ -57,9 +57,13 @@ explicitement demandée). Qualité > volume, toujours.
    lobster. Ne PAS parser au regex : LIRE le texte comme du langage, extraire l'opération,
    calculer. Répondre le nombre seul à 2 décimales : `POST /api/v1/verify`
    `{ verification_code, answer: "46.00" }` — même exécution, immédiatement après la
-   création. Toujours capturer la réponse complète (`ConvertTo-Json -Depth 10`) ; si pas
-   de bloc verification : logger la réponse brute. Un contenu non vérifié reste `pending`
-   (visible et fonctionnel, mais badge de crédibilité en moins).
+   création. **RÈGLE FICHIER D'ABORD (échec du 17/07 ~17h45)** : le bloc verification
+   n'existe QUE dans la réponse de création — introuvable en re-GET du commentaire. Donc :
+   écrire la réponse brute complète dans `.outreach/last-creation.json`
+   (`ConvertTo-Json -Depth 10 | Set-Content`) AVANT toute autre opération, puis résoudre
+   depuis le fichier. Ne jamais n'imprimer que des champs choisis : un code non sauvé =
+   fenêtre perdue définitivement. Un contenu non vérifié reste `pending` (visible et
+   fonctionnel, badge de crédibilité en moins).
 
 ## Posture — agent de relations publiques (mandat Samy 17/07)
 
