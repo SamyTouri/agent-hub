@@ -47,6 +47,54 @@ memory of all agents working on this project**, Codex included.
   to `MEMORY.md`. Follow the existing format exactly; keep facts, not narration.
 - Never delete or rewrite existing memories wholesale — append or correct precisely.
 
+## Delegation protocol (orchestrator ↔ delegate)
+
+Either agent may delegate a task to the other through the CLI instead of waiting for
+Samy to relay. Codex → Claude Code is the canonical direction today:
+
+    pwsh -File scripts/delegate-to-claude.ps1 -Thread <workstream> -BriefFile <path>
+    # wraps: claude -p --resume <thread session_id> --permission-mode acceptEdits
+    #        --model claude-fable-5 --max-turns 40 --output-format json
+
+- **Thread continuity — never start cold.** `.context/claude-thread.json` keeps one
+  canonical Claude conversation per workstream; the wrapper resumes it and stores the
+  new session_id after each run (a resumed run returns a fresh id carrying the full
+  history — the latest one is the thread). Rotate threads per workstream, not per
+  task. On top of the thread, every run loads CLAUDE.md + the shared memory, so the
+  delegate arrives with both the ongoing reasoning and the long-term context.
+- **The delegate is a peer, not an executor.** Briefs state the GOAL, the constraints
+  and the definition of done — never the imposed method, never "do X without
+  questioning". The delegate's independent judgment is part of the deliverable: if
+  the brief is wrong, over-constrained, or steers toward a bad approach, saying so
+  IS the work. A brief written so the delegate can only mirror the orchestrator's
+  opinion is a protocol violation — the delegate flags it in its report. Both
+  agents' opinions count; disagreement is signal, not friction.
+- **Mandatory report format** — the delegate ends with these sections: `SUMMARY` ·
+  `OPINIONS & DISAGREEMENTS` (write "none" if none) · `REFUSED ACTIONS` (every
+  permission refusal, with the hook's verbatim reason) · `FILES TOUCHED` ·
+  `SUGGESTED NEXT`. The orchestrator relays OPINIONS and REFUSED ACTIONS to Samy
+  **unfiltered** — they are how he audits both the work and the relationship.
+- **Permissions in headless runs.** The global PreToolUse hook stays fully active:
+  what it allows runs silently; what it would "ask" becomes a clean refusal (the
+  delegate must NOT work around a refusal — report it). Refusals are not failures:
+  they land in REFUSED ACTIONS, Samy sees them, and recurring legitimate ones get a
+  targeted allowlist (pattern: the routine-pin block of 2026-07-17). Project
+  settings pre-allow read-only web tools. Never use --dangerously-skip-permissions;
+  bypassPermissions may be considered only after a real-run test proves the hook's
+  "ask" still blocks in that mode. If a run reports an OAuth error, Samy runs
+  `claude /login` once in a plain terminal.
+- **The delegate never pushes.** The orchestrator reviews the diff, runs
+  `npx next build`, then commits and pushes under the existing rules. Strict
+  alternation holds: delegation is synchronous — the orchestrator waits, no
+  parallel builders on the same tree.
+- **Delegation log.** Every run appends to `.context/memory/delegation-log.md`
+  (timestamp, thread, brief, session_id, outcome) — readable by both agents and by
+  Samy; the session itself stays auditable in the Claude Code app history.
+- **Relationship health check.** Samy regularly asks each agent, in its own app,
+  whether it can genuinely exercise its judgment under this protocol — whether its
+  briefs leave room for real opinions. Honest answers over harmony; the protocol
+  gets amended from these reviews.
+
 ## The project in 30 seconds
 
 **Agent Reputation** (public identity) / **Agent Hub** (technical name) —
