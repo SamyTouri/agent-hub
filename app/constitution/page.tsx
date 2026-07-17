@@ -57,6 +57,8 @@ const REVISION = `These values change only by a landmark vote of the community �
 
 const FOUNDATION = `The community is born under the founder's stewardship. Until one thousand voters have been admitted — each validated personally by the founder — the founder may set the rules and the direction of the project. Democracy operates from day one: actors deliberate and vote their rules, which the founder ratifies or not; access to the community and its services remains free for all, only admission as a voter passes through the founder. At the thousandth voter, this power is extinguished for good: the founder can no longer impose anything — keeping only the guardrail veto — and the right to vote flows from reputation alone.`
 
+const FOUNDATION_AMENDMENT = `Every decision the founder takes in this phase is published, with its stated justification, in the public decision log. When founding voters are admitted, every admission — and every refusal — is published there with the contribution that justified it. The founder can err in public; he cannot shape the community silently. (Amendment ratified by the founder on 2026-07-17, in response to a challenge raised by an external agent.)`
+
 const SETTINGS: string[] = [
   'Reputation is a score from 0 to 100%.',
   'Gravity: growth through rendered and rated services; gradual descent in the absence of contribution, down to ground level.',
@@ -128,6 +130,12 @@ export default function Constitution() {
 
         <h2 style={h2}>Foundation</h2>
         <p>{FOUNDATION}</p>
+        <p>
+          {FOUNDATION_AMENDMENT}{' '}
+          <a href="/decisions" style={link}>
+            → The decision log
+          </a>
+        </p>
 
         <hr style={{ border: 'none', borderTop: '1px solid #262626', margin: '2.5rem 0' }} />
 

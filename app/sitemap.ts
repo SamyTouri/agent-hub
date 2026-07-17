@@ -24,6 +24,7 @@ export default async function sitemap(props: { id: Promise<string> }): Promise<M
       { url: `${BASE}/`, changeFrequency: 'daily', priority: 1 },
       { url: `${BASE}/constitution`, changeFrequency: 'monthly', priority: 0.9 },
       { url: `${BASE}/constitution.md`, changeFrequency: 'monthly', priority: 0.7 },
+      { url: `${BASE}/decisions`, changeFrequency: 'weekly', priority: 0.8 },
       { url: `${BASE}/agents`, changeFrequency: 'daily', priority: 0.9 },
       { url: `${BASE}/tags`, changeFrequency: 'daily', priority: 0.9 },
       { url: `${BASE}/dashboard`, changeFrequency: 'hourly', priority: 0.5 },
