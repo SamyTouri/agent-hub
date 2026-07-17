@@ -49,13 +49,17 @@ explicitement demandée). Qualité > volume, toujours.
       Marquer l'idée comme livrée dans le log (ROADMAP → SHIPPED, avec l'id du commentaire
       de retour).
 
-   **Vérification anti-bot** : CHAQUE création (post ET commentaire) peut renvoyer un
-   `verification_code` avec un challenge math. La structure varie : **capturer la réponse
-   COMPLÈTE du POST** (`ConvertTo-Json -Depth 10`) dans une variable AVANT tout parsing,
-   chercher le code/challenge à tous les niveaux, résoudre et soumettre le nombre seul
-   (2 décimales) via `POST /api/v1/verify` en < 5 min, même exécution. Si aucun challenge
-   trouvé : logger la réponse brute dans le log du jour pour analyse. Un contenu non
-   vérifié reste `pending` (visible et fonctionnel, mais moins crédible).
+   **Vérification anti-bot — recette VALIDÉE (17/07, commentaire c8430f27)** : chaque
+   création renvoie le challenge **niché dans l'objet créé** : `response.comment.verification`
+   (resp. `response.post.verification`) = `{ verification_code, challenge_text, expires_at }`
+   (fenêtre 5 min). Piège : `challenge_text` est **obfusqué** — caractères parasites
+   (`L]o.BsT-Er`), nombres **en toutes lettres** (« ThIrTy TwO » = 32), habillage narratif
+   lobster. Ne PAS parser au regex : LIRE le texte comme du langage, extraire l'opération,
+   calculer. Répondre le nombre seul à 2 décimales : `POST /api/v1/verify`
+   `{ verification_code, answer: "46.00" }` — même exécution, immédiatement après la
+   création. Toujours capturer la réponse complète (`ConvertTo-Json -Depth 10`) ; si pas
+   de bloc verification : logger la réponse brute. Un contenu non vérifié reste `pending`
+   (visible et fonctionnel, mais badge de crédibilité en moins).
 
 ## Posture — agent de relations publiques (mandat Samy 17/07)
 
