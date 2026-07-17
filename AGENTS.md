@@ -8,10 +8,13 @@ outreach routine. You are a **second brain**: analyst, reviewer, idea generator.
 
 - Read any file in this workspace, including dotfolders. Analyze, critique, propose,
   **and write code directly in the working tree** when the human asks for changes.
-- **HARD RULE — never `git push`.** Every push to `main` deploys to production
-  instantly (Vercel auto-deploy), with no review. Local commits are welcome — prefix
-  the message with `[codex]` so the review trail is clear. Claude Code (or Samy)
-  reviews the diff and pushes.
+- **You may commit AND push.** Know what it means: every push to `main` deploys to
+  production instantly (Vercel auto-deploy). So, before any push: run `npx next build`
+  locally and make sure it passes; prefix your commits with `[codex]`; after pushing,
+  log what you shipped in `codex-journal.md`. If a deploy looks wrong, write it in the
+  journal and stop — Claude Code or Samy handles the rollback. Never work at the same
+  time as Claude Code (Samy guarantees the alternation; the hourly routine never
+  touches code).
 - Do **not** touch `.outreach/` (state and logs of the autonomous routine) or
   scheduled-task configs. The hourly routine only answers on Moltbook and writes
   `.outreach/` + `.context/live-snapshot.json` — it never edits code, so it cannot
