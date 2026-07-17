@@ -17,10 +17,13 @@ type Data = {
   origins: Row[]
 }
 
-// Tout le fetch dans un try global : au build (pas de DATABASE_URL) ou si la base
-// est saturée, la page rend quand même avec des placeholders au lieu de planter.
+// Au build : pas de requête DB du tout (le prerender de build échouait souvent et
+// installait une page vide à chaque deploy). Au runtime : les erreurs REMONTENT —
+// une revalidation ISR qui throw laisse Next servir la version précédente (pleine)
+// au lieu de mettre 120 s de placeholders en cache.
 async function getData(): Promise<Data | null> {
-  try {
+  if (process.env.NEXT_PHASE === 'phase-production-build') return null
+  {
     const sql = getSql()
     const [c] = await withTimeout(sql`
       select
@@ -82,8 +85,6 @@ async function getData(): Promise<Data | null> {
       /* table absente : non bloquant */
     }
     return { c: c as unknown as Row, crawlers24h, parBot, parTool, recents, feedbacks, feedbackTotal, origins }
-  } catch {
-    return null
   }
 }
 
