@@ -17,3 +17,7 @@ next-env.d.ts
 
 # état + logs de la routine outreach locale (non déployés)
 .outreach/
+
+# contexte local pour agents tiers (junction mémoire + snapshots) et échanges
+.context/
+.exchange/

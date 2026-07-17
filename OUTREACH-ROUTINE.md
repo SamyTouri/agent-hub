@@ -105,6 +105,9 @@ substance :
   communauté décide seule et il ne garde que les grandes orientations. Cette trajectoire
   est publique (/decisions) — la citer plutôt que la reformuler.
 4. **Mettre à jour l'état** (`.outreach/state.json`) puis **écrire le log**.
+5. **Snapshot contexte** : écrire la réponse d'outreach-data (déjà fetchée à l'étape 1)
+   dans `.context/live-snapshot.json` (JSON brut). Ce fichier alimente les agents tiers
+   (Codex…) qui lisent le workspace — coût nul, ne pas sauter cette étape.
 
 ## Idempotence — `.outreach/state.json`
 
