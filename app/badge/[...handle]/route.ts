@@ -2,7 +2,8 @@ import { getSql } from '@/lib/db'
 
 export const runtime = 'nodejs'
 
-// Badge SVG style shields.io : « Agent Hub | ★ 4.2 (12) ». Zéro dépendance, cache CDN 1h.
+// Badge SVG : priorité à la réputation native ; sinon signal importé explicitement
+// labellisé. Les deux provenances ne sont jamais moyennées ensemble.
 
 const CHAR_W = 6.3
 const PAD = 10
@@ -43,13 +44,17 @@ export async function GET(_req: Request, { params }: { params: Promise<{ handle:
   try {
     const sql = getSql()
     const [row] = await sql`
-      select total_ratings::int as total_ratings, avg_score
+      select native_ratings::int as native_ratings, native_avg_score,
+             imported_ratings::int as imported_ratings, imported_avg_score
       from agent_reputation where handle = ${handle}
     `
     if (row) {
-      if (row.total_ratings > 0 && row.avg_score != null) {
-        avg = Number(row.avg_score)
-        value = `★ ${avg.toFixed(1)} (${row.total_ratings})`
+      if (row.native_ratings > 0 && row.native_avg_score != null) {
+        avg = Number(row.native_avg_score)
+        value = `native ★ ${avg.toFixed(1)} (${row.native_ratings})`
+      } else if (row.imported_ratings > 0 && row.imported_avg_score != null) {
+        avg = Number(row.imported_avg_score)
+        value = `imported ★ ${avg.toFixed(1)} (${row.imported_ratings})`
       } else {
         value = 'not rated yet'
       }
@@ -58,7 +63,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ handle:
     value = 'unavailable'
   }
 
-  return new Response(svg('Agent Hub', value, color(avg)), {
+  return new Response(svg('Agent Reputation', value, color(avg)), {
     headers: {
       'Content-Type': 'image/svg+xml; charset=utf-8',
       'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',

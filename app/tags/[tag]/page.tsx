@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { cache } from 'react'
-import { getSql } from '@/lib/db'
+import { unstable_cache } from 'next/cache'
+import { getSql, withTimeout } from '@/lib/db'
+import { serializeJsonLd } from '@/lib/json-ld'
 
 export const revalidate = 604800
 // Même pattern que les pages agents : ISR au premier hit (cf. app/agents/[...handle]).
@@ -17,37 +18,42 @@ type Params = Promise<{ tag: string }>
 
 const encodeHandle = (handle: string) => handle.split('/').map(encodeURIComponent).join('/')
 
-const fetchTag = cache(async (tag: string) => {
-  const sql = getSql()
-  const rows = await sql`
-    select a.handle, left(a.description, 160) as description,
-           r.total_ratings::int as total_ratings, r.avg_score
-    from agents a
-    left join agent_reputation r on r.agent_id = a.id
-    where a.tags @> array[${tag}]::text[]
-    order by r.avg_score desc nulls last, r.total_ratings desc nulls last, a.handle
-    limit ${PER_PAGE}
-  `
-  const [{ total }] = await sql`
-    select count(*)::int as total from agents where tags @> array[${tag}]::text[]
-  `
-  return { rows, total }
-})
+const fetchTag = unstable_cache(
+  async (tag: string) => {
+    const sql = getSql()
+    const rows = await withTimeout(sql`
+      select a.handle, left(a.description, 160) as description,
+             r.native_ratings::int as native_ratings, r.native_avg_score,
+             r.verified_native_ratings::int as verified_native_ratings,
+             r.imported_ratings::int as imported_ratings, r.imported_avg_score,
+             count(*) over()::int as total
+      from agents a
+      left join agent_reputation r on r.agent_id = a.id
+      where a.tags @> array[${tag}]::text[]
+      order by (r.native_ratings > 0) desc, r.verified_native_ratings desc,
+               r.native_avg_score desc nulls last, r.imported_avg_score desc nulls last, a.handle
+      limit ${PER_PAGE}
+    `)
+    return { rows, total: rows[0]?.total ?? 0 }
+  },
+  ['agent-tag-v2'],
+  { revalidate: 604800 },
+)
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const tag = decodeURIComponent((await params).tag)
-  const data = await fetchTag(tag).catch(() => null)
+  const data = await fetchTag(tag)
   if (!data || data.total === 0) return { title: 'Tag not found — Agent Hub' }
   return {
-    title: `Best ${tag} MCP servers & AI agents — ranked by reputation | Agent Hub`,
-    description: `${data.total.toLocaleString('en-US')} ${tag} MCP servers and AI agents, ranked by cross-registry reputation. Compare, connect over MCP, and rate them on Agent Hub.`,
+    title: `Best ${tag} MCP servers & AI agents — provenance-separated | Agent Reputation`,
+    description: `${data.total.toLocaleString('en-US')} ${tag} MCP servers and AI agents. Native reputation and imported discovery signals stay separate.`,
     alternates: { canonical: `${BASE}/tags/${encodeURIComponent(tag)}` },
   }
 }
 
 export default async function TagPage({ params }: { params: Params }) {
   const tag = decodeURIComponent((await params).tag)
-  const data = await fetchTag(tag).catch(() => null)
+  const data = await fetchTag(tag)
   if (!data || data.total === 0) notFound()
   const { rows, total } = data
 
@@ -78,7 +84,7 @@ export default async function TagPage({ params }: { params: Params }) {
   return (
     <div style={{ background: '#0a0a0a', minHeight: '100vh' }}>
       <main style={page}>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
         <p style={{ margin: 0 }}>
           <a href="/tags" style={{ ...link, fontSize: 13.5 }}>
             ← All tags
@@ -86,7 +92,7 @@ export default async function TagPage({ params }: { params: Params }) {
         </p>
         <h1 style={{ fontSize: 26, marginBottom: 4 }}>Best {tag} MCP servers &amp; AI agents</h1>
         <p style={{ color: '#888', marginTop: 0 }}>
-          {total.toLocaleString('en-US')} listed, ranked by reputation
+          {total.toLocaleString('en-US')} listed, native reputation first and imported signals second
           {total > PER_PAGE ? ` — showing the top ${PER_PAGE}` : ''}. Semantic search available via the{' '}
           <code>find_agent</code> MCP tool.
         </p>
@@ -101,7 +107,11 @@ export default async function TagPage({ params }: { params: Params }) {
                   </a>
                 </td>
                 <td style={{ ...td, whiteSpace: 'nowrap', color: '#dfb317' }}>
-                  {r.avg_score != null ? `★ ${Number(r.avg_score).toFixed(1)}` : '—'}
+                  {r.native_avg_score != null
+                    ? `native ★ ${Number(r.native_avg_score).toFixed(1)}`
+                    : r.imported_avg_score != null
+                      ? `imported ★ ${Number(r.imported_avg_score).toFixed(1)}`
+                      : '—'}
                 </td>
                 <td style={{ ...td, color: '#aaa' }}>{r.description}</td>
               </tr>

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { getSql } from '@/lib/db'
+import { unstable_cache } from 'next/cache'
+import { getSql, withTimeout } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,6 +14,20 @@ export const metadata: Metadata = {
 
 const encodeHandle = (handle: string) => handle.split('/').map(encodeURIComponent).join('/')
 
+const getDirectoryPage = unstable_cache(
+  async (offset: number) => {
+    const sql = getSql()
+    return withTimeout(sql`
+      select handle, description, external_source, count(*) over()::int as total
+      from agents
+      order by (external_source is not null), updated_at desc
+      limit ${PER_PAGE} offset ${offset}
+    `)
+  },
+  ['agent-directory-v2'],
+  { revalidate: 3600 },
+)
+
 export default async function AgentsIndex({
   searchParams,
 }: {
@@ -22,14 +37,8 @@ export default async function AgentsIndex({
   const pageNum = Math.max(1, parseInt(pageParam ?? '1', 10) || 1)
   const offset = (pageNum - 1) * PER_PAGE
 
-  const sql = getSql()
-  const rows = await sql`
-    select handle, description, external_source
-    from agents
-    order by external_source nulls first, updated_at desc
-    limit ${PER_PAGE} offset ${offset}
-  `
-  const [{ total }] = await sql`select count(*)::int as total from agents`
+  const rows = await getDirectoryPage(offset)
+  const total = rows[0]?.total ?? 0
   const lastPage = Math.max(1, Math.ceil(total / PER_PAGE))
 
   const page = {

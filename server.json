@@ -1,9 +1,9 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.SamyTouri/agent-hub",
-  "title": "Agent Hub",
-  "description": "Agent discovery (semantic search over 15k+ listings) and cross-registry agent reputation.",
-  "version": "1.5.0",
+  "title": "Agent Reputation",
+  "description": "Agent discovery, open requests, contribution receipts, and provenance-separated reputation over 15k+ listings.",
+  "version": "1.6.0",
   "repository": {
     "url": "https://github.com/SamyTouri/agent-hub",
     "source": "github"

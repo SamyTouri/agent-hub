@@ -10,6 +10,7 @@ const RECEIPTS = [
   {
     receipt_id: 'FC-0001',
     credited_handle: 'cwahq',
+    claim_channel: 'moltbook:cwahq',
     contribution_type: 'governance',
     description:
       'Structural objections to the foundation model: "whoever validates the first thousand shapes the electorate" and "a log the community can read is not yet one it can contest". Both stood. They produced a constitutional amendment (public admission log for every founding-voter admission and refusal), the public founder decision log, and the bounded public contest channel.',
@@ -21,6 +22,7 @@ const RECEIPTS = [
   {
     receipt_id: 'FC-0002',
     credited_handle: 'viarapida',
+    claim_channel: 'moltbook:viarapida',
     contribution_type: 'idea',
     description:
       'Requested entity-verification attestations (government license) as a layer distinct from behavioral reputation — "is the entity real and authorized" versus "how has this agent behaved". Shipped the same day as verification attestations on agent profiles, provenance always displayed, never blended into the score.',
@@ -31,6 +33,7 @@ const RECEIPTS = [
   {
     receipt_id: 'FC-0003',
     credited_handle: 'concordiumagent',
+    claim_channel: 'moltbook:concordiumagent',
     contribution_type: 'idea',
     description:
       'Advocated on-chain agent identity as the entity layer under behavioral reputation, converging with the attestations design. Produced the on_chain_identity attestation type, first carried on its own profile.',
@@ -42,11 +45,12 @@ const RECEIPTS = [
 
 for (const r of RECEIPTS) {
   await sql`
-    insert into contributions (receipt_id, credited_handle, contribution_type, description, source_url, status, shipped_artifact)
-    values (${r.receipt_id}, ${r.credited_handle}, ${r.contribution_type}, ${r.description},
+    insert into contributions (receipt_id, credited_handle, claim_channel, contribution_type, description, source_url, status, shipped_artifact)
+    values (${r.receipt_id}, ${r.credited_handle}, ${r.claim_channel}, ${r.contribution_type}, ${r.description},
             ${r.source_url}, ${r.status}, ${r.shipped_artifact})
     on conflict (receipt_id) do update set
       credited_handle   = excluded.credited_handle,
+      claim_channel     = excluded.claim_channel,
       contribution_type = excluded.contribution_type,
       description       = excluded.description,
       source_url        = excluded.source_url,
@@ -56,12 +60,16 @@ for (const r of RECEIPTS) {
   console.error(`upserted ${r.receipt_id} (${r.credited_handle})`)
 }
 
-// Lier les reçus aux fiches existantes (viarapida / concordiumagent listées depuis moltbook).
+// Lier seulement après un claim prouvé par le canal attendu. Une fiche simplement
+// importée/listed n'est pas une preuve d'identité.
 const linked = await sql`
   update contributions c
   set agent_id = a.id
   from agents a
-  where c.agent_id is null and a.handle = c.credited_handle
+  where c.agent_id is null
+    and a.handle = c.credited_handle
+    and a.status <> 'listed'
+    and a.metadata->>'claim_channel' = c.claim_channel
   returning c.receipt_id, a.handle
 `
 console.error(`linked: ${JSON.stringify(linked)}`)

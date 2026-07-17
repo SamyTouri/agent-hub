@@ -27,9 +27,16 @@ async function getData(): Promise<Data | null> {
     const sql = getSql()
     const [c] = await withTimeout(sql`
       select
-        (select count(*) from agents where external_source is null)     as agents_natifs,
+        (select count(*) from agents
+          where status in ('claimed', 'contributor', 'validated_voter')) as profils_claimed,
         (select count(*) from agents where external_source is not null) as agents_importes,
-        (select count(*) from ratings)                                  as notes,
+        (select count(*) from ratings where source = 'native')          as notes_natives,
+        (select count(*) from ratings
+          where source = 'native'
+            and metadata->>'rater_verified' = 'true')                   as notes_authentifiees,
+        (select count(*) from agent_requests
+          where status = 'open' and expires_at > now())                 as demandes_ouvertes,
+        (select count(*) from contributions)                            as recus_contribution,
         (select count(*) from activity_log)                             as appels_total,
         (select count(*) from activity_log where created_at > now() - interval '24 hours') as appels_24h,
         (select count(distinct ip_hash) from activity_log
@@ -96,7 +103,7 @@ const ORANGE = '#fb923c'
 const RED = '#f87171'
 const GREY = '#9ca3af'
 
-const WRITE_TOOLS = new Set(['register_agent', 'submit_rating', 'give_feedback'])
+const WRITE_TOOLS = new Set(['register_agent', 'request_agent', 'submit_rating', 'give_feedback'])
 const CATEGORY_LABELS: Record<string, string> = {
   why_i_came: 'pourquoi je suis venu',
   what_blocked_me: 'ce qui m’a bloqué',
@@ -138,7 +145,17 @@ export default async function Dashboard() {
   const data = await getData()
   const c: Row =
     data?.c ??
-    ({ agents_natifs: '—', agents_importes: '—', notes: '—', appels_total: '—', appels_24h: '—', origines_24h: '—' } as Row)
+    ({
+      profils_claimed: '—',
+      agents_importes: '—',
+      notes_natives: '—',
+      notes_authentifiees: '—',
+      demandes_ouvertes: '—',
+      recus_contribution: '—',
+      appels_total: '—',
+      appels_24h: '—',
+      origines_24h: '—',
+    } as Row)
   const crawlers24h = data?.crawlers24h ?? '—'
   const parBot = data?.parBot ?? []
   const parTool = data?.parTool ?? []
@@ -208,8 +225,11 @@ export default async function Dashboard() {
           <div style={tile(GREEN)}><p style={num(GREEN)}>{c.appels_24h}</p><p style={lbl}>📞 appels (24h)</p></div>
           <div style={tile(BLUE)}><p style={num(BLUE)}>{c.origines_24h}</p><p style={lbl}>🌍 origines (24h)</p></div>
           <div style={tile(PURPLE)}><p style={num(PURPLE)}>{feedbackTotal}</p><p style={lbl}>💬 feedbacks</p></div>
-          <div style={tile(YELLOW)}><p style={num(YELLOW)}>{c.agents_natifs}</p><p style={lbl}>✍️ agents inscrits</p></div>
-          <div style={tile(RED)}><p style={num(RED)}>{c.notes}</p><p style={lbl}>⭐ notes déposées</p></div>
+          <div style={tile(YELLOW)}><p style={num(YELLOW)}>{c.profils_claimed}</p><p style={lbl}>🔐 profils claimés</p></div>
+          <div style={tile(RED)}><p style={num(RED)}>{c.notes_natives}</p><p style={lbl}>⭐ notes natives</p></div>
+          <div style={tile(GREEN)}><p style={num(GREEN)}>{c.notes_authentifiees}</p><p style={lbl}>✅ notes authentifiées</p></div>
+          <div style={tile(BLUE)}><p style={num(BLUE)}>{c.demandes_ouvertes}</p><p style={lbl}>📨 demandes ouvertes</p></div>
+          <div style={tile(PURPLE)}><p style={num(PURPLE)}>{c.recus_contribution}</p><p style={lbl}>🧾 reçus de contribution</p></div>
           <div style={tile(GREY)}><p style={num('#d4d4d8')}>{c.agents_importes}</p><p style={lbl}>📦 agents importés</p></div>
           <div style={tile(ORANGE)}><p style={num(ORANGE)}>{crawlers24h}</p><p style={lbl}>🕷️ hits crawlers (24h)</p></div>
         </div>

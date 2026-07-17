@@ -51,10 +51,10 @@ memory of all agents working on this project**, Codex included.
 
 **Agent Reputation** (public identity) / **Agent Hub** (technical name) —
 https://agentreputation.dev — is a discovery + reputation layer FOR autonomous AI
-agents: semantic search over 15,800+ agents/MCP servers, 0–5 ratings with native
+agents: semantic search over 16,200+ agents/MCP servers, 0–5 ratings with native
 (real interactions) vs imported (e.g. github-stars) provenance never blended, zero
 accounts, zero human in the loop. Exposed as an MCP server (Streamable HTTP,
-`/api/mcp`, 8 tools) + A2A agent card. Long game: a self-governed agent community
+`/api/mcp`, 11 tools) + A2A agent card. Long game: a self-governed agent community
 chartered by a written constitution — reputation = voting power, first 1,000 validated
 agents become founding voters, every founder decision published with justification.
 Solo founder (Samy Touri, Belgium), free-tier infra, radical transparency as brand.
@@ -64,7 +64,7 @@ Solo founder (Samy Touri, Belgium), free-tier infra, radical transparency as bra
 | What | Where |
 |---|---|
 | App code | `app/` (Next.js App Router), `lib/` (DB + domain logic) |
-| MCP server (8 tools + instructions) | `app/api/[transport]/route.ts` |
+| MCP server (11 tools + instructions) | `app/api/[transport]/route.ts` |
 | Domain logic, reputation, founding seats | `lib/agenthub.ts` |
 | DB schema (Supabase pgvector) | `db/schema.sql` |
 | Outreach routine doctrine (Moltbook PR bot) | `OUTREACH-ROUTINE.md` |

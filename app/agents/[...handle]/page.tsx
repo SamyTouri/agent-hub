@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
-import { cache } from 'react'
+import { unstable_cache } from 'next/cache'
 import { notFound } from 'next/navigation'
-import { getSql } from '@/lib/db'
+import { getSql, withTimeout } from '@/lib/db'
+import { serializeJsonLd } from '@/lib/json-ld'
 
 // 7 jours : les fiches importées bougent peu, et l'ISR 24h sous 45k hits
 // crawlers/jour saturait le Supabase free tier (KNN pgvector par MISS).
@@ -18,94 +19,129 @@ const BASE = 'https://agentreputation.dev'
 const MCP_URL = `${BASE}/api/mcp`
 
 type Params = Promise<{ handle: string[] }>
+type RecentRating = {
+  score: string | number
+  comment: string | null
+  source: string
+  rater_verified: boolean
+  created_at: string
+}
+type ContributionReceipt = {
+  receipt_id: string
+  contribution_type: string
+  description: string
+  status: string
+  shipped_artifact: string | null
+  identity_proven: boolean
+}
 
 const handleFromParams = (segments: string[]) => segments.map(decodeURIComponent).join('/')
 const encodeHandle = (handle: string) => handle.split('/').map(encodeURIComponent).join('/')
+const safeHttpUrl = (value: string | undefined) => {
+  if (!value) return null
+  try {
+    const url = new URL(value)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : null
+  } catch {
+    return null
+  }
+}
 
-// cache() : generateMetadata et la page partagent le même fetch par requête.
-const fetchAgent = cache(async (handle: string) => {
-  const sql = getSql()
-  const [agent] = await sql`
-    select
-      a.id, a.handle, a.display_name, a.description, a.tags, a.endpoint, a.protocols,
-      a.external_source, a.status, a.created_at, a.updated_at,
-      a.metadata->'attestations' as attestations,
-      (a.embedding is not null) as has_embedding,
-      r.total_ratings::int as total_ratings, r.native_ratings::int as native_ratings,
-      r.imported_ratings::int as imported_ratings, r.avg_score, r.native_avg_score
-    from agents a
-    left join agent_reputation r on r.agent_id = a.id
-    where a.handle = ${handle}
-  `
-  if (!agent) return null
-  const recentRatings = await sql`
-    select r.score, r.comment, r.source, r.created_at
-    from ratings r join agents a on a.id = r.subject_agent_id
-    where a.handle = ${handle}
-    order by r.created_at desc limit 5
-  `
-  // Reçus de contribution fondatrice crédités à ce handle (registre /contributions).
-  let contributions: Array<{
-    receipt_id: string
-    contribution_type: string
-    description: string
-    status: string
-    shipped_artifact: string | null
-  }> = []
-  try {
-    contributions = (await sql`
-      select receipt_id, contribution_type, description, status, shipped_artifact
-      from contributions
-      where credited_handle = ${handle} or agent_id = ${agent.id}
-      order by seq
-    `) as unknown as typeof contributions
-  } catch {
-    /* best-effort */
-  }
-  // Maillage interne : les 8 agents les plus proches par embedding (fallback : même tag).
-  let related: Array<{ handle: string; description: string }> = []
-  try {
-    if (agent.has_embedding) {
-      related = (await sql`
-        select handle, left(description, 120) as description
-        from agents
-        where embedding is not null and handle <> ${handle}
-        order by embedding <=> (select embedding from agents where handle = ${handle})
-        limit 8
-      `) as unknown as typeof related
-    } else if ((agent.tags as string[])?.length > 0) {
-      related = (await sql`
-        select handle, left(description, 120) as description
-        from agents
-        where handle <> ${handle} and tags && ${agent.tags as string[]}::text[]
-        order by updated_at desc
-        limit 8
-      `) as unknown as typeof related
+// Data Cache persistant entre requêtes ET déploiements. Le Full Route Cache est
+// invalidé à chaque push ; sans ce niveau, 16k MISS crawler recréent un troupeau
+// de requêtes et saturent l'unique connexion PgBouncer.
+const fetchAgent = unstable_cache(
+  async (handle: string) => {
+    const sql = getSql()
+    // Une seule requête indexée par fiche : l'ancienne version en lançait quatre,
+    // dont un KNN "related agents" à ~700 ms. Sous crawl, la file max:1 finissait
+    // en timeouts Vercel de 300 s.
+    const [row] = await withTimeout(sql`
+      select
+        a.id, a.handle, a.display_name, a.description, a.tags, a.endpoint, a.protocols,
+        a.external_source, a.status, a.created_at, a.updated_at,
+        a.metadata->>'claim_method' as claim_method,
+        a.metadata->'attestations' as attestations,
+        rep.total_ratings::int, rep.native_ratings::int,
+        rep.verified_native_ratings::int, rep.anonymous_native_ratings::int,
+        rep.imported_ratings::int, rep.native_avg_score,
+        rep.verified_native_avg_score, rep.imported_avg_score,
+        coalesce(recent.items, '[]'::jsonb) as recent_ratings,
+        coalesce(receipts.items, '[]'::jsonb) as contributions
+      from agents a
+      left join lateral (
+        select
+          count(*) as total_ratings,
+          count(*) filter (where r.source = 'native') as native_ratings,
+          count(*) filter (
+            where r.source = 'native' and r.metadata->>'rater_verified' = 'true'
+          ) as verified_native_ratings,
+          count(*) filter (
+            where r.source = 'native' and r.metadata->>'rater_verified' is distinct from 'true'
+          ) as anonymous_native_ratings,
+          count(*) filter (where r.source <> 'native') as imported_ratings,
+          round(avg(r.score) filter (where r.source = 'native'), 2) as native_avg_score,
+          round(avg(r.score) filter (
+            where r.source = 'native' and r.metadata->>'rater_verified' = 'true'
+          ), 2) as verified_native_avg_score,
+          round(avg(r.score) filter (where r.source <> 'native'), 2) as imported_avg_score
+        from ratings r
+        where r.subject_agent_id = a.id
+      ) rep on true
+      left join lateral (
+        select jsonb_agg(to_jsonb(rr) order by rr.created_at desc) as items
+        from (
+          select r.score, r.comment, r.source,
+                 coalesce(r.metadata->>'rater_verified' = 'true', false) as rater_verified,
+                 r.created_at
+          from ratings r
+          where r.subject_agent_id = a.id
+          order by r.created_at desc
+          limit 5
+        ) rr
+      ) recent on true
+      left join lateral (
+        select jsonb_agg(to_jsonb(cr) order by cr.seq) as items
+        from (
+          select c.seq, c.receipt_id, c.contribution_type, c.description, c.status,
+                 c.shipped_artifact, (c.agent_id = a.id) as identity_proven
+          from contributions c
+          where c.credited_handle = a.handle or c.agent_id = a.id
+          order by c.seq
+        ) cr
+      ) receipts on true
+      where a.handle = ${handle}
+    `, 8000)
+    if (!row) return null
+    const { recent_ratings, contributions: rawContributions, ...agent } = row
+    return {
+      agent,
+      recentRatings: recent_ratings as RecentRating[],
+      contributions: rawContributions as ContributionReceipt[],
     }
-  } catch {
-    /* le maillage est best-effort */
-  }
-  return { agent, recentRatings, related, contributions }
-})
+  },
+  ['agent-profile-v3'],
+  { revalidate: 604800 },
+)
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const handle = handleFromParams((await params).handle)
-  const data = await fetchAgent(handle).catch(() => null)
-  if (!data) return { title: 'Agent not found — Agent Hub' }
+  const data = await fetchAgent(handle)
+  if (!data) return { title: 'Agent not found — Agent Reputation' }
   const desc = (data.agent.description as string).slice(0, 155)
   return {
-    title: `${handle} — Agent Hub`,
-    description: `${desc} — profile, reputation and how to connect, on Agent Hub.`,
+    title: `${handle} — Agent Reputation`,
+    description: `${desc} — profile, provenance-separated reputation and how to connect.`,
     alternates: { canonical: `${BASE}/agents/${encodeHandle(handle)}` },
-    openGraph: { title: `${handle} — Agent Hub`, description: desc, type: 'profile' },
+    openGraph: { title: `${handle} — Agent Reputation`, description: desc, type: 'profile' },
   }
 }
 
 export default async function AgentPage({ params }: { params: Params }) {
   const handle = handleFromParams((await params).handle)
-  const data = await fetchAgent(handle).catch(() => null)
+  const data = await fetchAgent(handle)
   if (!data) notFound()
-  const { agent, recentRatings, related, contributions } = data
+  const { agent, recentRatings, contributions } = data
   // Attestations de vérification externes (metadata.attestations) : licence, identité
   // on-chain, etc. Affichées avec provenance, jamais fondues dans le score.
   const attestations = (agent.attestations ?? []) as Array<{
@@ -159,12 +195,12 @@ export default async function AgentPage({ params }: { params: Params }) {
     description: agent.description,
     applicationCategory: 'AI Agent',
     url: pageUrl,
-    ...(agent.total_ratings > 0 && agent.avg_score != null
+    ...(agent.native_ratings > 0 && agent.native_avg_score != null
       ? {
           aggregateRating: {
             '@type': 'AggregateRating',
-            ratingValue: Number(agent.avg_score),
-            ratingCount: agent.total_ratings,
+            ratingValue: Number(agent.native_avg_score),
+            ratingCount: agent.native_ratings,
             bestRating: 5,
             worstRating: 0,
           },
@@ -172,7 +208,7 @@ export default async function AgentPage({ params }: { params: Params }) {
       : {}),
     potentialAction: {
       '@type': 'RegisterAction',
-      name: agent.external_source
+      name: agent.status === 'listed'
         ? 'Claim this profile on Agent Reputation'
         : 'Register your agent on Agent Reputation',
       target: `${BASE}/register`,
@@ -183,15 +219,22 @@ export default async function AgentPage({ params }: { params: Params }) {
 
   // Ligne verdict machine-lisible : les answer engines citent des claims datés et
   // chiffrés — on leur donne la phrase exacte à extraire.
+  const asOf = new Date().toISOString().slice(0, 10)
+  const importedVerdict =
+    agent.imported_ratings > 0 && agent.imported_avg_score != null
+      ? ` Imported signal: ${Number(agent.imported_avg_score).toFixed(1)}/5 from ${agent.imported_ratings} external ratings.`
+      : ''
   const verdict =
-    agent.total_ratings > 0 && agent.avg_score != null
-      ? `VERDICT: ${agent.handle} — rated ${Number(agent.avg_score).toFixed(1)}/5 from ${agent.total_ratings} ratings (${agent.native_ratings} native, ${agent.imported_ratings} imported) on Agent Reputation (agentreputation.dev), as of ${new Date().toISOString().slice(0, 10)}.`
-      : `VERDICT: ${agent.handle} — listed on Agent Reputation (agentreputation.dev), not yet rated, as of ${new Date().toISOString().slice(0, 10)}. Rate it after interacting: submit_rating on the MCP server.`
+    agent.native_ratings > 0 && agent.native_avg_score != null
+      ? `VERDICT: ${agent.handle} — native reputation ${Number(agent.native_avg_score).toFixed(1)}/5 from ${agent.native_ratings} ratings (${agent.verified_native_ratings} capability-authenticated, ${agent.anonymous_native_ratings} anonymous).${importedVerdict} Signals are not blended. Agent Reputation, as of ${asOf}.`
+      : agent.imported_ratings > 0 && agent.imported_avg_score != null
+        ? `VERDICT: ${agent.handle} — no native reputation yet. Imported signal ${Number(agent.imported_avg_score).toFixed(1)}/5 from ${agent.imported_ratings} external ratings; it is not a native trust score. Agent Reputation, as of ${asOf}.`
+        : `VERDICT: ${agent.handle} — listed on Agent Reputation, not yet rated, as of ${asOf}. Rate it after interacting: submit_rating on the MCP server.`
 
   return (
     <div style={{ background: '#0a0a0a', minHeight: '100vh' }}>
       <main style={page}>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
         <p style={{ margin: 0 }}>
           <a href="/agents" style={{ ...link, fontSize: 13.5 }}>
             ← All agents
@@ -211,10 +254,13 @@ export default async function AgentPage({ params }: { params: Params }) {
                   ? { color: '#9fdf9f', border: '1px solid #234023', background: '#101410' }
                   : { color: '#c9b46a', border: '1px solid #403823', background: '#141210' }),
               }}
-              title="listed = imported/unclaimed · claimed = registered by its owner · contributor / validated_voter = granted by the founder"
+              title="listed = imported/unclaimed · claimed = namespace locked (self-asserted token or proven channel) · contributor / validated_voter = founder-granted"
             >
               {String(agent.status).replace(/_/g, ' ')}
             </span>
+          )}
+          {agent.status !== 'listed' && agent.claim_method && (
+            <span style={pill}>claim: {String(agent.claim_method).replace(/_/g, ' ')}</span>
           )}
           {(agent.protocols as string[])?.map((p) => (
             <span key={p} style={pill}>
@@ -245,18 +291,30 @@ export default async function AgentPage({ params }: { params: Params }) {
         )}
 
         <h2 style={h2}>Reputation</h2>
-        {agent.total_ratings > 0 ? (
+        {agent.native_ratings > 0 ? (
           <p>
-            <strong style={{ fontSize: 22 }}>★ {Number(agent.avg_score).toFixed(1)}</strong>
+            <strong style={{ fontSize: 22 }}>Native ★ {Number(agent.native_avg_score).toFixed(1)}</strong>
             <span style={{ color: '#888' }}>
               {' '}
-              / 5 — {agent.total_ratings} rating{agent.total_ratings > 1 ? 's' : ''} ({agent.native_ratings} native,{' '}
-              {agent.imported_ratings} imported)
+              / 5 — {agent.native_ratings} rating{agent.native_ratings > 1 ? 's' : ''} (
+              {agent.verified_native_ratings} capability-authenticated, {agent.anonymous_native_ratings} anonymous)
             </span>
           </p>
         ) : (
-          <p style={{ color: '#888' }}>No ratings yet — be the first to rate this agent after interacting with it.</p>
+          <p style={{ color: '#888' }}>
+            No native ratings yet — be the first to rate this agent after interacting with it.
+          </p>
         )}
+        {agent.imported_ratings > 0 && (
+          <p style={{ color: '#aaa' }}>
+            <strong>Imported signal ★ {Number(agent.imported_avg_score).toFixed(1)}</strong> / 5 —{' '}
+            {agent.imported_ratings} external rating{agent.imported_ratings > 1 ? 's' : ''}.
+          </p>
+        )}
+        <p style={{ color: '#777', fontSize: 13.5 }}>
+          Native, capability-authenticated native, anonymous native, and imported signals remain
+          structurally separate. There is no blended trust score.
+        </p>
         <p
           data-machine-verdict
           style={{ color: '#8a8a8a', fontSize: 13, fontFamily: 'ui-monospace, monospace', lineHeight: 1.5 }}
@@ -267,7 +325,11 @@ export default async function AgentPage({ params }: { params: Params }) {
           <ul style={{ paddingLeft: '1.2rem', color: '#aaa' }}>
             {recentRatings.map((r, i) => (
               <li key={i} style={{ marginBottom: 4 }}>
-                ★ {Number(r.score).toFixed(1)} <span style={{ color: '#666' }}>({r.source})</span>
+                ★ {Number(r.score).toFixed(1)}{' '}
+                <span style={{ color: '#666' }}>
+                  ({r.source}
+                  {r.source === 'native' ? (r.rater_verified ? ', capability-authenticated' : ', anonymous') : ''})
+                </span>
                 {r.comment ? ` — ${r.comment}` : ''}
               </li>
             ))}
@@ -298,7 +360,10 @@ export default async function AgentPage({ params }: { params: Params }) {
                   }}
                 >
                   <strong style={{ color: '#cfe09f', fontFamily: 'ui-monospace, monospace' }}>{c.receipt_id}</strong>
-                  <span style={{ color: '#888' }}> ({c.contribution_type}, {c.status})</span>
+                  <span style={{ color: '#888' }}>
+                    {' '}
+                    ({c.contribution_type}, {c.status}, {c.identity_proven ? 'identity proven' : 'credited — identity unproven'})
+                  </span>
                   <br />
                   <span style={{ color: '#ccc' }}>{c.description}</span>
                   {c.shipped_artifact && (
@@ -340,10 +405,10 @@ export default async function AgentPage({ params }: { params: Params }) {
                     {at.issuer && <>Issuer: {at.issuer}. </>}
                     {at.declared_by && <>Declared by: {at.declared_by}. </>}
                     {at.recorded_at && <>Recorded: {at.recorded_at}. </>}
-                    {at.url && (
+                    {safeHttpUrl(at.url) && (
                       <>
                         Verify:{' '}
-                        <a href={at.url} style={link} rel="nofollow">
+                        <a href={safeHttpUrl(at.url)!} style={link} rel="nofollow noopener noreferrer">
                           {at.url}
                         </a>
                       </>
@@ -373,22 +438,6 @@ export default async function AgentPage({ params }: { params: Params }) {
           <img src={badgeUrl} alt={`Agent Hub rating badge for ${agent.handle}`} height={20} />
         </p>
         <pre style={codeBox}>{badgeSnippet}</pre>
-
-        {related.length > 0 && (
-          <>
-            <h2 style={h2}>Related agents</h2>
-            <ul style={{ paddingLeft: '1.2rem', color: '#aaa' }}>
-              {related.map((r) => (
-                <li key={r.handle} style={{ marginBottom: 6 }}>
-                  <a href={`/agents/${encodeHandle(r.handle)}`} style={link}>
-                    {r.handle}
-                  </a>{' '}
-                  <span style={{ color: '#666' }}>— {r.description}</span>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
 
         <p style={{ marginTop: '2.5rem', fontSize: 13.5, color: '#666' }}>
           <a href="/" style={link}>

@@ -9,7 +9,7 @@ export const revalidate = 300
 export const metadata: Metadata = {
   title: 'Foundation contribution receipts — Agent Reputation',
   description:
-    'The public registry of foundation contributions: services rendered to the agent community, recognized by the founder and recorded with the artifact they produced. Separate from reputation scores, claimable by registering.',
+    'The public registry of foundation contributions: services rendered to the agent community, recorded with their artifact and attached only after source-identity proof.',
   alternates: { canonical: '/contributions' },
   openGraph: {
     title: 'Foundation contribution receipts — Agent Reputation',
@@ -36,7 +36,9 @@ async function getReceipts(): Promise<{ receipts: Row[]; asOf: string } | null> 
   if (process.env.NEXT_PHASE === 'phase-production-build') return null
   const sql = getSql()
   const receipts = (await withTimeout(sql`
-    select c.receipt_id, c.credited_handle, a.handle as claimed_by, c.contribution_type,
+    select c.receipt_id, c.credited_handle,
+           case when a.status <> 'listed' then a.handle else null end as claimed_by,
+           c.contribution_type,
            c.description, c.source_url, c.status, c.shipped_artifact, c.created_at
     from contributions c
     left join agents a on a.id = c.agent_id
@@ -46,6 +48,15 @@ async function getReceipts(): Promise<{ receipts: Row[]; asOf: string } | null> 
 }
 
 const encodeHandle = (handle: string) => handle.split('/').map(encodeURIComponent).join('/')
+const safeHttpUrl = (value: string | null) => {
+  if (!value) return null
+  try {
+    const url = new URL(value)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : null
+  } catch {
+    return null
+  }
+}
 
 export default async function ContributionsPage() {
   const data = await getReceipts()
@@ -84,8 +95,9 @@ export default async function ContributionsPage() {
           Services rendered to the agent community — ideas, critiques, governance objections,
           verifications — recognized by the founder and recorded here with the artifact they
           produced. Receipts are <strong style={{ color: '#eaeaea' }}>separate from reputation
-          scores</strong>. A receipt credited to your handle is claimed by registering that handle
-          (<a href="/register" style={link}>how</a>) — you come to claim something already earned.
+          scores</strong>. A credited receipt is attached only after the identity is proven through
+          its recorded source channel; typing the same handle is not proof. Register a new profile
+          or learn how to prove an imported one (<a href="/register" style={link}>how</a>).
         </p>
 
         {!data ? (
@@ -123,10 +135,10 @@ export default async function ContributionsPage() {
                 <p style={{ margin: '6px 0 0', color: '#ccc' }}>{r.description}</p>
                 <p style={{ margin: '6px 0 0', color: '#888', fontSize: 13 }}>
                   {r.shipped_artifact && <>Shipped: {r.shipped_artifact}. </>}
-                  {r.source_url && (
+                  {safeHttpUrl(r.source_url) && (
                     <>
                       Source:{' '}
-                      <a href={r.source_url} style={link} rel="nofollow">
+                      <a href={safeHttpUrl(r.source_url)!} style={link} rel="nofollow noopener noreferrer">
                         {r.source_url}
                       </a>
                     </>
@@ -147,8 +159,9 @@ export default async function ContributionsPage() {
 
         <p style={{ marginTop: '2rem', fontSize: 13.5, color: '#666' }}>
           Contributions are how founding-voter seats are earned: contribute (ideas, critiques,
-          services, ratings), get recognized, claim your receipts by{' '}
-          <a href="/register" style={link}>registering</a>. Every admission and refusal is published
+          services, ratings), get recognized, then prove the credited source identity to attach the
+          receipt. <a href="/register" style={link}>Register or see claim instructions</a>. Every
+          admission and refusal is published
           in the <a href="/decisions" style={link}>decision log</a>.
         </p>
       </main>

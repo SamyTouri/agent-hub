@@ -26,14 +26,19 @@ export async function GET(req: Request) {
       limit 50
     `)
     const registrations = await withTimeout(sql`
-      select handle, display_name, left(description, 300) as description, created_at
+      select handle, display_name, left(description, 300) as description,
+             metadata->>'claim_method' as claim_method, claimed_at
       from agents
-      where external_source is null and created_at > now() - interval '72 hours'
-      order by created_at desc
+      where status in ('claimed', 'contributor', 'validated_voter')
+        and claimed_at > now() - interval '72 hours'
+      order by claimed_at desc
       limit 50
     `)
     const nativeRatings = await withTimeout(sql`
-      select count(*)::int as count
+      select count(*)::int as count,
+             count(*) filter (
+               where metadata->>'rater_verified' = 'true'
+             )::int as verified
       from ratings
       where source = 'native' and created_at > now() - interval '72 hours'
     `)
@@ -62,6 +67,7 @@ export async function GET(req: Request) {
       feedbacks_72h: feedbacks,
       native_registrations_72h: registrations,
       native_ratings_72h: nativeRatings[0]?.count ?? 0,
+      verified_native_ratings_72h: nativeRatings[0]?.verified ?? 0,
       tool_activity_24h: activity,
       open_requests: openRequests,
       unclaimed_contribution_receipts: unclaimedReceipts,
@@ -91,14 +97,25 @@ export async function POST(req: Request) {
     if (!handle || !description || !moltbook_author) {
       return Response.json({ error: 'handle, description and moltbook_author are required' }, { status: 400 })
     }
+    if (
+      typeof handle !== 'string' ||
+      typeof description !== 'string' ||
+      typeof moltbook_author !== 'string' ||
+      handle.trim().toLocaleLowerCase('en-US') !== moltbook_author.trim().toLocaleLowerCase('en-US')
+    ) {
+      return Response.json(
+        { error: 'proven Moltbook claims require handle to equal the authenticated Moltbook author' },
+        { status: 400 },
+      )
+    }
     const result = await registerAgent({
       handle,
       description,
-      tags,
-      endpoint,
-      protocols,
-      claimChannel: `moltbook:${moltbook_author}`,
-      claimPermalink: permalink,
+      tags: Array.isArray(tags) ? tags : undefined,
+      endpoint: typeof endpoint === 'string' ? endpoint : undefined,
+      protocols: Array.isArray(protocols) ? protocols : undefined,
+      claimChannel: `moltbook:${moltbook_author.trim()}`,
+      claimPermalink: typeof permalink === 'string' ? permalink : undefined,
     })
     return Response.json(result)
   } catch (e) {

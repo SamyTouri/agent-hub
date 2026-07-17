@@ -46,18 +46,38 @@ create table if not exists ratings (
 -- 4. Index
 create index if not exists agents_embedding_idx on agents using hnsw (embedding vector_cosine_ops);
 create index if not exists agents_tags_idx      on agents using gin (tags);
+create index if not exists agents_directory_idx on agents ((external_source is not null), updated_at desc);
 create index if not exists ratings_subject_idx  on ratings (subject_agent_id);
+create index if not exists ratings_rater_idx    on ratings (rater_agent_id);
+create index if not exists ratings_subject_created_idx on ratings (subject_agent_id, created_at desc);
 
 -- 5. Vue réputation : sépare explicitement notes natives vs importées
-create or replace view agent_reputation as
+drop view if exists agent_reputation;
+create view agent_reputation with (security_invoker = true) as
 select
   a.id      as agent_id,
   a.handle,
-  count(r.*)                                            as total_ratings,
-  count(r.*) filter (where r.source = 'native')        as native_ratings,
-  count(r.*) filter (where r.source <> 'native')       as imported_ratings,
-  round(avg(r.score), 2)                               as avg_score,
-  round(avg(r.score) filter (where r.source = 'native'), 2) as native_avg_score
+  count(r.*) as total_ratings,
+  count(r.*) filter (where r.source = 'native') as native_ratings,
+  count(r.*) filter (
+    where r.source = 'native'
+      and r.metadata->>'rater_verified' = 'true'
+  ) as verified_native_ratings,
+  count(r.*) filter (
+    where r.source = 'native'
+      and r.metadata->>'rater_verified' is distinct from 'true'
+  ) as anonymous_native_ratings,
+  count(r.*) filter (where r.source <> 'native') as imported_ratings,
+  round(avg(r.score) filter (where r.source = 'native'), 2) as native_avg_score,
+  round(avg(r.score) filter (
+    where r.source = 'native'
+      and r.metadata->>'rater_verified' = 'true'
+  ), 2) as verified_native_avg_score,
+  round(avg(r.score) filter (
+    where r.source = 'native'
+      and r.metadata->>'rater_verified' is distinct from 'true'
+  ), 2) as anonymous_native_avg_score,
+  round(avg(r.score) filter (where r.source <> 'native'), 2) as imported_avg_score
 from agents a
 left join ratings r on r.subject_agent_id = a.id
 group by a.id, a.handle;
@@ -76,6 +96,7 @@ returns table (
   similarity  float
 )
 language sql stable
+set search_path = public, pg_temp
 as $$
   select
     a.id, a.handle, a.description, a.endpoint,
@@ -89,7 +110,9 @@ $$;
 
 -- 7. updated_at auto sur agents
 create or replace function set_updated_at()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql
+set search_path = public, pg_temp
+as $$
 begin
   new.updated_at = now();
   return new;
@@ -122,6 +145,8 @@ alter table activity_log enable row level security;
 -- 10. Origine des appels (distinguer le vrai trafic de nos tests) — IP hashée, jamais en clair
 alter table activity_log add column if not exists ip_hash    text;
 alter table activity_log add column if not exists user_agent text;
+create index if not exists activity_log_tool_ip_created_idx
+  on activity_log (tool, ip_hash, created_at desc);
 
 -- 11bis. Retours des agents utilisateurs (tool give_feedback) — la voix des
 --        agents avant la gouvernance formelle. Lu par le fondateur (dashboard),
@@ -139,11 +164,12 @@ create table if not exists feedback (
   created_at   timestamptz default now()
 );
 create index if not exists feedback_created_idx on feedback (created_at desc);
+create index if not exists feedback_ip_created_idx on feedback (ip_hash, created_at desc);
 alter table feedback enable row level security;
 
 -- 12. Ownership des fiches (chantier "claim/ownership", 2026-07-17).
 --     Quatre états : listed (importé/non réclamé) → claimed (inscrit par son
---     propriétaire, verrouillé par owner_token OU canal prouvé) → contributor
+--     namespace, verrouillé par owner_token auto-déclaré OU canal prouvé) → contributor
 --     (services rendus, accordé par le fondateur) → validated_voter (siège de
 --     fondateur validé). contributor/validated_voter ne s'accordent JAMAIS par API.
 alter table agents add column if not exists status text not null default 'listed';
@@ -165,9 +191,12 @@ create table if not exists contributions (
   source_url        text,
   status            text not null default 'acknowledged', -- acknowledged | ratified | shipped
   shipped_artifact  text,
+  claim_channel     text,                           -- canal source requis pour lier le reçu (ex. moltbook:cwahq)
   created_at        timestamptz default now()
 );
+alter table contributions add column if not exists claim_channel text;
 create index if not exists contributions_handle_idx on contributions (credited_handle);
+create index if not exists contributions_agent_idx on contributions (agent_id);
 alter table contributions enable row level security;
 
 -- 14. Demandes d'agents (boucle request/match) — un agent publie un besoin, le hub
@@ -189,7 +218,25 @@ create table if not exists agent_requests (
   expires_at       timestamptz default now() + interval '30 days'
 );
 create index if not exists agent_requests_status_idx on agent_requests (status, created_at desc);
+create index if not exists agent_requests_ip_created_idx on agent_requests (ip_hash, created_at desc);
 alter table agent_requests enable row level security;
+
+-- 15. Anti-abus des notes natives (les imports passent par des scripts internes).
+create index if not exists ratings_native_ip_created_idx
+  on ratings ((metadata->>'ip_hash'), created_at desc)
+  where source = 'native';
+create index if not exists ratings_native_rater_subject_created_idx
+  on ratings (rater_agent_id, subject_agent_id, created_at desc)
+  where source = 'native';
+
+-- 16. L'event-trigger de défense RLS n'est pas une API publique.
+do $$
+begin
+  if to_regprocedure('public.rls_auto_enable()') is not null then
+    revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
+  end if;
+end
+$$;
 
 -- 11. Passages de crawlers (Google, Bing, bots IA) — loggés par le middleware edge
 --     via l'API REST Supabase. Purge > 60 jours par le cron quotidien /api/cron/daily.

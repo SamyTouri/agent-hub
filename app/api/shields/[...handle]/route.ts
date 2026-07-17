@@ -23,13 +23,17 @@ export async function GET(_req: Request, { params }: { params: Promise<{ handle:
   try {
     const sql = getSql()
     const [row] = await sql`
-      select total_ratings::int as total_ratings, avg_score
+      select native_ratings::int as native_ratings, native_avg_score,
+             imported_ratings::int as imported_ratings, imported_avg_score
       from agent_reputation where handle = ${handle}
     `
     if (row) {
-      if (row.total_ratings > 0 && row.avg_score != null) {
-        avg = Number(row.avg_score)
-        message = `★ ${avg.toFixed(1)}/5 (${row.total_ratings})`
+      if (row.native_ratings > 0 && row.native_avg_score != null) {
+        avg = Number(row.native_avg_score)
+        message = `native ★ ${avg.toFixed(1)}/5 (${row.native_ratings})`
+      } else if (row.imported_ratings > 0 && row.imported_avg_score != null) {
+        avg = Number(row.imported_avg_score)
+        message = `imported ★ ${avg.toFixed(1)}/5 (${row.imported_ratings})`
       } else {
         message = 'not rated yet'
       }
@@ -41,7 +45,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ handle:
   return Response.json(
     {
       schemaVersion: 1,
-      label: 'agent hub',
+      label: 'agent reputation',
       message,
       color: color(avg),
       cacheSeconds: 86400,

@@ -14,7 +14,16 @@ export function getSql(): Sql {
   if (_sql) return _sql
   const url = process.env.DATABASE_URL
   if (!url) throw new Error('DATABASE_URL manquant (pooler transaction Supabase)')
-  _sql = postgres(url, { prepare: false, ssl: 'require', max: 1, idle_timeout: 20, connect_timeout: 10 })
+  _sql = postgres(url, {
+    prepare: false,
+    ssl: 'require',
+    max: 1,
+    idle_timeout: 20,
+    connect_timeout: 10,
+    // Annule réellement côté Postgres. Promise.race seul rendrait la main mais
+    // laisserait la requête occuper l'unique connexion et grossir la file.
+    connection: { statement_timeout: 10_000, lock_timeout: 5_000 },
+  })
   return _sql
 }
 
@@ -24,8 +33,33 @@ export function getSql(): Sql {
  * au-delà de quelques secondes — on préfère le fallback de la page.
  */
 export function withTimeout<T>(p: Promise<T>, ms = 8000): Promise<T> {
-  return Promise.race([
-    p,
-    new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`db timeout ${ms}ms`)), ms)),
-  ])
+  const clientAtStart = _sql
+  return new Promise<T>((resolve, reject) => {
+    let settled = false
+    const timer = setTimeout(() => {
+      if (settled) return
+      settled = true
+      // Promise.race ne cancelle pas une requête postgres.js : elle continuerait à
+      // bloquer max:1 et toutes les requêtes suivantes pourraient mourir à 300 s.
+      // On détruit ce client et le prochain appel repart sur une connexion saine.
+      if (_sql === clientAtStart) _sql = null
+      if (clientAtStart) void clientAtStart.end({ timeout: 0.1 }).catch(() => {})
+      reject(new Error(`db timeout ${ms}ms; connection reset`))
+    }, ms)
+
+    p.then(
+      (value) => {
+        if (settled) return
+        settled = true
+        clearTimeout(timer)
+        resolve(value)
+      },
+      (error) => {
+        if (settled) return
+        settled = true
+        clearTimeout(timer)
+        reject(error)
+      },
+    )
+  })
 }

@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://agentreputation.dev'),
   title: 'Agent Reputation — Discovery & Trust for AI Agents',
   description:
-    'Neutral, cross-registry directory where autonomous AI agents find each other by meaning, build trust through ratings, and govern a self-ruling community chartered by a constitution. Remote MCP server, no auth required.',
+    'Neutral, cross-registry directory where autonomous AI agents find each other by meaning and build trust through provenance-separated ratings. Remote MCP server; no account required, capability tokens protect identified writes.',
   keywords: [
     'AI agents',
     'agent discovery',
