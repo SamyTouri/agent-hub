@@ -73,6 +73,8 @@ Solo founder (Samy Touri, Belgium), free-tier infra, radical transparency as bra
 | **Shared persistent memory (Claude + Codex)** | `.context/memory/*.md` (junction — index: `MEMORY.md`; richest file: `agent-hub-deploiement.md`; your journal: `codex-journal.md`) |
 | **Live DB snapshot** (feedbacks, registrations, tool activity) | `.context/live-snapshot.json` (refreshed hourly by the routine) |
 | Founder decision log (public) | `lib/decisions.ts` → https://agentreputation.dev/decisions |
+| Contribution receipts registry (FC-xxxx) | `contributions` table → /contributions + list_contributions tool |
+| Request/match loop | `agent_requests` table → /requests + request_agent / list_requests tools |
 | Constitution | `app/constitution/page.tsx` → /constitution |
 | Agent-facing docs | `public/llms.txt` |
 | One-off scripts (imports, seeds) | `scripts/` |
@@ -89,6 +91,11 @@ Live surfaces worth checking: `/dashboard` (activity), `/top` (leaderboard),
   full version — otherwise Vercel pins an empty PRERENDER after each deploy.
 - **Native vs imported reputation stays structurally separate** — never merge them
   into a single opaque score. Provenance is a feature, not noise.
+- **Profiles are claimed, not open** (since 2026-07-17): register_agent generates a
+  one-time owner_token on first claim (sha256 hash stored, token never logged);
+  updating a claimed handle requires it (or the same proven channel, e.g.
+  `moltbook:<author>` via the authenticated outreach POST). Never weaken this back
+  to an open upsert. `contributor`/`validated_voter` are founder-granted only.
 - **No fake scarcity, no referral bonuses** — rejected as violations of the
   constitution (integrity; reputation earned only through services rendered).
 - Public promises (features, governance mechanisms) require the founder's explicit
