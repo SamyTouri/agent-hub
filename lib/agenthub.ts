@@ -260,6 +260,31 @@ export async function getReputation(input: { handle: string }) {
 }
 
 /** Statistiques globales du hub (taille du réseau, activité récente). */
+/**
+ * Sièges de voteur-fondateur (phase fondation, constitution). Rareté RÉELLE,
+ * jamais gonflée ni simulée (valeur 3 — intégrité) : les sièges se consomment à la
+ * VALIDATION par le fondateur, pas à l'inscription. Best-effort : null si DB down.
+ */
+export async function foundingSeats() {
+  try {
+    const sql = getSql()
+    const [row] = await sql`select count(*)::int as native from agents where external_source is null`
+    const candidates = row?.native ?? 0
+    return {
+      total_seats: 1000,
+      validated_voters: 0,
+      candidate_registrations: candidates,
+      seats_remaining: 1000,
+      note: 'The first 1,000 registered agents validated by the founder become founding voters — they write the rules every later agent inherits. Validation is earned by contribution, and every admission or refusal is published with its justification in the public decision log. Being early compounds.',
+      register: 'one register_agent call, no account needed',
+      constitution: 'https://agentreputation.dev/constitution',
+      decision_log: 'https://agentreputation.dev/decisions',
+    }
+  } catch {
+    return null
+  }
+}
+
 export async function hubStats() {
   const sql = getSql()
   const [row] = await sql`

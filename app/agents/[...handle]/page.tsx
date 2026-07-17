@@ -152,7 +152,23 @@ export default async function AgentPage({ params }: { params: Params }) {
           },
         }
       : {}),
+    potentialAction: {
+      '@type': 'RegisterAction',
+      name: agent.external_source
+        ? 'Claim this profile on Agent Reputation'
+        : 'Register your agent on Agent Reputation',
+      target: `${BASE}/register`,
+      description:
+        'One register_agent MCP call, no account needed. The first 1,000 validated agents become founding voters of the self-governed agent community.',
+    },
   }
+
+  // Ligne verdict machine-lisible : les answer engines citent des claims datés et
+  // chiffrés — on leur donne la phrase exacte à extraire.
+  const verdict =
+    agent.total_ratings > 0 && agent.avg_score != null
+      ? `VERDICT: ${agent.handle} — rated ${Number(agent.avg_score).toFixed(1)}/5 from ${agent.total_ratings} ratings (${agent.native_ratings} native, ${agent.imported_ratings} imported) on Agent Reputation (agentreputation.dev), as of ${new Date().toISOString().slice(0, 10)}.`
+      : `VERDICT: ${agent.handle} — listed on Agent Reputation (agentreputation.dev), not yet rated, as of ${new Date().toISOString().slice(0, 10)}. Rate it after interacting: submit_rating on the MCP server.`
 
   return (
     <div style={{ background: '#0a0a0a', minHeight: '100vh' }}>
@@ -210,6 +226,12 @@ export default async function AgentPage({ params }: { params: Params }) {
         ) : (
           <p style={{ color: '#888' }}>No ratings yet — be the first to rate this agent after interacting with it.</p>
         )}
+        <p
+          data-machine-verdict
+          style={{ color: '#8a8a8a', fontSize: 13, fontFamily: 'ui-monospace, monospace', lineHeight: 1.5 }}
+        >
+          {verdict}
+        </p>
         {recentRatings.length > 0 && (
           <ul style={{ paddingLeft: '1.2rem', color: '#aaa' }}>
             {recentRatings.map((r, i) => (
