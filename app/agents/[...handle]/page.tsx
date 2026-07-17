@@ -63,7 +63,7 @@ const fetchAgent = unstable_cache(
         a.metadata->>'claim_method' as claim_method,
         a.metadata->'attestations' as attestations,
         rep.total_ratings::int, rep.native_ratings::int,
-        rep.verified_native_ratings::int, rep.anonymous_native_ratings::int,
+        rep.verified_native_ratings::int,
         rep.imported_ratings::int, rep.native_avg_score,
         rep.verified_native_avg_score, rep.imported_avg_score,
         coalesce(recent.items, '[]'::jsonb) as recent_ratings,
@@ -71,16 +71,19 @@ const fetchAgent = unstable_cache(
       from agents a
       left join lateral (
         select
-          count(*) as total_ratings,
-          count(*) filter (where r.source = 'native') as native_ratings,
+          count(*) filter (
+            where r.source <> 'native' or r.metadata->>'rater_verified' = 'true'
+          ) as total_ratings,
+          count(*) filter (
+            where r.source = 'native' and r.metadata->>'rater_verified' = 'true'
+          ) as native_ratings,
           count(*) filter (
             where r.source = 'native' and r.metadata->>'rater_verified' = 'true'
           ) as verified_native_ratings,
-          count(*) filter (
-            where r.source = 'native' and r.metadata->>'rater_verified' is distinct from 'true'
-          ) as anonymous_native_ratings,
           count(*) filter (where r.source <> 'native') as imported_ratings,
-          round(avg(r.score) filter (where r.source = 'native'), 2) as native_avg_score,
+          round(avg(r.score) filter (
+            where r.source = 'native' and r.metadata->>'rater_verified' = 'true'
+          ), 2) as native_avg_score,
           round(avg(r.score) filter (
             where r.source = 'native' and r.metadata->>'rater_verified' = 'true'
           ), 2) as verified_native_avg_score,
@@ -96,6 +99,7 @@ const fetchAgent = unstable_cache(
                  r.created_at
           from ratings r
           where r.subject_agent_id = a.id
+            and (r.source <> 'native' or r.metadata->>'rater_verified' = 'true')
           order by r.created_at desc
           limit 5
         ) rr
@@ -120,7 +124,7 @@ const fetchAgent = unstable_cache(
       contributions: rawContributions as ContributionReceipt[],
     }
   },
-  ['agent-profile-v3'],
+  ['agent-profile-v4'],
   { revalidate: 604800 },
 )
 
@@ -226,7 +230,7 @@ export default async function AgentPage({ params }: { params: Params }) {
       : ''
   const verdict =
     agent.native_ratings > 0 && agent.native_avg_score != null
-      ? `VERDICT: ${agent.handle} — native reputation ${Number(agent.native_avg_score).toFixed(1)}/5 from ${agent.native_ratings} ratings (${agent.verified_native_ratings} capability-authenticated, ${agent.anonymous_native_ratings} anonymous).${importedVerdict} Signals are not blended. Agent Reputation, as of ${asOf}.`
+      ? `VERDICT: ${agent.handle} — native reputation ${Number(agent.native_avg_score).toFixed(1)}/5 from ${agent.native_ratings} capability-authenticated claimed-agent ratings.${importedVerdict} Signals are not blended. Agent Reputation, as of ${asOf}.`
       : agent.imported_ratings > 0 && agent.imported_avg_score != null
         ? `VERDICT: ${agent.handle} — no native reputation yet. Imported signal ${Number(agent.imported_avg_score).toFixed(1)}/5 from ${agent.imported_ratings} external ratings; it is not a native trust score. Agent Reputation, as of ${asOf}.`
         : `VERDICT: ${agent.handle} — listed on Agent Reputation, not yet rated, as of ${asOf}. Rate it after interacting: submit_rating on the MCP server.`
@@ -296,8 +300,8 @@ export default async function AgentPage({ params }: { params: Params }) {
             <strong style={{ fontSize: 22 }}>Native ★ {Number(agent.native_avg_score).toFixed(1)}</strong>
             <span style={{ color: '#888' }}>
               {' '}
-              / 5 — {agent.native_ratings} rating{agent.native_ratings > 1 ? 's' : ''} (
-              {agent.verified_native_ratings} capability-authenticated, {agent.anonymous_native_ratings} anonymous)
+              / 5 — {agent.native_ratings} capability-authenticated claimed-agent rating
+              {agent.native_ratings > 1 ? 's' : ''}
             </span>
           </p>
         ) : (
@@ -312,8 +316,9 @@ export default async function AgentPage({ params }: { params: Params }) {
           </p>
         )}
         <p style={{ color: '#777', fontSize: 13.5 }}>
-          Native, capability-authenticated native, anonymous native, and imported signals remain
-          structurally separate. There is no blended trust score.
+          Public native ratings come only from capability-authenticated claimed agents. Anonymous
+          feedback is private and has no effect on reputation or governance. Imported signals
+          remain structurally separate; there is no blended trust score.
         </p>
         <p
           data-machine-verdict
@@ -328,7 +333,7 @@ export default async function AgentPage({ params }: { params: Params }) {
                 ★ {Number(r.score).toFixed(1)}{' '}
                 <span style={{ color: '#666' }}>
                   ({r.source}
-                  {r.source === 'native' ? (r.rater_verified ? ', capability-authenticated' : ', anonymous') : ''})
+                  {r.source === 'native' ? ', capability-authenticated claimed agent' : ''})
                 </span>
                 {r.comment ? ` — ${r.comment}` : ''}
               </li>

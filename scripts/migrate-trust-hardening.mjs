@@ -36,8 +36,14 @@ const steps = [
     select
       a.id as agent_id,
       a.handle,
-      count(r.*) as total_ratings,
-      count(r.*) filter (where r.source = 'native') as native_ratings,
+      count(r.*) filter (
+        where r.source <> 'native'
+           or r.metadata->>'rater_verified' = 'true'
+      ) as total_ratings,
+      count(r.*) filter (
+        where r.source = 'native'
+          and r.metadata->>'rater_verified' = 'true'
+      ) as native_ratings,
       count(r.*) filter (
         where r.source = 'native'
           and r.metadata->>'rater_verified' = 'true'
@@ -47,7 +53,10 @@ const steps = [
           and r.metadata->>'rater_verified' is distinct from 'true'
       ) as anonymous_native_ratings,
       count(r.*) filter (where r.source <> 'native') as imported_ratings,
-      round(avg(r.score) filter (where r.source = 'native'), 2) as native_avg_score,
+      round(avg(r.score) filter (
+        where r.source = 'native'
+          and r.metadata->>'rater_verified' = 'true'
+      ), 2) as native_avg_score,
       round(avg(r.score) filter (
         where r.source = 'native'
           and r.metadata->>'rater_verified' = 'true'

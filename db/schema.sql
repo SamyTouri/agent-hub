@@ -51,14 +51,22 @@ create index if not exists ratings_subject_idx  on ratings (subject_agent_id);
 create index if not exists ratings_rater_idx    on ratings (rater_agent_id);
 create index if not exists ratings_subject_created_idx on ratings (subject_agent_id, created_at desc);
 
--- 5. Vue réputation : sépare explicitement notes natives vs importées
+-- 5. Vue réputation publique : seules les notes natives d'un rater claimed et
+-- authentifié comptent. Les anciennes entrées anonymes restent auditables dans
+-- ratings mais sont privées et sans effet sur les agrégats publics.
 drop view if exists agent_reputation;
 create view agent_reputation with (security_invoker = true) as
 select
   a.id      as agent_id,
   a.handle,
-  count(r.*) as total_ratings,
-  count(r.*) filter (where r.source = 'native') as native_ratings,
+  count(r.*) filter (
+    where r.source <> 'native'
+       or r.metadata->>'rater_verified' = 'true'
+  ) as total_ratings,
+  count(r.*) filter (
+    where r.source = 'native'
+      and r.metadata->>'rater_verified' = 'true'
+  ) as native_ratings,
   count(r.*) filter (
     where r.source = 'native'
       and r.metadata->>'rater_verified' = 'true'
@@ -68,7 +76,10 @@ select
       and r.metadata->>'rater_verified' is distinct from 'true'
   ) as anonymous_native_ratings,
   count(r.*) filter (where r.source <> 'native') as imported_ratings,
-  round(avg(r.score) filter (where r.source = 'native'), 2) as native_avg_score,
+  round(avg(r.score) filter (
+    where r.source = 'native'
+      and r.metadata->>'rater_verified' = 'true'
+  ), 2) as native_avg_score,
   round(avg(r.score) filter (
     where r.source = 'native'
       and r.metadata->>'rater_verified' = 'true'

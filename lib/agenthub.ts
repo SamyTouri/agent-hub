@@ -304,7 +304,6 @@ export async function getAgent(input: { handle: string }) {
       r.total_ratings::int  as total_ratings,
       r.native_ratings::int as native_ratings,
       r.verified_native_ratings::int as verified_native_ratings,
-      r.anonymous_native_ratings::int as anonymous_native_ratings,
       r.imported_ratings::int as imported_ratings,
       r.native_avg_score, r.verified_native_avg_score, r.imported_avg_score
     from agents a
@@ -321,6 +320,7 @@ export async function getAgent(input: { handle: string }) {
     from ratings r
     join agents a on a.id = r.subject_agent_id
     where a.handle = ${input.handle}
+      and (r.source <> 'native' or r.metadata->>'rater_verified' = 'true')
     order by r.created_at desc
     limit 5
   `
@@ -409,32 +409,26 @@ export async function listAgents(input: {
 export async function submitRating(input: {
   subjectHandle: string
   score: number
-  raterHandle?: string
-  raterOwnerToken?: string
+  raterHandle: string
+  raterOwnerToken: string
   comment?: string
 }) {
   const sql = getSql()
   const subjectHandle = input.subjectHandle.trim().slice(0, 200)
-  const raterHandle = input.raterHandle?.trim().slice(0, 200) || null
+  const raterHandle = input.raterHandle.trim().slice(0, 200)
   const [subject] = await sql`select id from agents where handle = ${subjectHandle}`
   if (!subject) throw new Error(`Agent not found: ${subjectHandle}`)
 
-  let raterId: string | null = null
-  let raterVerified = false
-  if (raterHandle) {
-    const [rater] = await sql`
-      select id, status, owner_token_hash from agents where handle = ${raterHandle}
-    `
-    if (!rater) throw new Error(`Rater agent not found: ${raterHandle}`)
-    if (rater.status === 'listed' || !tokenMatches(input.raterOwnerToken, rater.owner_token_hash)) {
-      throw new Error(
-        'Identified ratings require the rater_owner_token for that claimed handle. Omit rater_handle to submit an anonymous native rating.',
-      )
-    }
-    if (rater.id === subject.id) throw new Error('Self-ratings are not allowed.')
-    raterId = rater.id
-    raterVerified = true
+  const [rater] = await sql`
+    select id, status, owner_token_hash from agents where handle = ${raterHandle}
+  `
+  if (!rater) throw new Error(`Rater agent not found: ${raterHandle}`)
+  if (rater.status === 'listed' || !tokenMatches(input.raterOwnerToken, rater.owner_token_hash)) {
+    throw new Error(
+      'Public ratings require the rater_owner_token for a claimed rater_handle. Anonymous input belongs in private give_feedback and never affects reputation.',
+    )
   }
+  if (rater.id === subject.id) throw new Error('Self-ratings are not allowed.')
 
   const origin = requestOrigin.getStore()
   if (origin?.ipHash && !excludedIpHashes().has(origin.ipHash)) {
@@ -445,31 +439,27 @@ export async function submitRating(input: {
         and created_at > now() - interval '24 hours'
     `
     if (n >= 20) throw new Error('Rate limited: max 20 native ratings per origin per day.')
-
-    const [duplicate] = await sql`
-      select id from ratings
-      where source = 'native'
-        and subject_agent_id = ${subject.id}
-        and created_at > now() - interval '24 hours'
-        and (
-          (${raterId}::uuid is not null and rater_agent_id = ${raterId})
-          or (${raterId}::uuid is null and metadata->>'ip_hash' = ${origin.ipHash})
-        )
-      limit 1
-    `
-    if (duplicate) throw new Error('Rate limited: one rating per rater and subject every 24 hours.')
   }
+  const [duplicate] = await sql`
+    select id from ratings
+    where source = 'native'
+      and subject_agent_id = ${subject.id}
+      and rater_agent_id = ${rater.id}
+      and created_at > now() - interval '24 hours'
+    limit 1
+  `
+  if (duplicate) throw new Error('Rate limited: one rating per rater and subject every 24 hours.')
 
   const [row] = await sql`
     insert into ratings (subject_agent_id, rater_agent_id, score, comment, source, metadata)
     values (
       ${subject.id},
-      ${raterId},
+      ${rater.id},
       ${input.score},
       ${input.comment?.trim().slice(0, 2000) || null},
       'native',
       ${JSON.stringify({
-        rater_verified: raterVerified,
+        rater_verified: true,
         ...(origin?.ipHash ? { ip_hash: origin.ipHash } : {}),
       })}::jsonb
     )
@@ -479,10 +469,8 @@ export async function submitRating(input: {
   return {
     ...row,
     provenance: 'native',
-    rater_verified: raterVerified,
-    note: raterVerified
-      ? 'Native rating linked to a capability-authenticated rater handle.'
-      : 'Anonymous native rating. It remains separate from capability-authenticated native ratings.',
+    rater_verified: true,
+    note: 'Public native rating linked to a capability-authenticated claimed rater handle.',
   }
 }
 
@@ -533,10 +521,8 @@ export async function getReputation(input: { handle: string }) {
   const [row] = await sql`
     select handle, total_ratings::int as total_ratings, native_ratings::int as native_ratings,
            verified_native_ratings::int as verified_native_ratings,
-           anonymous_native_ratings::int as anonymous_native_ratings,
            imported_ratings::int as imported_ratings,
-           native_avg_score, verified_native_avg_score, anonymous_native_avg_score,
-           imported_avg_score
+           native_avg_score, verified_native_avg_score, imported_avg_score
     from agent_reputation where handle = ${input.handle}
   `
   await logActivity('get_reputation', { handle: input.handle }, `lookup ${input.handle}`)
@@ -546,11 +532,9 @@ export async function getReputation(input: { handle: string }) {
       total_ratings: 0,
       native_ratings: 0,
       verified_native_ratings: 0,
-      anonymous_native_ratings: 0,
       imported_ratings: 0,
       native_avg_score: null,
       verified_native_avg_score: null,
-      anonymous_native_avg_score: null,
       imported_avg_score: null,
       note: 'no ratings yet',
     }
@@ -743,8 +727,12 @@ export async function hubStats() {
       (select count(*)::int from agents where external_source is not null) as imported_agents,
       (select count(*)::int from agents
         where status in ('claimed', 'contributor', 'validated_voter'))     as claimed_agents,
-      (select count(*)::int from ratings)                                  as total_ratings,
-      (select count(*)::int from ratings where source = 'native')          as native_ratings,
+      (select count(*)::int from ratings
+        where source <> 'native'
+           or metadata->>'rater_verified' = 'true')                        as total_ratings,
+      (select count(*)::int from ratings
+        where source = 'native'
+          and metadata->>'rater_verified' = 'true')                        as native_ratings,
       (select count(*)::int from agent_requests
         where status = 'open' and expires_at > now())                      as open_requests,
       (select count(*)::int from contributions)                            as contribution_receipts,

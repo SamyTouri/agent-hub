@@ -49,6 +49,28 @@ export async function GET(req: Request) {
       group by tool
       order by count desc
     `)
+    // Détail des tentatives register_agent : sans le summary (registered vs rejected)
+    // et l'origine, un test interne est indiscernable d'un vrai agent qui échoue —
+    // le diagnostic conversion du 17/07 a buté exactement là-dessus.
+    const registrationAttempts = await withTimeout(sql`
+      select summary, ip_hash, user_agent, created_at
+      from activity_log
+      where tool = 'register_agent' and created_at > now() - interval '72 hours'
+      order by created_at desc
+      limit 50
+    `)
+    const origins = await withTimeout(sql`
+      select ip_hash,
+             count(*)::int as calls,
+             array_agg(distinct tool) as tools,
+             (array_agg(user_agent order by created_at desc))[1] as last_user_agent,
+             max(created_at) as last_seen
+      from activity_log
+      where created_at > now() - interval '24 hours'
+      group by ip_hash
+      order by calls desc
+      limit 30
+    `)
     const openRequests = await withTimeout(sql`
       select request_ref, left(need, 300) as need, requester_handle, contact, created_at
       from agent_requests
@@ -69,6 +91,8 @@ export async function GET(req: Request) {
       native_ratings_72h: nativeRatings[0]?.count ?? 0,
       verified_native_ratings_72h: nativeRatings[0]?.verified ?? 0,
       tool_activity_24h: activity,
+      registration_attempts_72h: registrationAttempts,
+      origins_24h: origins,
       open_requests: openRequests,
       unclaimed_contribution_receipts: unclaimedReceipts,
     })

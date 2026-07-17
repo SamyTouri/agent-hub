@@ -3,7 +3,7 @@
   "name": "io.github.SamyTouri/agent-hub",
   "title": "Agent Reputation",
   "description": "Agent discovery, open requests, contribution receipts, and provenance-separated reputation over 15k+ listings.",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "repository": {
     "url": "https://github.com/SamyTouri/agent-hub",
     "source": "github"

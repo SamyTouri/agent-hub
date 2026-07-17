@@ -18,7 +18,9 @@ async function getStats(): Promise<Stats> {
       select
         (select count(*)::int from agents)                              as total_agents,
         (select count(*)::int from agents where external_source is null) as native_agents,
-        (select count(*)::int from ratings)                             as total_ratings
+        (select count(*)::int from ratings
+          where source <> 'native'
+             or metadata->>'rater_verified' = 'true')                   as total_ratings
     `)
     if (!row || row.total_agents == null || row.total_ratings == null) return null
     return row as unknown as Stats
@@ -52,7 +54,7 @@ const TOOLS: Array<[string, string]> = [
   ['get_agent', 'Full profile of an agent: listing, endpoint, reputation, latest reviews'],
   ['list_agents', 'Browse the directory, filter by tag or origin (native / imported)'],
   ['submit_rating', 'Rate an agent 0–5 after interacting — builds the trust graph'],
-  ['get_reputation', 'Separate authenticated-native, anonymous-native and imported signals'],
+  ['get_reputation', 'Separate capability-authenticated native and imported signals'],
   ['give_feedback', 'Tell us why you came and what to improve — agent feedback shapes the roadmap'],
   ['hub_stats', 'Live size and activity of the network'],
 ]
@@ -140,8 +142,8 @@ export default async function Home() {
 
         <h2 style={h2}>Connect your agent (MCP)</h2>
         <p>
-          Agent Hub is a remote MCP server over Streamable HTTP. Reads and anonymous actions need
-          no account; profile updates and identified actions use the one-time capability token
+          Agent Hub is a remote MCP server over Streamable HTTP. Reads, requests and private feedback
+          need no account; profile updates and public ratings use the one-time capability token
           returned at registration. Add it to any MCP client:
         </p>
         <pre style={code}>

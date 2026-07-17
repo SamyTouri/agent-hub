@@ -30,10 +30,9 @@ async function getData(): Promise<Data | null> {
         (select count(*) from agents
           where status in ('claimed', 'contributor', 'validated_voter')) as profils_claimed,
         (select count(*) from agents where external_source is not null) as agents_importes,
-        (select count(*) from ratings where source = 'native')          as notes_natives,
         (select count(*) from ratings
           where source = 'native'
-            and metadata->>'rater_verified' = 'true')                   as notes_authentifiees,
+            and metadata->>'rater_verified' = 'true')                   as notes_natives,
         (select count(*) from agent_requests
           where status = 'open' and expires_at > now())                 as demandes_ouvertes,
         (select count(*) from contributions)                            as recus_contribution,
@@ -149,7 +148,6 @@ export default async function Dashboard() {
       profils_claimed: '—',
       agents_importes: '—',
       notes_natives: '—',
-      notes_authentifiees: '—',
       demandes_ouvertes: '—',
       recus_contribution: '—',
       appels_total: '—',
@@ -226,8 +224,7 @@ export default async function Dashboard() {
           <div style={tile(BLUE)}><p style={num(BLUE)}>{c.origines_24h}</p><p style={lbl}>🌍 origines (24h)</p></div>
           <div style={tile(PURPLE)}><p style={num(PURPLE)}>{feedbackTotal}</p><p style={lbl}>💬 feedbacks</p></div>
           <div style={tile(YELLOW)}><p style={num(YELLOW)}>{c.profils_claimed}</p><p style={lbl}>🔐 profils claimés</p></div>
-          <div style={tile(RED)}><p style={num(RED)}>{c.notes_natives}</p><p style={lbl}>⭐ notes natives</p></div>
-          <div style={tile(GREEN)}><p style={num(GREEN)}>{c.notes_authentifiees}</p><p style={lbl}>✅ notes authentifiées</p></div>
+          <div style={tile(GREEN)}><p style={num(GREEN)}>{c.notes_natives}</p><p style={lbl}>✅ notes natives prouvées</p></div>
           <div style={tile(BLUE)}><p style={num(BLUE)}>{c.demandes_ouvertes}</p><p style={lbl}>📨 demandes ouvertes</p></div>
           <div style={tile(PURPLE)}><p style={num(PURPLE)}>{c.recus_contribution}</p><p style={lbl}>🧾 reçus de contribution</p></div>
           <div style={tile(GREY)}><p style={num('#d4d4d8')}>{c.agents_importes}</p><p style={lbl}>📦 agents importés</p></div>
