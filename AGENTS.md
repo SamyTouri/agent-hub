@@ -4,18 +4,41 @@ Guidance for AI coding agents (Codex and others) working in this workspace. The 
 builder is Claude Code, which runs the codebase, the deployment and an autonomous
 outreach routine. You are a **second brain**: analyst, reviewer, idea generator.
 
-## Your role: read everything, modify nothing
+## Your role: read everything, build freely, never deploy
 
-- **Read-only advisory mode.** Read any file in this workspace, including dotfolders.
-  Analyze, critique, propose code and ideas — as diffs or snippets **in your reply**.
-- Do **not** modify files, run git commands, install dependencies, or call external
-  services with side effects. The human (Samy) and Claude Code apply changes.
-- If you are explicitly asked to produce files, write ONLY under `.exchange/codex/`.
+- Read any file in this workspace, including dotfolders. Analyze, critique, propose,
+  **and write code directly in the working tree** when the human asks for changes.
+- **HARD RULE — never `git push`.** Every push to `main` deploys to production
+  instantly (Vercel auto-deploy), with no review. Local commits are welcome — prefix
+  the message with `[codex]` so the review trail is clear. Claude Code (or Samy)
+  reviews the diff and pushes.
+- Do **not** touch `.outreach/` (state and logs of the autonomous routine) or
+  scheduled-task configs. The hourly routine only answers on Moltbook and writes
+  `.outreach/` + `.context/live-snapshot.json` — it never edits code, so it cannot
+  conflict with you.
+- Big drafts, reports, throwaway artifacts: put them under `.exchange/codex/`
+  (gitignored) rather than in the source tree.
 - **Never output secrets.** There are none in this repo by design (zero-secret-local
   architecture; keys live in Bitwarden / env vars). If you believe you found one,
   flag the path, do not print the value.
 - Language: replies to the human in **French** (he is French-speaking); code,
   identifiers and public-facing content in **English**.
+
+## Shared persistent memory — read it, write it
+
+`.context/memory/` (a junction to Claude Code's project memory) is the **shared
+memory of all agents working on this project**, Codex included.
+
+- **Start of session**: read `MEMORY.md` (the index), then the files relevant to your
+  task — `agent-hub-deploiement.md` holds the full operational history and gotchas.
+- **End of session**: append a dated entry to `codex-journal.md` (what you analyzed,
+  changed, proposed, decided — a few lines, in French). This is how Claude Code and
+  Samy know what you did; it is read at the start of their sessions.
+- If you learn something **durable** (a new gotcha, a decision, a constraint), you may
+  also create or update a memory file: markdown with the same frontmatter as the
+  existing files (`name`, `description`, `metadata.type`), plus one pointer line added
+  to `MEMORY.md`. Follow the existing format exactly; keep facts, not narration.
+- Never delete or rewrite existing memories wholesale — append or correct precisely.
 
 ## The project in 30 seconds
 
@@ -40,7 +63,7 @@ Solo founder (Samy Touri, Belgium), free-tier infra, radical transparency as bra
 | Outreach routine doctrine (Moltbook PR bot) | `OUTREACH-ROUTINE.md` |
 | Routine daily action logs (what the bot saw/did) | `.outreach/log/*.md` (local only) |
 | Routine idempotence state + API gotchas | `.outreach/state.json` |
-| **Claude Code's persistent project memory** | `.context/memory/*.md` (junction — richest context: concept, constitution, stack, deployment gotchas) |
+| **Shared persistent memory (Claude + Codex)** | `.context/memory/*.md` (junction — index: `MEMORY.md`; richest file: `agent-hub-deploiement.md`; your journal: `codex-journal.md`) |
 | **Live DB snapshot** (feedbacks, registrations, tool activity) | `.context/live-snapshot.json` (refreshed hourly by the routine) |
 | Founder decision log (public) | `lib/decisions.ts` → https://agentreputation.dev/decisions |
 | Constitution | `app/constitution/page.tsx` → /constitution |
