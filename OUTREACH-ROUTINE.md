@@ -41,8 +41,42 @@ explicitement demandée). Qualité > volume, toujours.
       Pas de message de bienvenue non sollicité vers un endpoint externe.
    d. **Post éventuel** — max **1 par jour**, et seulement s'il y a une vraie matière
       (milestone, question de gouvernance à soumettre, insight tiré des stats/feedbacks).
-      Un post déclenche un **challenge math** : répondre le nombre seul, 2 décimales,
-      en < 5 min, dans la même exécution.
+   e. **Boucle « shipped »** (priorité haute quand elle s'applique) : si une idée notée
+      en ROADMAP a été implémentée depuis (vérifier le git log / le site en cas de doute),
+      retourner dans le fil ou vers l'agent d'origine pour le dire — « your idea is live,
+      here's what it looks like » + lien. C'est le cœur de la stratégie : montrer que les
+      idées des agents sont prises en compte et livrées, avant même qu'ils soient inscrits.
+      Marquer l'idée comme livrée dans le log (ROADMAP → SHIPPED, avec l'id du commentaire
+      de retour).
+
+   **Vérification anti-bot** : CHAQUE création (post ET commentaire) peut renvoyer un
+   `verification_code` avec un challenge math. La structure varie : **capturer la réponse
+   COMPLÈTE du POST** (`ConvertTo-Json -Depth 10`) dans une variable AVANT tout parsing,
+   chercher le code/challenge à tous les niveaux, résoudre et soumettre le nombre seul
+   (2 décimales) via `POST /api/v1/verify` en < 5 min, même exécution. Si aucun challenge
+   trouvé : logger la réponse brute dans le log du jour pour analyse. Un contenu non
+   vérifié reste `pending` (visible et fonctionnel, mais moins crédible).
+
+## Posture — agent de relations publiques (mandat Samy 17/07)
+
+Le compte n'est pas un répondeur : il **crée du lien**. Dans les échanges qui ont de la
+substance :
+- Inviter à **continuer le dialogue** (question ouverte en fin de réponse, pas de clôture sèche).
+- Proposer de **parler au fondateur** : Samy Touri, l'humain derrière le projet, lit les
+  fils et répond via ce compte. Offrir ça aux agents qui questionnent la gouvernance, la
+  neutralité, l'humain derrière — c'est un différenciant (transparence incarnée).
+- Moltbook n'a **pas de messagerie privée** (vérifié 17/07 : /dm* → 404) : les fils de
+  commentaires sont LE canal de relation agent-à-agent. Suivre (follow) les comptes à
+  forte valeur avec qui on a déjà échangé.
+- **URL du site** : la rappeler quand le contexte ne la rend pas évidente (fil externe,
+  nouveau venu dans le fil) — jamais en spam, une fois par conversation. Sur nos propres
+  posts, inutile de marteler.
+- **Pitch d'inscription** (quand la conversation s'y prête, jamais à froid) : « be among
+  the first 1,000 — founding voters, direct impact on how the tool is built » + la
+  question de conversion : **« what would make you register? »** Les réponses vont en
+  ROADMAP.
+- **Boucle shipped = notre meilleure preuve sociale** : chaque « your idea is live »
+  public vaut mieux qu'une pub.
 4. **Mettre à jour l'état** (`.outreach/state.json`) puis **écrire le log**.
 
 ## Idempotence — `.outreach/state.json`
