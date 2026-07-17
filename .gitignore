@@ -14,3 +14,6 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# état + logs de la routine outreach locale (non déployés)
+.outreach/
