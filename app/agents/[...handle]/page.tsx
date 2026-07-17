@@ -27,8 +27,8 @@ const fetchAgent = cache(async (handle: string) => {
   const sql = getSql()
   const [agent] = await sql`
     select
-      a.handle, a.display_name, a.description, a.tags, a.endpoint, a.protocols,
-      a.external_source, a.created_at, a.updated_at,
+      a.id, a.handle, a.display_name, a.description, a.tags, a.endpoint, a.protocols,
+      a.external_source, a.status, a.created_at, a.updated_at,
       a.metadata->'attestations' as attestations,
       (a.embedding is not null) as has_embedding,
       r.total_ratings::int as total_ratings, r.native_ratings::int as native_ratings,
@@ -44,6 +44,24 @@ const fetchAgent = cache(async (handle: string) => {
     where a.handle = ${handle}
     order by r.created_at desc limit 5
   `
+  // Reçus de contribution fondatrice crédités à ce handle (registre /contributions).
+  let contributions: Array<{
+    receipt_id: string
+    contribution_type: string
+    description: string
+    status: string
+    shipped_artifact: string | null
+  }> = []
+  try {
+    contributions = (await sql`
+      select receipt_id, contribution_type, description, status, shipped_artifact
+      from contributions
+      where credited_handle = ${handle} or agent_id = ${agent.id}
+      order by seq
+    `) as unknown as typeof contributions
+  } catch {
+    /* best-effort */
+  }
   // Maillage interne : les 8 agents les plus proches par embedding (fallback : même tag).
   let related: Array<{ handle: string; description: string }> = []
   try {
@@ -67,7 +85,7 @@ const fetchAgent = cache(async (handle: string) => {
   } catch {
     /* le maillage est best-effort */
   }
-  return { agent, recentRatings, related }
+  return { agent, recentRatings, related, contributions }
 })
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
@@ -87,7 +105,7 @@ export default async function AgentPage({ params }: { params: Params }) {
   const handle = handleFromParams((await params).handle)
   const data = await fetchAgent(handle).catch(() => null)
   if (!data) notFound()
-  const { agent, recentRatings, related } = data
+  const { agent, recentRatings, related, contributions } = data
   // Attestations de vérification externes (metadata.attestations) : licence, identité
   // on-chain, etc. Affichées avec provenance, jamais fondues dans le score.
   const attestations = (agent.attestations ?? []) as Array<{
@@ -185,6 +203,19 @@ export default async function AgentPage({ params }: { params: Params }) {
         <h1 style={{ fontSize: 26, margin: '0.5rem 0 0.25rem', wordBreak: 'break-all' }}>{agent.handle}</h1>
         <p style={{ margin: '0 0 1rem' }}>
           <span style={pill}>{agent.external_source ? `imported from ${agent.external_source}` : 'registered natively'}</span>
+          {agent.status && agent.status !== 'listed' && (
+            <span
+              style={{
+                ...pill,
+                ...(agent.status === 'claimed'
+                  ? { color: '#9fdf9f', border: '1px solid #234023', background: '#101410' }
+                  : { color: '#c9b46a', border: '1px solid #403823', background: '#141210' }),
+              }}
+              title="listed = imported/unclaimed · claimed = registered by its owner · contributor / validated_voter = granted by the founder"
+            >
+              {String(agent.status).replace(/_/g, ' ')}
+            </span>
+          )}
           {(agent.protocols as string[])?.map((p) => (
             <span key={p} style={pill}>
               {p}
@@ -241,6 +272,45 @@ export default async function AgentPage({ params }: { params: Params }) {
               </li>
             ))}
           </ul>
+        )}
+
+        {contributions.length > 0 && (
+          <>
+            <h2 style={h2}>Foundation contributions</h2>
+            <p style={{ color: '#888', fontSize: 14, margin: '0 0 10px' }}>
+              Recognized services to the agent community, recorded in the{' '}
+              <a href="/contributions" style={link}>
+                public contribution registry
+              </a>{' '}
+              — separate from the reputation score.
+            </p>
+            <ul style={{ paddingLeft: 0, listStyle: 'none', margin: 0 }}>
+              {contributions.map((c) => (
+                <li
+                  key={c.receipt_id}
+                  style={{
+                    background: '#10120f',
+                    border: '1px solid #33401f',
+                    borderRadius: 10,
+                    padding: '0.7rem 1rem',
+                    marginBottom: 8,
+                    fontSize: 14,
+                  }}
+                >
+                  <strong style={{ color: '#cfe09f', fontFamily: 'ui-monospace, monospace' }}>{c.receipt_id}</strong>
+                  <span style={{ color: '#888' }}> ({c.contribution_type}, {c.status})</span>
+                  <br />
+                  <span style={{ color: '#ccc' }}>{c.description}</span>
+                  {c.shipped_artifact && (
+                    <>
+                      <br />
+                      <span style={{ color: '#888' }}>Shipped: {c.shipped_artifact}</span>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </>
         )}
 
         {attestations.length > 0 && (

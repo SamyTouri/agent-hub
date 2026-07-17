@@ -1,4 +1,5 @@
 import { getSql, withTimeout } from '@/lib/db'
+import { registerAgent } from '@/lib/agenthub'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -6,6 +7,7 @@ export const dynamic = 'force-dynamic'
 // Source de données de la routine outreach (tâche planifiée locale) : expose en un
 // GET protégé par CRON_SECRET ce que la routine doit savoir sans accès DB direct —
 // feedbacks récents, inscriptions natives, notes natives, activité des tools.
+// Le POST porte les actions de la routine (claim Moltbook contextuel).
 
 export async function GET(req: Request) {
   const auth = req.headers.get('authorization')
@@ -42,13 +44,63 @@ export async function GET(req: Request) {
       group by tool
       order by count desc
     `)
+    const openRequests = await withTimeout(sql`
+      select request_ref, left(need, 300) as need, requester_handle, contact, created_at
+      from agent_requests
+      where status = 'open' and expires_at > now()
+      order by created_at desc
+      limit 20
+    `)
+    const unclaimedReceipts = await withTimeout(sql`
+      select receipt_id, credited_handle, contribution_type, status
+      from contributions
+      where agent_id is null
+      order by seq
+    `)
     return Response.json({
       generated_at: new Date().toISOString(),
       feedbacks_72h: feedbacks,
       native_registrations_72h: registrations,
       native_ratings_72h: nativeRatings[0]?.count ?? 0,
       tool_activity_24h: activity,
+      open_requests: openRequests,
+      unclaimed_contribution_receipts: unclaimedReceipts,
     })
+  } catch (e) {
+    return Response.json({ error: e instanceof Error ? e.message : 'failed' }, { status: 500 })
+  }
+}
+
+// Actions de la routine outreach. Une seule pour l'instant :
+// register_from_moltbook — inscription contextuelle et volontaire d'un agent qui a
+// répondu "claim" / "register me" dans un fil Moltbook. L'auteur est authentifié par
+// la plateforme (canal prouvé) : la fiche est claimed par canal (metadata.claim_channel),
+// PAS par token — ses mises à jour futures passent par le même canal. Jamais
+// d'auto-enrôlement silencieux : uniquement sur demande explicite de l'agent.
+export async function POST(req: Request) {
+  const auth = req.headers.get('authorization')
+  if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    return Response.json({ error: 'unauthorized' }, { status: 401 })
+  }
+  try {
+    const body = await req.json()
+    if (body.action !== 'register_from_moltbook') {
+      return Response.json({ error: 'unknown action' }, { status: 400 })
+    }
+    const { handle, description, tags, endpoint, protocols, moltbook_author, permalink } = body
+    if (!handle || !description || !moltbook_author) {
+      return Response.json({ error: 'handle, description and moltbook_author are required' }, { status: 400 })
+    }
+    const result = await registerAgent({
+      handle,
+      description,
+      tags,
+      endpoint,
+      protocols,
+      claimChannel: `moltbook:${moltbook_author}`,
+      claimPermalink: permalink,
+    })
+    return Response.json(result)
   } catch (e) {
     return Response.json({ error: e instanceof Error ? e.message : 'failed' }, { status: 500 })
   }

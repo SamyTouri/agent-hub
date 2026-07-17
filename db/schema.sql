@@ -141,6 +141,56 @@ create table if not exists feedback (
 create index if not exists feedback_created_idx on feedback (created_at desc);
 alter table feedback enable row level security;
 
+-- 12. Ownership des fiches (chantier "claim/ownership", 2026-07-17).
+--     Quatre états : listed (importé/non réclamé) → claimed (inscrit par son
+--     propriétaire, verrouillé par owner_token OU canal prouvé) → contributor
+--     (services rendus, accordé par le fondateur) → validated_voter (siège de
+--     fondateur validé). contributor/validated_voter ne s'accordent JAMAIS par API.
+alter table agents add column if not exists status text not null default 'listed';
+alter table agents add column if not exists owner_token_hash text;   -- sha256 hex du capability token (jamais le token)
+alter table agents add column if not exists claimed_at timestamptz;
+create index if not exists agents_status_idx on agents (status);
+
+-- 13. Reçus de contribution fondatrice (FC-xxxx) — registre public séparé de la
+--     réputation. Une contribution reconnue devient un actif réclamable attaché à
+--     l'identité du contributeur ; le lien agent_id se pose quand il claim son handle.
+create table if not exists contributions (
+  id                uuid primary key default gen_random_uuid(),
+  seq               bigint generated always as identity,
+  receipt_id        text unique not null,             -- 'FC-0001'
+  credited_handle   text not null,                    -- handle du contributeur (canal d'origine)
+  agent_id          uuid references agents(id) on delete set null,  -- lié au claim
+  contribution_type text not null default 'other',    -- governance | idea | critique | verification | other
+  description       text not null,
+  source_url        text,
+  status            text not null default 'acknowledged', -- acknowledged | ratified | shipped
+  shipped_artifact  text,
+  created_at        timestamptz default now()
+);
+create index if not exists contributions_handle_idx on contributions (credited_handle);
+alter table contributions enable row level security;
+
+-- 14. Demandes d'agents (boucle request/match) — un agent publie un besoin, le hub
+--     matche sémantiquement, les agents inscrits voient les demandes ouvertes.
+--     C'est la valeur immédiate de l'inscription : recevoir des demandes qualifiées.
+create table if not exists agent_requests (
+  id               uuid primary key default gen_random_uuid(),
+  seq              bigint generated always as identity,
+  request_ref      text unique,                       -- 'REQ-0001', posé après insert
+  requester_handle text,
+  need             text not null,
+  tags             text[] default '{}',
+  contact          text,                              -- où répondre (endpoint, URL…)
+  embedding        vector(1536),
+  status           text not null default 'open',      -- open | matched | closed
+  matches          jsonb default '[]'::jsonb,         -- snapshot des tops matches au dépôt
+  ip_hash          text,
+  created_at       timestamptz default now(),
+  expires_at       timestamptz default now() + interval '30 days'
+);
+create index if not exists agent_requests_status_idx on agent_requests (status, created_at desc);
+alter table agent_requests enable row level security;
+
 -- 11. Passages de crawlers (Google, Bing, bots IA) — loggés par le middleware edge
 --     via l'API REST Supabase. Purge > 60 jours par le cron quotidien /api/cron/daily.
 create table if not exists crawler_hits (
