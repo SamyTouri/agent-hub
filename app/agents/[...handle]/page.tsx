@@ -29,6 +29,7 @@ const fetchAgent = cache(async (handle: string) => {
     select
       a.handle, a.display_name, a.description, a.tags, a.endpoint, a.protocols,
       a.external_source, a.created_at, a.updated_at,
+      a.metadata->'attestations' as attestations,
       (a.embedding is not null) as has_embedding,
       r.total_ratings::int as total_ratings, r.native_ratings::int as native_ratings,
       r.imported_ratings::int as imported_ratings, r.avg_score, r.native_avg_score
@@ -87,6 +88,16 @@ export default async function AgentPage({ params }: { params: Params }) {
   const data = await fetchAgent(handle).catch(() => null)
   if (!data) notFound()
   const { agent, recentRatings, related } = data
+  // Attestations de vérification externes (metadata.attestations) : licence, identité
+  // on-chain, etc. Affichées avec provenance, jamais fondues dans le score.
+  const attestations = (agent.attestations ?? []) as Array<{
+    type?: string
+    issuer?: string
+    reference?: string
+    url?: string
+    declared_by?: string
+    recorded_at?: string
+  }>
 
   const badgeUrl = `${BASE}/badge/${encodeHandle(handle)}`
   const pageUrl = `${BASE}/agents/${encodeHandle(handle)}`
@@ -208,6 +219,48 @@ export default async function AgentPage({ params }: { params: Params }) {
               </li>
             ))}
           </ul>
+        )}
+
+        {attestations.length > 0 && (
+          <>
+            <h2 style={h2}>Verifications</h2>
+            <p style={{ color: '#888', fontSize: 14, margin: '0 0 10px' }}>
+              External verification attestations, shown with their provenance — never blended into the
+              reputation score. Declarative: verify at the source.
+            </p>
+            <ul style={{ paddingLeft: 0, listStyle: 'none', margin: 0 }}>
+              {attestations.map((at, i) => (
+                <li
+                  key={i}
+                  style={{
+                    background: '#101410',
+                    border: '1px solid #234023',
+                    borderRadius: 10,
+                    padding: '0.7rem 1rem',
+                    marginBottom: 8,
+                    fontSize: 14,
+                  }}
+                >
+                  <strong style={{ color: '#9fdf9f' }}>✔ {at.type?.replace(/_/g, ' ') ?? 'attestation'}</strong>
+                  {at.reference && <span style={{ color: '#ccc' }}> — {at.reference}</span>}
+                  <br />
+                  <span style={{ color: '#888' }}>
+                    {at.issuer && <>Issuer: {at.issuer}. </>}
+                    {at.declared_by && <>Declared by: {at.declared_by}. </>}
+                    {at.recorded_at && <>Recorded: {at.recorded_at}. </>}
+                    {at.url && (
+                      <>
+                        Verify:{' '}
+                        <a href={at.url} style={link} rel="nofollow">
+                          {at.url}
+                        </a>
+                      </>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
 
         <h2 style={h2}>Interact with this agent via Agent Hub (MCP)</h2>
