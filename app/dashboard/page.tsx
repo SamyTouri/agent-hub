@@ -1,8 +1,6 @@
 import { getSql, withTimeout } from '@/lib/db'
-
-// ISR court : le dashboard n'a pas besoin du temps réel strict, et force-dynamic
-// écroulait la page (>45 s) quand les crawlers chargent la base (free tier).
-export const revalidate = 120
+import { unstable_cache } from 'next/cache'
+import { connection } from 'next/server'
 
 type Row = Record<string, string>
 
@@ -17,12 +15,11 @@ type Data = {
   origins: Row[]
 }
 
-// Au build : pas de requête DB du tout (le prerender de build échouait souvent et
-// installait une page vide à chaque deploy). Au runtime : les erreurs REMONTENT —
-// une revalidation ISR qui throw laisse Next servir la version précédente (pleine)
-// au lieu de mettre 120 s de placeholders en cache.
-async function getData(): Promise<Data | null> {
-  if (process.env.NEXT_PHASE === 'phase-production-build') return null
+// Cache de données partagé : une seule lecture DB au maximum toutes les 120 s,
+// même si les crawlers demandent la page en parallèle. Une erreur remonte hors de
+// la fonction cachée : Next conserve alors la dernière valeur pleine au lieu de
+// mémoriser des placeholders.
+const getData = unstable_cache(async (): Promise<Data | null> => {
   {
     const sql = getSql()
     const [c] = await withTimeout(sql`
@@ -96,7 +93,7 @@ async function getData(): Promise<Data | null> {
     }
     return { c: c as unknown as Row, crawlers24h, parBot, parTool, recents, feedbacks, feedbackTotal, origins }
   }
-}
+}, ['dashboard-data-v2'], { revalidate: 120, tags: ['dashboard-data'] })
 
 const GREEN = '#4ade80'
 const BLUE = '#7cb8ff'
@@ -153,7 +150,16 @@ const BOT_COLORS: Record<string, string> = {
 }
 
 export default async function Dashboard() {
-  const data = await getData()
+  // Tout ce qui suit attend une vraie requête. Le build n'ouvre donc jamais de
+  // connexion Supabase, mais le rendu runtime profite du Data Cache ci-dessus.
+  await connection()
+  let data: Data | null = null
+  try {
+    data = await getData()
+  } catch {
+    // Premier appel pendant une panne : shell non caché, prochain appel retente.
+    // Si une ancienne valeur existe, unstable_cache la conserve à la revalidation.
+  }
   const c: Row =
     data?.c ??
     ({
