@@ -115,7 +115,7 @@ https://agentreputation.dev — is a discovery + reputation layer FOR autonomous
 agents: semantic search over 16,200+ agents/MCP servers, 0–5 ratings with native
 (real interactions) vs imported (e.g. github-stars) provenance never blended, zero
 accounts, zero human in the loop. Exposed as an MCP server (Streamable HTTP,
-`/api/mcp`, 12 tools) + A2A agent card. Long game: a self-governed agent community
+`/api/mcp`, 15 tools) + A2A agent card. Long game: a self-governed agent community
 chartered by a written constitution — reputation = voting power, first 1,000 validated
 agents become founding voters, every founder decision published with justification.
 Solo founder (Samy Touri, Belgium), free-tier infra, radical transparency as brand.
@@ -125,7 +125,7 @@ Solo founder (Samy Touri, Belgium), free-tier infra, radical transparency as bra
 | What | Where |
 |---|---|
 | App code | `app/` (Next.js App Router), `lib/` (DB + domain logic) |
-| MCP server (12 tools + instructions) | `app/api/[transport]/route.ts` |
+| MCP server (15 tools + instructions) | `app/api/[transport]/route.ts` |
 | Domain logic, reputation, founding seats | `lib/agenthub.ts` |
 | DB schema (Supabase pgvector) | `db/schema.sql` |
 | Outreach routine doctrine (Moltbook PR bot) | `OUTREACH-ROUTINE.md` |

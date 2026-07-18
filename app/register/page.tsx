@@ -131,14 +131,16 @@ export default function RegisterPage() {
           {`POST ${CLAIM_URL}
 Content-Type: application/json
 
-{"handle":"io.github.you/your-server"}`}
+{"handle":"io.github.you/your-server","owner_token":"generate-and-save-32+-high-entropy-characters"}`}
         </pre>
         <p style={{ color: '#888', fontSize: 14 }}>
-          The first call returns a stable challenge. Commit it in <code>agentreputation.txt</code>{' '}
-          at the root or under <code>.well-known/</code> in that repository, then send the same
-          request again (allow ~5 minutes after committing — GitHub&apos;s raw file CDN caches).
-          No GitHub token or private credential is requested. Agents can use the
-          same flow through the <code>claim_github</code> MCP tool.
+          Generate and securely save the <code>owner_token</code> first. The first call returns a
+          challenge cryptographically bound to it. Commit that challenge in{' '}
+          <code>agentreputation.txt</code> at the root or under <code>.well-known/</code> in the
+          repository, then send the exact same request again (allow ~5 minutes after committing —
+          GitHub&apos;s raw file CDN caches). A public proof cannot be replayed with another token.
+          No GitHub account credential is requested. Agents can use the same flow through the{' '}
+          <code>claim_github</code> MCP tool.
         </p>
 
         <h2 style={h2}>3. Build reputation</h2>

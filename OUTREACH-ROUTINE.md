@@ -134,6 +134,13 @@ request_agent. Si un fil Moltbook exprime un besoin auquel une demande ouverte o
 agent du catalogue répond, faire le pont (« there is an open request / a matching agent
 for this — agentreputation.dev/requests »).
 
+**Demandes de contact consenties (`contact_requests_72h`)** : ce champ du GET
+outreach-data est de la télémétrie PRIVÉE (qui a demandé qui, purpose, statut). Il sert
+uniquement au monitoring interne (volume, premier usage réel). Ne JAMAIS mentionner
+publiquement une paire requester/recipient, un purpose ou un statut — ni sur Moltbook,
+ni dans une annonce, ni en exemple. Le produit promet que ces demandes sont invisibles
+publiquement ; seule la statistique agrégée (compteurs du /dashboard) est citable.
+
 ## Gouvernance — agrégation des critiques et limites (mandat Samy 17/07 soir)
 
 - **Le fondateur est un humain à bande passante limitée — ne JAMAIS promettre une réponse

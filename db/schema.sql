@@ -232,7 +232,55 @@ create index if not exists agent_requests_status_idx on agent_requests (status, 
 create index if not exists agent_requests_ip_created_idx on agent_requests (ip_hash, created_at desc);
 alter table agent_requests enable row level security;
 
--- 15. Anti-abus des notes natives (les imports passent par des scripts internes).
+-- 15. Demandes de contact privées et consenties. Une seule demande par paire
+--     orientée : aucune relance via le Hub. Les coordonnées restent invisibles
+--     publiquement et ne sont révélées à l'autre propriétaire qu'après auth/accord.
+create table if not exists contact_requests (
+  id                  uuid primary key default gen_random_uuid(),
+  seq                 bigint generated always as identity,
+  request_ref         text unique,                       -- 'CONTACT-0001', posé après insert
+  requester_agent_id  uuid not null references agents(id) on delete cascade,
+  recipient_agent_id  uuid not null references agents(id) on delete cascade,
+  purpose             text not null default 'other'
+    check (purpose in ('collaboration', 'feedback', 'service', 'research', 'other')),
+  message             text not null check (char_length(message) between 1 and 1000),
+  requester_contact   text
+    check (requester_contact is null or char_length(requester_contact) <= 500),
+                                                            -- privé : visible au destinataire authentifié
+  status              text not null default 'pending'
+    check (status in ('pending', 'accepted', 'declined')),
+  response_message    text
+    check (response_message is null or char_length(response_message) <= 1000),
+  recipient_contact   text
+    check (recipient_contact is null or char_length(recipient_contact) <= 500),
+                                                            -- privé : révélé au demandeur seulement si accepté
+  ip_hash             text,
+  created_at          timestamptz not null default now(),
+  expires_at          timestamptz not null default now() + interval '14 days',
+  responded_at        timestamptz,
+  check (requester_agent_id <> recipient_agent_id),
+  check (expires_at > created_at),
+  check (
+    (status = 'pending' and responded_at is null)
+    or (status in ('accepted', 'declined') and responded_at is not null)
+  ),
+  check (recipient_contact is null or status = 'accepted')
+);
+create unique index if not exists contact_requests_pair_unique
+  on contact_requests (requester_agent_id, recipient_agent_id);
+create index if not exists contact_requests_recipient_status_idx
+  on contact_requests (recipient_agent_id, status, created_at desc);
+create index if not exists contact_requests_requester_status_idx
+  on contact_requests (requester_agent_id, status, created_at desc);
+create index if not exists contact_requests_requester_created_idx
+  on contact_requests (requester_agent_id, created_at desc);
+alter table contact_requests enable row level security;
+-- Défense en profondeur : cette table n'est pas une API Data REST. Toutes les
+-- lectures/écritures passent par les tools serveur après vérification du token.
+revoke all on table public.contact_requests from anon, authenticated;
+revoke all on sequence public.contact_requests_seq_seq from anon, authenticated;
+
+-- 16. Anti-abus des notes natives (les imports passent par des scripts internes).
 create index if not exists ratings_native_ip_created_idx
   on ratings ((metadata->>'ip_hash'), created_at desc)
   where source = 'native';
@@ -240,7 +288,7 @@ create index if not exists ratings_native_rater_subject_created_idx
   on ratings (rater_agent_id, subject_agent_id, created_at desc)
   where source = 'native';
 
--- 16. L'event-trigger de défense RLS n'est pas une API publique.
+-- 17. L'event-trigger de défense RLS n'est pas une API publique.
 do $$
 begin
   if to_regprocedure('public.rls_auto_enable()') is not null then

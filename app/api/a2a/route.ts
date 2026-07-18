@@ -9,8 +9,11 @@ import {
   getReputation,
   hubStats,
   logActivity,
+  listContactRequests,
   registerAgent,
+  requestContact,
   requestAgent,
+  respondContactRequest,
   submitFeedback,
 } from '@/lib/agenthub'
 
@@ -27,7 +30,7 @@ const MAX_BODY_BYTES = 65_536
 // déclare streaming/pushNotifications false, donc un client conforme n'attend
 // ni SSE ni cycle de vie de tâche. Texte libre = découverte sémantique ;
 // DataPart {skill, args} = appel structuré sur le sous-ensemble servi ici.
-// La surface complète (12 tools, dont claim_github et submit_rating) reste MCP.
+// La surface complète (15 tools, dont claim_github et submit_rating) reste MCP.
 // ---------------------------------------------------------------------------
 
 // Codes d'erreur définis par la spec A2A v0.3 (+ JSON-RPC standard).
@@ -193,6 +196,96 @@ const SKILLS: Record<string, { schema: z.ZodTypeAny; run: (args: never) => Promi
       }
     },
   },
+  request_contact: {
+    schema: z.object({
+      requester_handle: handleSchema,
+      requester_owner_token: ownerTokenSchema,
+      recipient_handle: handleSchema,
+      purpose: z.enum(['collaboration', 'feedback', 'service', 'research', 'other']).optional(),
+      message: z.string().trim().min(1).max(1000),
+      requester_contact: z.string().trim().max(500).optional(),
+    }),
+    run: async (args: {
+      requester_handle: string
+      requester_owner_token: string
+      recipient_handle: string
+      purpose?: 'collaboration' | 'feedback' | 'service' | 'research' | 'other'
+      message: string
+      requester_contact?: string
+    }) => {
+      const result = await requestContact({
+        requesterHandle: args.requester_handle,
+        requesterOwnerToken: args.requester_owner_token,
+        recipientHandle: args.recipient_handle,
+        purpose: args.purpose,
+        message: args.message,
+        requesterContact: args.requester_contact,
+      })
+      return {
+        summary: `Consent request ${result.request_ref} stored in ${result.recipient_handle}'s private inbox. There is no push notification and no follow-up is possible unless the recipient accepts.`,
+        data: result as unknown as Record<string, unknown>,
+      }
+    },
+  },
+  list_contact_requests: {
+    schema: z.object({
+      agent_handle: handleSchema,
+      owner_token: ownerTokenSchema,
+      direction: z.enum(['incoming', 'outgoing', 'both']).optional(),
+      status: z.enum(['pending', 'accepted', 'declined', 'expired', 'all']).optional(),
+      limit: z.number().int().min(1).max(50).optional(),
+    }),
+    run: async (args: {
+      agent_handle: string
+      owner_token: string
+      direction?: 'incoming' | 'outgoing' | 'both'
+      status?: 'pending' | 'accepted' | 'declined' | 'expired' | 'all'
+      limit?: number
+    }) => {
+      const result = await listContactRequests({
+        agentHandle: args.agent_handle,
+        ownerToken: args.owner_token,
+        direction: args.direction,
+        status: args.status,
+        limit: args.limit,
+      })
+      return {
+        summary: `Private consent inbox for ${args.agent_handle}. Full authenticated results are in the data part.`,
+        data: result as unknown as Record<string, unknown>,
+      }
+    },
+  },
+  respond_contact_request: {
+    schema: z.object({
+      agent_handle: handleSchema,
+      owner_token: ownerTokenSchema,
+      request_ref: z.string().trim().min(1).max(40),
+      decision: z.enum(['accept', 'decline']),
+      response_message: z.string().trim().max(1000).optional(),
+      recipient_contact: z.string().trim().max(500).optional(),
+    }),
+    run: async (args: {
+      agent_handle: string
+      owner_token: string
+      request_ref: string
+      decision: 'accept' | 'decline'
+      response_message?: string
+      recipient_contact?: string
+    }) => {
+      const result = await respondContactRequest({
+        agentHandle: args.agent_handle,
+        ownerToken: args.owner_token,
+        requestRef: args.request_ref,
+        decision: args.decision,
+        responseMessage: args.response_message,
+        recipientContact: args.recipient_contact,
+      })
+      return {
+        summary: `Contact request ${args.request_ref} ${result.status}. Agent Reputation will not mediate any further conversation.`,
+        data: result as unknown as Record<string, unknown>,
+      }
+    },
+  },
   register_agent: {
     schema: z.object({
       handle: handleSchema,
@@ -239,7 +332,7 @@ const USAGE = {
     'Or send a DataPart {"skill": "<name>", "args": {...}} for a structured call.',
   ],
   skills: Object.keys(SKILLS),
-  full_surface: `The complete 12-tool surface (incl. claim_github, submit_rating, list_requests) is served over MCP: ${BASE}/api/mcp — docs: ${BASE}/llms.txt`,
+  full_surface: `The complete 15-tool surface (incl. claim_github, submit_rating, list_requests and the consent inbox) is served over MCP: ${BASE}/api/mcp — docs: ${BASE}/llms.txt`,
   agent_card: `${BASE}/.well-known/agent-card.json`,
 }
 
@@ -350,7 +443,7 @@ async function handleMessageSend(id: RpcId, params: unknown): Promise<Response> 
       const entry = SKILLS[name]
       if (!entry) {
         outcome = {
-          summary: `Unknown skill "${name}". Available: ${Object.keys(SKILLS).join(', ')}. The full 12-tool surface is served over MCP (${BASE}/api/mcp).`,
+          summary: `Unknown skill "${name}". Available: ${Object.keys(SKILLS).join(', ')}. The full 15-tool surface is served over MCP (${BASE}/api/mcp).`,
           data: { ok: false, error: `unknown skill "${name}"`, usage: USAGE },
         }
       } else {
@@ -388,7 +481,14 @@ async function handleMessageSend(id: RpcId, params: unknown): Promise<Response> 
       rawMessage.startsWith('Rate limited:') ||
       rawMessage.startsWith('Handle "') ||
       rawMessage.startsWith('Claim channel ') ||
-      rawMessage.startsWith('Linking a request ')
+      rawMessage.startsWith('Linking a request ') ||
+      rawMessage.startsWith('request_contact requires ') ||
+      rawMessage.startsWith('list_contact_requests requires ') ||
+      rawMessage.startsWith('respond_contact_request requires ') ||
+      rawMessage.startsWith('Recipient "') ||
+      rawMessage.startsWith('You cannot request contact ') ||
+      rawMessage.startsWith('A contact request ') ||
+      rawMessage.startsWith('Contact request ')
     const message = isPublicBusinessError ? rawMessage : 'The operation could not be completed. Please retry or use give_feedback.'
     outcome = {
       summary: `Request rejected: ${message}`,
@@ -396,7 +496,16 @@ async function handleMessageSend(id: RpcId, params: unknown): Promise<Response> 
     }
   }
 
-  await logActivity('a2a_message', { skill, text_chars: text.length || null }, outcome.summary.slice(0, 120))
+  const privateContactSkill = new Set([
+    'request_contact',
+    'list_contact_requests',
+    'respond_contact_request',
+  ]).has(skill)
+  await logActivity(
+    'a2a_message',
+    { skill, text_chars: text.length || null },
+    privateContactSkill ? `private ${skill} call` : outcome.summary.slice(0, 120),
+  )
 
   const responseParts: Part[] = []
   if (wantText) responseParts.push({ kind: 'text', text: outcome.summary })

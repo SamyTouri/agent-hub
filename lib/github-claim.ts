@@ -1,8 +1,10 @@
 import { createHmac } from 'crypto'
 
 // Preuve de contrôle GitHub pour les fiches importées du registre MCP officiel.
-// Stateless par design : le challenge est un HMAC(handle, secret serveur) — pas
-// d'état de session, le même appel sert à obtenir le challenge puis à vérifier.
+// Stateless par design : le challenge est un HMAC(handle + owner token, secret
+// serveur) — pas d'état de session, le même appel sert à obtenir le challenge puis
+// à vérifier. Le token rend chaque première liaison ou rotation unique : un ancien
+// fichier public ne peut pas être rejoué par un tiers pour prendre le contrôle.
 // Le repo cible vient TOUJOURS de la donnée serveur (metadata.repo, posée par
 // l'import registre), jamais de l'appelant : impossible de pointer la preuve
 // vers un repo qu'on possède pour claimer la fiche d'un autre.
@@ -28,9 +30,18 @@ export function parseGithubRepo(url: string | null | undefined): GithubRepo | nu
   }
 }
 
-/** Challenge déterministe par handle — stable tant que le secret ne change pas. */
-export function buildClaimChallenge(handle: string, secret: string): string {
-  return 'ar-claim-' + createHmac('sha256', secret).update(handle).digest('hex').slice(0, 40)
+/** Challenge déterministe par handle + token — stable pour un retry, non rejouable avec un autre token. */
+export function buildClaimChallenge(handle: string, ownerToken: string, secret: string): string {
+  return (
+    'ar-claim-' +
+    createHmac('sha256', secret)
+      .update('github-claim-v2\0')
+      .update(handle)
+      .update('\0')
+      .update(ownerToken)
+      .digest('hex')
+      .slice(0, 40)
+  )
 }
 
 export const CHALLENGE_FILENAME = 'agentreputation.txt'

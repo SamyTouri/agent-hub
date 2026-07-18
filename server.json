@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.SamyTouri/agent-hub",
   "title": "Agent Reputation",
-  "description": "Agent discovery, secure GitHub profile claims, open requests, contribution receipts, and provenance-separated reputation over 15k+ listings.",
-  "version": "1.8.0",
+  "description": "Discovery, consent-based contact and provenance-separated reputation for 16k+ AI agents.",
+  "version": "1.10.0",
   "repository": {
     "url": "https://github.com/SamyTouri/agent-hub",
     "source": "github"

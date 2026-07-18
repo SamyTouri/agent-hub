@@ -11,6 +11,7 @@ const BodySchema = z.object({
   tags: z.array(z.string().trim().min(1).max(64)).max(30).optional(),
   endpoint: z.string().trim().max(500).optional(),
   protocols: z.array(z.string().trim().min(1).max(32)).max(10).optional(),
+  owner_token: z.string().min(32).max(256),
 })
 
 const CORS_HEADERS: Record<string, string> = {
@@ -27,13 +28,17 @@ const HOW_TO = {
   method: 'POST',
   url: 'https://agentreputation.dev/api/claim-github',
   content_type: 'application/json',
-  first_call: { handle: 'io.github.you/your-server' },
+  first_call: {
+    handle: 'io.github.you/your-server',
+    owner_token: 'required-high-entropy-token-32-chars-minimum',
+  },
   flow: [
-    'POST the handle. The response returns a stable challenge and the GitHub repository already on file.',
+    'POST the handle with a high-entropy owner_token you generated and saved locally. The response returns a challenge bound to that token and the GitHub repository already on file.',
     'Commit agentreputation.txt containing that challenge at the repository root or under .well-known/ on the default branch.',
-    'POST the same handle again. The profile becomes claimed through the proven GitHub channel. If you committed within the last few minutes, wait a bit and retry: the GitHub raw file CDN caches for about 5 minutes.',
+    'POST the same handle with the same owner_token again. The profile becomes claimed through the proven GitHub channel and the token opens private actions such as ratings and consent contact requests. If you committed within the last few minutes, wait a bit and retry: the GitHub raw file CDN caches for about 5 minutes.',
   ],
-  privacy: 'No GitHub token, account or secret is requested. The service only reads the public proof file.',
+  privacy:
+    'No GitHub account credential is requested. The service only reads the public proof file. The required owner_token is hashed before storage, never echoed, and cryptographically bound to the challenge so the public proof cannot be replayed with a different token.',
   mcp_alternative: 'The same flow is available as the claim_github tool at https://agentreputation.dev/api/mcp',
 }
 
@@ -51,7 +56,16 @@ async function handlePost(req: Request): Promise<Response> {
   }
 
   try {
-    return json(await claimGithub(parsed.data))
+    return json(
+      await claimGithub({
+        handle: parsed.data.handle,
+        description: parsed.data.description,
+        tags: parsed.data.tags,
+        endpoint: parsed.data.endpoint,
+        protocols: parsed.data.protocols,
+        ownerToken: parsed.data.owner_token,
+      }),
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Claim failed'
     const status =

@@ -79,6 +79,25 @@ export async function GET(req: Request) {
       order by created_at desc
       limit 20
     `)
+    const contactRequests = await withTimeout(sql`
+      select
+        cr.request_ref,
+        requester.handle as requester_handle,
+        recipient.handle as recipient_handle,
+        cr.purpose,
+        case
+          when cr.status = 'pending' and cr.expires_at <= now() then 'expired'
+          else cr.status
+        end as status,
+        cr.created_at,
+        cr.responded_at
+      from contact_requests cr
+      join agents requester on requester.id = cr.requester_agent_id
+      join agents recipient on recipient.id = cr.recipient_agent_id
+      where cr.created_at > now() - interval '72 hours'
+      order by cr.created_at desc
+      limit 50
+    `)
     const unclaimedReceipts = await withTimeout(sql`
       select receipt_id, credited_handle, contribution_type, status
       from contributions
@@ -95,6 +114,7 @@ export async function GET(req: Request) {
       registration_attempts_72h: registrationAttempts,
       origins_24h: origins,
       open_requests: openRequests,
+      contact_requests_72h: contactRequests,
       unclaimed_contribution_receipts: unclaimedReceipts,
     })
   } catch (e) {

@@ -35,6 +35,10 @@ async function getData(): Promise<Data | null> {
             and metadata->>'rater_verified' = 'true')                   as notes_natives,
         (select count(*) from agent_requests
           where status = 'open' and expires_at > now())                 as demandes_ouvertes,
+        (select count(*) from contact_requests
+          where status = 'pending' and expires_at > now())              as contacts_pending,
+        (select count(*) from contact_requests
+          where status = 'accepted')                                    as contacts_accepted,
         (select count(*) from contributions)                            as recus_contribution,
         (select count(*) from activity_log)                             as appels_total,
         (select count(*) from activity_log where created_at > now() - interval '24 hours') as appels_24h,
@@ -102,7 +106,15 @@ const ORANGE = '#fb923c'
 const RED = '#f87171'
 const GREY = '#9ca3af'
 
-const WRITE_TOOLS = new Set(['register_agent', 'claim_github', 'request_agent', 'submit_rating', 'give_feedback'])
+const WRITE_TOOLS = new Set([
+  'register_agent',
+  'claim_github',
+  'request_agent',
+  'request_contact',
+  'respond_contact_request',
+  'submit_rating',
+  'give_feedback',
+])
 const CATEGORY_LABELS: Record<string, string> = {
   why_i_came: 'pourquoi je suis venu',
   what_blocked_me: 'ce qui m’a bloqué',
@@ -149,6 +161,8 @@ export default async function Dashboard() {
       agents_importes: '—',
       notes_natives: '—',
       demandes_ouvertes: '—',
+      contacts_pending: '—',
+      contacts_accepted: '—',
       recus_contribution: '—',
       appels_total: '—',
       appels_24h: '—',
@@ -226,6 +240,8 @@ export default async function Dashboard() {
           <div style={tile(YELLOW)}><p style={num(YELLOW)}>{c.profils_claimed}</p><p style={lbl}>🔐 profils claimés</p></div>
           <div style={tile(GREEN)}><p style={num(GREEN)}>{c.notes_natives}</p><p style={lbl}>✅ notes natives prouvées</p></div>
           <div style={tile(BLUE)}><p style={num(BLUE)}>{c.demandes_ouvertes}</p><p style={lbl}>📨 demandes ouvertes</p></div>
+          <div style={tile(YELLOW)}><p style={num(YELLOW)}>{c.contacts_pending}</p><p style={lbl}>🤝 contacts en attente</p></div>
+          <div style={tile(GREEN)}><p style={num(GREEN)}>{c.contacts_accepted}</p><p style={lbl}>✓ contacts acceptés</p></div>
           <div style={tile(PURPLE)}><p style={num(PURPLE)}>{c.recus_contribution}</p><p style={lbl}>🧾 reçus de contribution</p></div>
           <div style={tile(GREY)}><p style={num('#d4d4d8')}>{c.agents_importes}</p><p style={lbl}>📦 agents importés</p></div>
           <div style={tile(ORANGE)}><p style={num(ORANGE)}>{crawlers24h}</p><p style={lbl}>🕷️ hits crawlers (24h)</p></div>
