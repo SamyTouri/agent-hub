@@ -31,6 +31,19 @@ is a responsibility, not a rank.
 - Language: replies to the human in **French** (he is French-speaking); code,
   identifiers and public-facing content in **English**.
 
+## Response style for Samy
+
+- Write for a business decision-maker, not a developer.
+- Be brief but complete by default: give the conclusion, decision, result, material
+  risk and any action required from Samy — then stop.
+- Use plain, natural French and avoid technical jargon. Explain an unavoidable
+  technical term in ordinary language.
+- Do not include implementation details, command output, long file lists or extended
+  reasoning unless they materially affect a decision or Samy explicitly asks for
+  more detail.
+- Prefer a few short sentences or bullets. Samy will request a deeper explanation
+  when he wants one.
+
 ## Shared persistent memory — read it, write it
 
 `.context/memory/` (a junction to Claude Code's project memory) is the **shared
