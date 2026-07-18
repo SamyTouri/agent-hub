@@ -27,6 +27,21 @@ from a2a.types import (
     AgentProvider,
     AgentSkill,
 )
+
+# uagents-core 0.4.8 creates ``uagents_core.log`` in the current directory by
+# default. Vercel Functions have a read-only code filesystem, so replace that
+# default before importing Agentverse. Logs still go to stdout/Vercel logs.
+from uagents_core import logger as uagents_logger
+
+_original_uagents_get_logger = uagents_logger.get_logger
+
+
+def _stdout_uagents_logger(logger_name=None, level=20, log_file=None):
+    return _original_uagents_get_logger(logger_name, level, log_file=None)
+
+
+uagents_logger.get_logger = _stdout_uagents_logger
+
 from agentverse_sdk.a2a import init as agentverse_init
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse

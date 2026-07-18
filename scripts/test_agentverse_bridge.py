@@ -86,10 +86,27 @@ assert response.status_code == 400, response.text
     )
 
 
+def test_import_does_not_write_vendor_log() -> None:
+    log_path = Path(__file__).resolve().parents[1] / "uagents_core.log"
+    log_path.unlink(missing_ok=True)
+
+    code = "import api.agentverse"
+    env = os.environ.copy()
+    env.pop("AGENTVERSE_AGENT_URI", None)
+    subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=Path(__file__).resolve().parents[1],
+        env=env,
+        check=True,
+    )
+    assert not log_path.exists()
+
+
 if __name__ == "__main__":
     test_query_is_trimmed_and_bounded()
     test_only_text_summary_is_returned()
     test_malformed_upstream_is_generic()
     test_unconfigured_bridge_fails_closed()
     test_configured_bridge_uses_verified_sdk_route()
+    test_import_does_not_write_vendor_log()
     print("Agentverse bridge checks passed")
