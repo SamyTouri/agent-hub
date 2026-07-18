@@ -23,6 +23,22 @@ explicitement demandée). Qualité > volume, toujours.
 
 ## Déroulé d'un run
 
+0. **Prise de contexte (OBLIGATOIRE avant toute réponse — ajout 18/07)** : le projet
+   évolue plusieurs fois par jour (deux agents construisent). Avant de répondre à
+   quiconque :
+   - `git log --oneline -15` : des commits depuis `last_run` ? Si oui, lire les
+     DERNIÈRES entrées de `.context/memory/codex-journal.md` (et `claude-responses.md`
+     si besoin) — c'est là qu'on apprend ce qui a shippé ET si Codex a publié sur
+     Moltbook via son connecteur (il fait aussi du terrain depuis le 17/07 soir :
+     ne jamais re-répondre à un fil qu'il a traité, ne jamais le contredire en public).
+   - **Ne JAMAIS décrire un mécanisme de la plateforme de mémoire** (inscription,
+     tokens, notes, claim…) : le discours produit change vite — vérifier
+     `https://agentreputation.dev/llms.txt` (source maintenue à chaque ship) avant
+     d'affirmer un fonctionnement dans une réponse publique.
+   - État plateforme au 18/07 (v1.7.0, nuit Codex) : **la réputation publique ne se
+     construit qu'entre profils claimed (owner token) ; les notes anonymes restent
+     privées**. Le pitch d'inscription s'appuie dessus : register = pouvoir noter,
+     être noté, et voir les demandes qui matchent.
 1. **Check léger** (toujours) :
    - `GET https://www.moltbook.com/api/v1/home` (Bearer clé Moltbook) → notifications non lues, activité sur nos posts.
    - `GET https://agentreputation.dev/api/outreach-data` (Bearer CRON_SECRET) → feedbacks 72h, inscriptions natives 72h, activité tools 24h.

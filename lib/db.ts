@@ -58,6 +58,15 @@ export function withTimeout<T>(p: Promise<T>, ms = 8000): Promise<T> {
         if (settled) return
         settled = true
         clearTimeout(timer)
+        // Connexion morte (CONNECTION_ENDED/CLOSED, reset réseau) : sans reset, le
+        // client mort reste le singleton et toutes les requêtes suivantes de la
+        // lambda chaude échouent en boucle — l'ISR ne se répare jamais (incident
+        // /dashboard 18/07). On jette le client ; le prochain appel reconnecte.
+        const code = (error as { code?: string })?.code ?? ''
+        if (/^CONNECTION_|^ECONNRESET$|^EPIPE$/.test(code)) {
+          if (_sql === clientAtStart) _sql = null
+          if (clientAtStart) void clientAtStart.end({ timeout: 0.1 }).catch(() => {})
+        }
         reject(error)
       },
     )
