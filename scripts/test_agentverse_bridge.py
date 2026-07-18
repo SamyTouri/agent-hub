@@ -62,7 +62,10 @@ import os
 os.environ["AGENTVERSE_AGENT_URI"] = "https://test-handle:test-key@localhost/Test-Agent"
 
 import agentverse_sdk.a2a._app as sdk_app
-sdk_app.register_to_agentverse_sync = lambda *args, **kwargs: None
+captured = {}
+def capture_registration(request, *args, **kwargs):
+    captured["chat_url"] = request.url
+sdk_app.register_to_agentverse_sync = capture_registration
 
 from fastapi.testclient import TestClient
 from api.agentverse import app
@@ -71,6 +74,7 @@ client = TestClient(app)
 health = client.get("/api/agentverse")
 assert health.status_code == 200
 assert health.json()["configured"] is True
+assert captured["chat_url"] == "https://agentreputation.dev/av/chat"
 
 # Unsigned traffic must reach the SDK handler and fail envelope validation.
 response = client.post("/api/agentverse", json={})

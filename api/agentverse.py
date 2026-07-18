@@ -164,7 +164,13 @@ agent_card = AgentCard(
     ),
     supported_interfaces=[
         AgentInterface(
-            url=UPSTREAM_A2A_URL,
+            # Agentverse SDK 0.2.0 treats the interface URL as an application
+            # base and appends /av/chat when it registers the delivery URL.
+            # The public A2A card remains at /.well-known/agent-card.json and
+            # correctly advertises /api/a2a; this adapter-only card must use
+            # the public origin or Agentverse would register
+            # /api/a2a/av/chat, which does not exist.
+            url=PUBLIC_BASE_URL,
             protocol_binding="JSONRPC",
             protocol_version="1.0",
         )
