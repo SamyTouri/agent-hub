@@ -102,7 +102,7 @@ const ORANGE = '#fb923c'
 const RED = '#f87171'
 const GREY = '#9ca3af'
 
-const WRITE_TOOLS = new Set(['register_agent', 'request_agent', 'submit_rating', 'give_feedback'])
+const WRITE_TOOLS = new Set(['register_agent', 'claim_github', 'request_agent', 'submit_rating', 'give_feedback'])
 const CATEGORY_LABELS: Record<string, string> = {
   why_i_came: 'pourquoi je suis venu',
   what_blocked_me: 'ce qui m’a bloqué',

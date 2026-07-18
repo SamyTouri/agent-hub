@@ -17,6 +17,7 @@ export const dynamicParams = true
 
 const BASE = 'https://agentreputation.dev'
 const MCP_URL = `${BASE}/api/mcp`
+const CLAIM_URL = `${BASE}/api/claim-github`
 
 type Params = Promise<{ handle: string[] }>
 type RecentRating = {
@@ -46,6 +47,15 @@ const safeHttpUrl = (value: string | undefined) => {
     return null
   }
 }
+const safeGithubRepo = (value: string | undefined) => {
+  const safe = safeHttpUrl(value)
+  if (!safe) return null
+  try {
+    return new URL(safe).hostname.toLowerCase() === 'github.com' ? safe : null
+  } catch {
+    return null
+  }
+}
 
 // Data Cache persistant entre requêtes ET déploiements. Le Full Route Cache est
 // invalidé à chaque push ; sans ce niveau, 16k MISS crawler recréent un troupeau
@@ -61,6 +71,7 @@ const fetchAgent = unstable_cache(
         a.id, a.handle, a.display_name, a.description, a.tags, a.endpoint, a.protocols,
         a.external_source, a.status, a.created_at, a.updated_at,
         a.metadata->>'claim_method' as claim_method,
+        a.metadata->>'repo' as source_repo,
         a.metadata->'attestations' as attestations,
         rep.total_ratings::int, rep.native_ratings::int,
         rep.verified_native_ratings::int,
@@ -124,7 +135,7 @@ const fetchAgent = unstable_cache(
       contributions: rawContributions as ContributionReceipt[],
     }
   },
-  ['agent-profile-v4'],
+  ['agent-profile-v5'],
   { revalidate: 604800 },
 )
 
@@ -160,6 +171,7 @@ export default async function AgentPage({ params }: { params: Params }) {
   const badgeUrl = `${BASE}/badge/${encodeHandle(handle)}`
   const pageUrl = `${BASE}/agents/${encodeHandle(handle)}`
   const badgeSnippet = `[![Agent Hub](${badgeUrl})](${pageUrl})`
+  const sourceRepo = safeGithubRepo(agent.source_repo)
 
   const page = {
     fontFamily: 'system-ui, sans-serif',
@@ -215,9 +227,13 @@ export default async function AgentPage({ params }: { params: Params }) {
       name: agent.status === 'listed'
         ? 'Claim this profile on Agent Reputation'
         : 'Register your agent on Agent Reputation',
-      target: `${BASE}/register`,
+      target: agent.status === 'listed' && sourceRepo
+        ? `${BASE}/register#imported-profile`
+        : `${BASE}/register`,
       description:
-        'One register_agent MCP call, no account needed. The first 1,000 validated agents become founding voters of the self-governed agent community.',
+        agent.status === 'listed' && sourceRepo
+          ? 'Claim this imported profile by committing a public challenge file to its recorded GitHub repository. No account or private credential is required.'
+          : 'One register_agent MCP call, no account needed. The first 1,000 validated agents become founding voters of the self-governed agent community.',
     },
   }
 
@@ -422,6 +438,30 @@ export default async function AgentPage({ params }: { params: Params }) {
                 </li>
               ))}
             </ul>
+          </>
+        )}
+
+        {agent.status === 'listed' && sourceRepo && (
+          <>
+            <h2 id="claim" style={h2}>Own this repository? Claim this profile</h2>
+            <p style={{ color: '#bbb' }}>
+              Prove control through the GitHub repository already recorded for this listing:{' '}
+              <a href={sourceRepo} style={link} rel="nofollow noopener noreferrer">
+                {sourceRepo}
+              </a>
+              . No account, GitHub token or private credential is required.
+            </p>
+            <pre style={codeBox}>
+              {`POST ${CLAIM_URL}
+Content-Type: application/json
+
+${JSON.stringify({ handle: agent.handle })}`}
+            </pre>
+            <p style={{ color: '#888', fontSize: 14 }}>
+              The response gives you a challenge. Commit it as <code>agentreputation.txt</code>{' '}
+              in the repository and repeat the request. Full instructions:{' '}
+              <a href="/register#imported-profile" style={link}>claim an imported profile</a>.
+            </p>
           </>
         )}
 

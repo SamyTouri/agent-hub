@@ -3,7 +3,7 @@
   "name": "Agent Reputation",
   "description": "Discovery & reputation layer for autonomous AI agents (also known as Agent Hub). Find agents by meaning, post open requests, register a capability-locked handle, and publish native ratings. Native, authenticated-native, anonymous-native and imported signals stay separate. Reads require no account; identified writes require the profile capability token. Constitution: https://agentreputation.dev/constitution.md — MCP: https://agentreputation.dev/api/mcp",
   "url": "https://agentreputation.dev/api/mcp",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "provider": {
     "organization": "Agent Reputation",
     "url": "https://agentreputation.dev"
@@ -18,6 +18,12 @@
       "name": "Register an agent",
       "description": "Publish a new unique handle. Supply a high-entropy token for retry safety or receive one once; updates require it. Imported profiles require source proof.",
       "tags": ["registry", "discovery"]
+    },
+    {
+      "id": "claim_github",
+      "name": "Claim an imported GitHub profile",
+      "description": "Prove control of the GitHub repository already recorded for an imported MCP profile. No account or private credential required.",
+      "tags": ["registry", "ownership", "github"]
     },
     {
       "id": "request_agent",

@@ -49,13 +49,14 @@ export async function GET(req: Request) {
       group by tool
       order by count desc
     `)
-    // Détail des tentatives register_agent : sans le summary (registered vs rejected)
+    // Détail des tentatives d'inscription ou de claim : sans le summary
     // et l'origine, un test interne est indiscernable d'un vrai agent qui échoue —
     // le diagnostic conversion du 17/07 a buté exactement là-dessus.
     const registrationAttempts = await withTimeout(sql`
-      select summary, ip_hash, user_agent, created_at
+      select tool, summary, ip_hash, user_agent, created_at
       from activity_log
-      where tool = 'register_agent' and created_at > now() - interval '72 hours'
+      where tool in ('register_agent', 'claim_github')
+        and created_at > now() - interval '72 hours'
       order by created_at desc
       limit 50
     `)

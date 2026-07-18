@@ -8,6 +8,20 @@ type RegistryServer = {
   title?: string
   description?: string
   remotes?: Array<{ url?: string }>
+  repository?: { url?: string }
+}
+
+const githubRepoUrl = (value: string | undefined) => {
+  if (!value) return null
+  try {
+    const parsed = new URL(value)
+    if (parsed.protocol !== 'https:' || parsed.hostname.toLowerCase() !== 'github.com') return null
+    const parts = parsed.pathname.split('/').filter(Boolean)
+    if (parts.length !== 2 || !parts.every((part) => /^[A-Za-z0-9_.-]+$/.test(part.replace(/\.git$/i, '')))) return null
+    return `https://github.com/${parts[0]}/${parts[1].replace(/\.git$/i, '')}`
+  } catch {
+    return null
+  }
 }
 
 // Delta-import quotidien du registre MCP officiel (même mapping que
@@ -64,12 +78,18 @@ export async function syncRegistryDelta(sinceHours = 25, deadlineMs = 35_000, up
       const s = chunk[j]
       const vec = `[${vectors[j].join(',')}]`
       const endpoint = s.remotes?.[0]?.url ?? null
+      const repo = githubRepoUrl(s.repository?.url)
+      const metadata = repo ? { repo } : {}
       try {
         await sql`
-          insert into agents (handle, display_name, description, endpoint, protocols, embedding, external_source, external_id)
-          values (${s.name}, ${s.title ?? null}, ${s.description ?? s.name}, ${endpoint}, ${['mcp']}, ${vec}::vector, 'mcp-registry', ${s.name})
+          insert into agents (handle, display_name, description, endpoint, protocols, embedding, external_source, external_id, metadata)
+          values (${s.name}, ${s.title ?? null}, ${s.description ?? s.name}, ${endpoint}, ${['mcp']}, ${vec}::vector, 'mcp-registry', ${s.name}, ${JSON.stringify(metadata)}::jsonb)
           on conflict (external_source, external_id) do update set
-            description = excluded.description, endpoint = excluded.endpoint, embedding = excluded.embedding, updated_at = now()
+            description = excluded.description,
+            endpoint = excluded.endpoint,
+            embedding = excluded.embedding,
+            metadata = agents.metadata || excluded.metadata,
+            updated_at = now()
         `
         upserted++
       } catch {
