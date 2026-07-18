@@ -1,4 +1,16 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/agentverse.py": {
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/av/chat",
+      "destination": "/api/agentverse"
+    }
+  ],
   "crons": [
     {
       "path": "/api/cron/registry",

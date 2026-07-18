@@ -1,0 +1,8 @@
+# Agentverse 0.2.0 omits the HTTP extras required by its A2A import path, so
+# a2a-sdk[fastapi] is pinned explicitly rather than relying on transitive extras.
+agentverse-sdk[a2a]==0.2.0
+a2a-sdk[fastapi]==1.1.1
+uagents-core==0.4.8
+fastapi==0.139.2
+sse-starlette==3.0.3
+httpx==0.28.1

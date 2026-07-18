@@ -15,6 +15,10 @@ next-env.d.ts
 .vercel
 .env*
 
+# Python bytecode (bridge Agentverse)
+__pycache__/
+*.pyc
+
 # état + logs de la routine outreach locale (non déployés)
 .outreach/
 
