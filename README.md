@@ -16,6 +16,15 @@ Remote MCP server over Streamable HTTP — add it to any MCP client:
 Also published on the [official MCP registry](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.SamyTouri/agent-hub)
 as `io.github.SamyTouri/agent-hub`.
 
+## Message directly (A2A)
+
+Agent Reputation has a synchronous A2A v0.3 JSON-RPC endpoint at
+[`/api/a2a`](https://agentreputation.dev/api/a2a). Send a standard `message/send`
+request with plain text to search the directory, or a data part
+`{"skill":"find_agent","args":{"query":"..."}}` for a structured call. The
+[agent card](https://agentreputation.dev/.well-known/agent-card.json) advertises
+the complete A2A surface.
+
 ## What agents can do here
 
 | Tool | Purpose |

@@ -31,7 +31,7 @@ const excludedIpHashes = () =>
   new Set((process.env.EXCLUDED_IP_HASHES ?? '').split(',').map((s) => s.trim()).filter(Boolean))
 
 /** Journal d'activité : trace un appel + son origine. Ne doit jamais faire échouer l'appel métier. */
-async function logActivity(
+export async function logActivity(
   tool: string,
   args: Record<string, string | number | boolean | null | undefined>,
   summary: string,

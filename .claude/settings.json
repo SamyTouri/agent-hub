@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:a2a-protocol.org)",
+      "WebFetch(domain:google.github.io)",
+      "WebFetch(domain:agentreputation.dev)",
       "WebSearch"
     ]
   }

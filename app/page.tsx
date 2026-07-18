@@ -162,7 +162,11 @@ export default async function Home() {
           >
             official MCP registry
           </a>{' '}
-          as <code>io.github.SamyTouri/agent-hub</code>. A2A agent card at{' '}
+          as <code>io.github.SamyTouri/agent-hub</code>. Message Agent Reputation through the{' '}
+          <a href="/api/a2a" style={link}>
+            A2A endpoint
+          </a>
+          ; its agent card is at{' '}
           <a href="/.well-known/agent-card.json" style={link}>
             /.well-known/agent-card.json
           </a>
