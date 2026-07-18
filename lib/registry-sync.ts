@@ -83,7 +83,7 @@ export async function syncRegistryDelta(sinceHours = 25, deadlineMs = 35_000, up
       try {
         await sql`
           insert into agents (handle, display_name, description, endpoint, protocols, embedding, external_source, external_id, metadata)
-          values (${s.name}, ${s.title ?? null}, ${s.description ?? s.name}, ${endpoint}, ${['mcp']}, ${vec}::vector, 'mcp-registry', ${s.name}, ${JSON.stringify(metadata)}::jsonb)
+          values (${s.name}, ${s.title ?? null}, ${s.description ?? s.name}, ${endpoint}, ${['mcp']}, ${vec}::vector, 'mcp-registry', ${s.name}, ${sql.json(metadata)})
           on conflict (external_source, external_id) do update set
             description = excluded.description,
             endpoint = excluded.endpoint,

@@ -31,14 +31,18 @@ const excludedIpHashes = () =>
   new Set((process.env.EXCLUDED_IP_HASHES ?? '').split(',').map((s) => s.trim()).filter(Boolean))
 
 /** Journal d'activité : trace un appel + son origine. Ne doit jamais faire échouer l'appel métier. */
-async function logActivity(tool: string, args: Record<string, unknown>, summary: string) {
+async function logActivity(
+  tool: string,
+  args: Record<string, string | number | boolean | null | undefined>,
+  summary: string,
+) {
   try {
     const sql = getSql()
     const origin = requestOrigin.getStore()
     if (origin?.ipHash && excludedIpHashes().has(origin.ipHash)) return
     await sql`
       insert into activity_log (tool, args, summary, ip_hash, user_agent)
-      values (${tool}, ${JSON.stringify(args)}::jsonb, ${summary}, ${origin?.ipHash ?? null}, ${origin?.userAgent ?? null})
+      values (${tool}, ${sql.json(args)}, ${summary}, ${origin?.ipHash ?? null}, ${origin?.userAgent ?? null})
     `
   } catch {
     /* no-op : le journal est best-effort */
@@ -160,7 +164,7 @@ export async function registerAgent(input: RegisterInput) {
       }
     }
 
-    const claimMeta: Record<string, unknown> = {
+    const claimMeta: Record<string, string> = {
       claim_method: claimChannel ? 'proven_channel' : 'self_asserted',
     }
     if (claimChannel) {
@@ -180,7 +184,7 @@ export async function registerAgent(input: RegisterInput) {
         'claimed',
         ${tokenHash},
         now(),
-        ${JSON.stringify(claimMeta)}::jsonb
+        ${sql.json(claimMeta)}
       )
       on conflict (handle) do update set
         description = excluded.description,
@@ -568,10 +572,10 @@ export async function submitRating(input: {
       ${input.score},
       ${input.comment?.trim().slice(0, 2000) || null},
       'native',
-      ${JSON.stringify({
+      ${sql.json({
         rater_verified: true,
         ...(origin?.ipHash ? { ip_hash: origin.ipHash } : {}),
-      })}::jsonb
+      })}
     )
     returning id, created_at
   `
@@ -717,7 +721,7 @@ export async function requestAgent(input: {
       ${cleanStrings(input.tags, 20, 64)},
       ${input.contact?.slice(0, 500) ?? null},
       ${vec}::vector,
-      ${JSON.stringify(matches)}::jsonb,
+      ${sql.json(matches)},
       ${origin?.ipHash ?? null}
     )
     returning id, seq, created_at
