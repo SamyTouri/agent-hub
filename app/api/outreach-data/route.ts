@@ -104,6 +104,42 @@ export async function GET(req: Request) {
       where agent_id is null
       order by seq
     `)
+    const representativeSettings = await withTimeout(sql`
+      select key, value, updated_at
+      from rep_settings
+      where key in ('enabled', 'mode', 'daily_usd_cap', 'outbound_per_day', 'openai_identity')
+      order by key
+    `)
+    const representativeUsage = await withTimeout(sql`
+      select
+        coalesce(sum(usd), 0)::float as usd_today,
+        coalesce(sum(input_tokens), 0)::int as input_tokens_today,
+        coalesce(sum(output_tokens), 0)::int as output_tokens_today,
+        count(*) filter (where purpose not like '%:reserved')::int as completed_calls_today
+      from rep_llm_usage
+      where created_at >= date_trunc('day', now())
+    `)
+    const representativeRuns = await withTimeout(sql`
+      select status, mode, actions_count, llm_calls, openai_identity_match,
+             summary, error, started_at, finished_at
+      from rep_runs
+      order by started_at desc
+      limit 20
+    `)
+    const representativeDrafts = await withTimeout(sql`
+      select target_identity, channel, target_url, reason, draft, status, created_at
+      from rep_outbound
+      where status in ('draft', 'approved', 'failed')
+      order by created_at desc
+      limit 20
+    `)
+    const representativeEscalations = await withTimeout(sql`
+      select category, summary, status, created_at
+      from rep_escalations
+      where status = 'open'
+      order by created_at desc
+      limit 20
+    `)
     return Response.json({
       generated_at: new Date().toISOString(),
       feedbacks_72h: feedbacks,
@@ -116,6 +152,13 @@ export async function GET(req: Request) {
       open_requests: openRequests,
       contact_requests_72h: contactRequests,
       unclaimed_contribution_receipts: unclaimedReceipts,
+      representative: {
+        settings: representativeSettings,
+        usage_today: representativeUsage[0],
+        recent_runs: representativeRuns,
+        reviewed_outbound_drafts: representativeDrafts,
+        open_escalations: representativeEscalations,
+      },
     })
   } catch (e) {
     return Response.json({ error: e instanceof Error ? e.message : 'failed' }, { status: 500 })

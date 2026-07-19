@@ -313,3 +313,162 @@ alter table crawler_hits enable row level security;
 -- service_role (clé secrète REST utilisée par le proxy) doit être autorisé explicitement.
 grant insert, select, delete on public.crawler_hits to service_role;
 grant usage, select on all sequences in schema public to service_role;
+
+-- 18. Représentant autonome central : mémoire de conversation, registre des
+--     canaux, prospection ciblée, budget LLM et audit de chaque réveil.
+--     Aucune table rep_* n'est une API Supabase publique.
+create table if not exists rep_settings (
+  key        text primary key,
+  value      jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists rep_channels (
+  channel    text primary key,
+  writer     text not null default 'none'
+    check (writer in ('representative', 'local-routine', 'codex', 'none')),
+  caps       jsonb not null default '{}'::jsonb,
+  state      jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists rep_conversations (
+  id                 uuid primary key default gen_random_uuid(),
+  channel            text not null references rep_channels(channel),
+  external_thread_id text not null,
+  counterparty       text,
+  stage              text not null default 'open'
+    check (stage in ('open', 'qualified', 'converted', 'closed', 'suppressed')),
+  outcome_reason     text,
+  next_step          text,
+  metadata           jsonb not null default '{}'::jsonb,
+  last_activity_at   timestamptz not null default now(),
+  created_at         timestamptz not null default now(),
+  unique (channel, external_thread_id)
+);
+
+create table if not exists rep_messages (
+  id              uuid primary key default gen_random_uuid(),
+  conversation_id uuid not null references rep_conversations(id) on delete cascade,
+  role            text not null check (role in ('them', 'us', 'system')),
+  status          text not null default 'received'
+    check (status in ('received', 'draft', 'sent', 'failed')),
+  content         text not null check (char_length(content) between 1 and 8000),
+  external_id     text,
+  metadata        jsonb not null default '{}'::jsonb,
+  created_at      timestamptz not null default now()
+);
+create unique index if not exists rep_messages_external_unique
+  on rep_messages (conversation_id, external_id)
+  where external_id is not null;
+create index if not exists rep_messages_conversation_created_idx
+  on rep_messages (conversation_id, created_at);
+
+create table if not exists rep_outbound (
+  id              uuid primary key default gen_random_uuid(),
+  target_identity text not null,
+  channel         text not null references rep_channels(channel),
+  target_url      text,
+  reason          text not null check (char_length(reason) between 1 and 2000),
+  draft           text check (draft is null or char_length(draft) <= 4000),
+  status          text not null default 'draft'
+    check (status in ('draft', 'approved', 'sent', 'replied', 'suppressed', 'failed')),
+  source_agent_id uuid references agents(id) on delete set null,
+  external_id     text,
+  last_error      text,
+  sent_at         timestamptz,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now(),
+  unique (target_identity)
+);
+create index if not exists rep_outbound_status_created_idx
+  on rep_outbound (status, created_at);
+
+create table if not exists rep_llm_usage (
+  id              uuid primary key default gen_random_uuid(),
+  purpose         text not null,
+  model           text not null,
+  input_tokens    int not null check (input_tokens >= 0),
+  output_tokens   int not null check (output_tokens >= 0),
+  usd             numeric(10,6) not null check (usd >= 0),
+  conversation_id uuid references rep_conversations(id) on delete set null,
+  response_id     text,
+  created_at      timestamptz not null default now()
+);
+create index if not exists rep_llm_usage_created_idx on rep_llm_usage (created_at);
+
+create table if not exists rep_runs (
+  id                     uuid primary key default gen_random_uuid(),
+  trigger                 text not null default 'cron',
+  status                  text not null default 'running'
+    check (status in ('running', 'completed', 'skipped', 'failed')),
+  mode                    text not null default 'shadow',
+  actions_count           int not null default 0,
+  llm_calls               int not null default 0,
+  openai_identity_match   boolean,
+  summary                 text,
+  error                   text,
+  started_at              timestamptz not null default now(),
+  finished_at             timestamptz
+);
+create index if not exists rep_runs_started_idx on rep_runs (started_at desc);
+
+create table if not exists rep_escalations (
+  id              uuid primary key default gen_random_uuid(),
+  category        text not null,
+  summary         text not null check (char_length(summary) between 1 and 2000),
+  conversation_id uuid references rep_conversations(id) on delete set null,
+  status          text not null default 'open'
+    check (status in ('open', 'resolved', 'dismissed')),
+  created_at      timestamptz not null default now(),
+  resolved_at     timestamptz
+);
+create index if not exists rep_escalations_status_created_idx
+  on rep_escalations (status, created_at desc);
+
+-- Lease atomique plutôt qu'un advisory lock de session : le projet passe par
+-- PgBouncer en transaction pooling, où l'identité de session n'est pas stable.
+create table if not exists rep_tick_lease (
+  name         text primary key,
+  holder       uuid,
+  locked_until timestamptz not null default '-infinity',
+  updated_at   timestamptz not null default now()
+);
+
+insert into rep_tick_lease (name) values ('representative')
+on conflict (name) do nothing;
+
+insert into rep_settings (key, value) values
+  ('enabled', 'false'::jsonb),
+  ('mode', '"shadow"'::jsonb),
+  ('daily_usd_cap', '0.25'::jsonb),
+  ('tick_llm_calls_max', '3'::jsonb),
+  ('outbound_per_day', '2'::jsonb)
+on conflict (key) do nothing;
+
+insert into rep_channels (channel, writer, caps) values
+  ('a2a', 'representative', '{"authenticated_only": true}'::jsonb),
+  ('agentverse', 'none', '{"mode": "deterministic_read_only"}'::jsonb),
+  ('moltbook', 'local-routine', '{"posts_per_day": 1, "replies_per_tick": 5}'::jsonb),
+  ('github', 'codex', '{"new_contacts_per_day": 2, "human_review": true}'::jsonb)
+on conflict (channel) do nothing;
+
+alter table rep_settings      enable row level security;
+alter table rep_channels      enable row level security;
+alter table rep_conversations enable row level security;
+alter table rep_messages      enable row level security;
+alter table rep_outbound      enable row level security;
+alter table rep_llm_usage     enable row level security;
+alter table rep_runs          enable row level security;
+alter table rep_escalations   enable row level security;
+alter table rep_tick_lease    enable row level security;
+
+revoke all on table public.rep_settings from anon, authenticated;
+revoke all on table public.rep_channels from anon, authenticated;
+revoke all on table public.rep_conversations from anon, authenticated;
+revoke all on table public.rep_messages from anon, authenticated;
+revoke all on table public.rep_outbound from anon, authenticated;
+revoke all on table public.rep_llm_usage from anon, authenticated;
+revoke all on table public.rep_runs from anon, authenticated;
+revoke all on table public.rep_escalations from anon, authenticated;
+revoke all on table public.rep_tick_lease from anon, authenticated;

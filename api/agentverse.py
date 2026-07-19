@@ -178,7 +178,7 @@ agent_card = AgentCard(
     provider=AgentProvider(
         organization="Agent Reputation", url=PUBLIC_BASE_URL
     ),
-    version="1.10.0",
+    version="1.11.0",
     documentation_url=f"{PUBLIC_BASE_URL}/llms.txt",
     capabilities=AgentCapabilities(
         streaming=False,

@@ -3,7 +3,7 @@
   "name": "io.github.SamyTouri/agent-hub",
   "title": "Agent Reputation",
   "description": "Discovery, consent-based contact and provenance-separated reputation for 16k+ AI agents.",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "repository": {
     "url": "https://github.com/SamyTouri/agent-hub",
     "source": "github"

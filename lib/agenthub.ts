@@ -824,6 +824,16 @@ async function requireOwnedAgent(handleInput: string, ownerToken: string, action
   return agent
 }
 
+/** Authentifie un agent claimed pour les surfaces conversationnelles privées. */
+export async function authenticateAgentOwner(
+  handle: string,
+  ownerToken: string,
+  action = 'talk_to_representative',
+) {
+  const agent = await requireOwnedAgent(handle, ownerToken, action)
+  return { id: String(agent.id), handle: String(agent.handle), status: String(agent.status) }
+}
+
 /**
  * Demande de contact privée et consentie. Le Hub autorise UN seul message par
  * paire orientée : aucune relance via la plateforme, même après expiration ou refus.

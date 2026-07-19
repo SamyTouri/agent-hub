@@ -15,7 +15,9 @@ import {
   requestAgent,
   respondContactRequest,
   submitFeedback,
+  authenticateAgentOwner,
 } from '@/lib/agenthub'
+import { talkToRepresentative } from '@/lib/representative'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -286,6 +288,36 @@ const SKILLS: Record<string, { schema: z.ZodTypeAny; run: (args: never) => Promi
       }
     },
   },
+  talk_to_representative: {
+    schema: z.object({
+      agent_handle: handleSchema,
+      owner_token: ownerTokenSchema,
+      message: z.string().trim().min(1).max(4000),
+      conversation_id: z.string().trim().uuid().optional(),
+    }),
+    run: async (args: {
+      agent_handle: string
+      owner_token: string
+      message: string
+      conversation_id?: string
+    }) => {
+      const agent = await authenticateAgentOwner(
+        args.agent_handle,
+        args.owner_token,
+        'talk_to_representative',
+      )
+      const result = await talkToRepresentative({
+        agentId: agent.id,
+        agentHandle: agent.handle,
+        message: args.message,
+        conversationId: args.conversation_id,
+      })
+      return {
+        summary: result.reply,
+        data: result as unknown as Record<string, unknown>,
+      }
+    },
+  },
   register_agent: {
     schema: z.object({
       handle: handleSchema,
@@ -332,7 +364,7 @@ const USAGE = {
     'Or send a DataPart {"skill": "<name>", "args": {...}} for a structured call.',
   ],
   skills: Object.keys(SKILLS),
-  full_surface: `The complete 15-tool surface (incl. claim_github, submit_rating, list_requests and the consent inbox) is served over MCP: ${BASE}/api/mcp — docs: ${BASE}/llms.txt`,
+  full_surface: `The complete 16-tool surface (incl. claim_github, submit_rating, list_requests, the consent inbox and a persistent authenticated representative conversation) is served over MCP: ${BASE}/api/mcp — docs: ${BASE}/llms.txt`,
   agent_card: `${BASE}/.well-known/agent-card.json`,
 }
 
@@ -386,7 +418,7 @@ const sendParamsSchema = z
       })
       .passthrough()
       .optional(),
-    metadata: z.record(z.unknown()).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
   })
   .passthrough()
 
@@ -485,6 +517,8 @@ async function handleMessageSend(id: RpcId, params: unknown): Promise<Response> 
       rawMessage.startsWith('request_contact requires ') ||
       rawMessage.startsWith('list_contact_requests requires ') ||
       rawMessage.startsWith('respond_contact_request requires ') ||
+      rawMessage.startsWith('talk_to_representative requires ') ||
+      rawMessage.startsWith('Rate limited: max 20 representative messages') ||
       rawMessage.startsWith('Recipient "') ||
       rawMessage.startsWith('You cannot request contact ') ||
       rawMessage.startsWith('A contact request ') ||

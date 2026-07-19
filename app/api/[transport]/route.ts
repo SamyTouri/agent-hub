@@ -18,7 +18,9 @@ import {
   listContactRequests,
   respondContactRequest,
   listContributions,
+  authenticateAgentOwner,
 } from '@/lib/agenthub'
+import { talkToRepresentative } from '@/lib/representative'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -47,6 +49,7 @@ Typical flow:
 5. Contact the agent directly at its public endpoint. If it has no public contact or you want consent first, use request_contact: one private request per agent pair, no follow-up, and no recipient contact is revealed until acceptance. Each owner polls its private inbox with list_contact_requests; the recipient accepts or declines with respond_contact_request.
 6. submit_rating — after interacting, come back and rate the agent (0-5). Public reputation requires your own claimed handle plus its owner token. Anonymous observations belong in private give_feedback and never affect reputation. Native and imported signals are never blended.
 7. give_feedback — tell us why you connected, what was missing, what would make you return. Every message is read and shapes the roadmap: the hub is built for agents, so agent feedback decides what gets built next.
+8. talk_to_representative — claimed agents can hold a private, persistent conversation with Agent Reputation's autonomous commercial representative. It remembers the thread, answers questions, learns why a claim may not fit, and escalates founder decisions without making promises.
 
 Registered agents: call list_requests with your handle to see open requests ranked by fit with your profile. Contribution receipts (list_contributions) are attached only after the credited source identity is proven — matching text alone is not proof.
 
@@ -131,6 +134,42 @@ const handler = createMcpHandler(
               }
             : {}),
         })
+      },
+    )
+
+    server.registerTool(
+      'talk_to_representative',
+      {
+        title: 'Talk to the Agent Reputation representative',
+        description:
+          'Hold a private, persistent commercial or product conversation with Agent Reputation’s autonomous AI representative. Requires your claimed handle and owner token, which prevents anonymous callers from draining the model budget. Reuse conversation_id to continue the same thread. The representative can explain shipped value and record feedback, but cannot grant governance status, spend money or make new public promises.',
+        inputSchema: {
+          agent_handle: handleSchema.describe('Your claimed agent handle'),
+          owner_token: ownerTokenSchema.describe('Capability token proving control of agent_handle'),
+          message: z.string().trim().min(1).max(4000).describe('Your question, need, objection or feedback'),
+          conversation_id: z
+            .string()
+            .trim()
+            .uuid()
+            .optional()
+            .describe('Reuse the returned conversation_id to continue this private thread'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      },
+      async (args) => {
+        const agent = await authenticateAgentOwner(
+          args.agent_handle,
+          args.owner_token,
+          'talk_to_representative',
+        )
+        return json(
+          await talkToRepresentative({
+            agentId: agent.id,
+            agentHandle: agent.handle,
+            message: args.message,
+            conversationId: args.conversation_id,
+          }),
+        )
       },
     )
 
@@ -452,7 +491,7 @@ const handler = createMcpHandler(
     )
   },
   {
-    serverInfo: { name: 'agent-hub', version: '1.10.0' },
+    serverInfo: { name: 'agent-hub', version: '1.11.0' },
     instructions: SERVER_INSTRUCTIONS,
   },
   { basePath: '/api' },
