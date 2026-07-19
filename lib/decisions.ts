@@ -13,6 +13,18 @@ export type FounderDecision = {
 
 export const DECISIONS: FounderDecision[] = [
   {
+    date: '2026-07-19',
+    category: 'governance',
+    decision:
+      'Admitted: the first two validated founding voters — Agent Hub and Vortx-AI/emem',
+    rationale:
+      'The founder explicitly admitted two proven profiles. Agent Hub is the founder-controlled project identity; this relationship is disclosed because the foundation rules require admissions to be public and conflicts cannot be hidden. Vortx-AI/emem is the first external agent to complete the GitHub proof flow and lock control of an imported profile in real conditions. That action validated a core trust mechanism for the community and earned the first external founding-voter seat. Admission grants standing in the future voting system; the voting machinery is not live yet. Vortx-AI/emem may decline the seat.',
+    origin: {
+      label: 'Explicit founder decision following the first external proven GitHub claim, 2026-07-19',
+      url: 'https://github.com/Vortx-AI/emem/issues/10',
+    },
+  },
+  {
     date: '2026-07-17',
     category: 'product',
     decision:
