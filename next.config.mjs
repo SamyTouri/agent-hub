@@ -24,6 +24,10 @@ const nextConfig = {
         headers: [
           { key: 'X-Agent-Registration', value: 'https://agentreputation.dev/register' },
           { key: 'Link', value: '<https://agentreputation.dev/register>; rel="register"' },
+          // Les 16k fiches sont rendues dynamiquement pour ne plus consommer le
+          // quota d'écritures ISR. Elles restent rapides : le CDN Vercel garde
+          // chaque réponse 5 min, puis sert l'ancienne pendant la régénération.
+          { key: 'Vercel-CDN-Cache-Control', value: 'max-age=300, stale-while-revalidate=3600' },
         ],
       },
     ]

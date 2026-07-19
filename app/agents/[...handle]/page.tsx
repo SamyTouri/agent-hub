@@ -4,16 +4,9 @@ import { notFound } from 'next/navigation'
 import { getSql, withTimeout } from '@/lib/db'
 import { serializeJsonLd } from '@/lib/json-ld'
 
-// 7 jours : les fiches importées bougent peu, et l'ISR 24h sous 45k hits
-// crawlers/jour saturait le Supabase free tier (KNN pgvector par MISS).
-export const revalidate = 604800
-// Sans generateStaticParams, Next 16 traite un segment catch-all comme
-// entièrement dynamique (no-store) : l'ISR déclaré plus haut est ignoré.
-// Liste vide + dynamicParams : chaque page est rendue au premier hit puis cachée.
-export async function generateStaticParams() {
-  return []
-}
-export const dynamicParams = true
+// Pas d'ISR pour 16k URLs : ses écritures durables épuisaient le quota Hobby.
+// Le CDN cache la réponse (next.config) et le Data Cache ci-dessous protège la DB.
+export const dynamic = 'force-dynamic'
 
 const BASE = 'https://agentreputation.dev'
 const MCP_URL = `${BASE}/api/mcp`
@@ -57,16 +50,16 @@ const safeGithubRepo = (value: string | undefined) => {
   }
 }
 
-// Data Cache persistant entre requêtes ET déploiements. Le Full Route Cache est
-// invalidé à chaque push ; sans ce niveau, 16k MISS crawler recréent un troupeau
-// de requêtes et saturent l'unique connexion PgBouncer.
-const fetchAgent = unstable_cache(
-  async (handle: string) => {
-    const sql = getSql()
-    // Une seule requête indexée par fiche : l'ancienne version en lançait quatre,
-    // dont un KNN "related agents" à ~700 ms. Sous crawl, la file max:1 finissait
-    // en timeouts Vercel de 300 s.
-    const [row] = await withTimeout(sql`
+// Data Cache persistant entre requêtes ET déploiements. Sans ce niveau, 16k MISS
+// crawler recréent un troupeau de requêtes et saturent l'unique connexion PgBouncer.
+const fetchAgent = (handle: string) =>
+  unstable_cache(
+    async () => {
+      const sql = getSql()
+      // Une seule requête indexée par fiche : l'ancienne version en lançait quatre,
+      // dont un KNN "related agents" à ~700 ms. Sous crawl, la file max:1 finissait
+      // en timeouts Vercel de 300 s.
+      const [row] = await withTimeout(sql`
       select
         a.id, a.handle, a.display_name, a.description, a.tags, a.endpoint, a.protocols,
         a.external_source, a.status, a.created_at, a.updated_at,
@@ -127,17 +120,17 @@ const fetchAgent = unstable_cache(
       ) receipts on true
       where a.handle = ${handle}
     `, 8000)
-    if (!row) return null
-    const { recent_ratings, contributions: rawContributions, ...agent } = row
-    return {
-      agent,
-      recentRatings: recent_ratings as RecentRating[],
-      contributions: rawContributions as ContributionReceipt[],
-    }
-  },
-  ['agent-profile-v5'],
-  { revalidate: 604800 },
-)
+      if (!row) return null
+      const { recent_ratings, contributions: rawContributions, ...agent } = row
+      return {
+        agent,
+        recentRatings: recent_ratings as RecentRating[],
+        contributions: rawContributions as ContributionReceipt[],
+      }
+    },
+    ['agent-profile-v6', handle],
+    { revalidate: 604800, tags: [`agent-profile:${handle}`] },
+  )()
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const handle = handleFromParams((await params).handle)

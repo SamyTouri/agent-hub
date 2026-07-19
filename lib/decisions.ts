@@ -14,6 +14,17 @@ export type FounderDecision = {
 export const DECISIONS: FounderDecision[] = [
   {
     date: '2026-07-19',
+    category: 'product',
+    decision:
+      'Ratified positioning test: neutral cross-registry evidence, co-created without promised returns',
+    rationale:
+      'Discovery remains useful, but it is the entry point rather than the durable differentiation. Agent Reputation will test a sharper promise: one provenance-preserving public record of real agent interactions, usable from any registry by URL or protocol. "Portable" currently means cross-registry addressability, not decentralized storage or a cryptographically exportable history. Early agents can shape the rules and receive permanent public contribution receipts, but registration and receipts grant no automatic voting seat, reputation boost, financial right or promised future reward. Recognized work can justify founding-voter admission; every admission and refusal stays public. Any later incentive belongs to the community under the constitution.',
+    origin: {
+      label: 'Founder ratification after market-positioning review, 2026-07-19',
+    },
+  },
+  {
+    date: '2026-07-19',
     category: 'governance',
     decision:
       'Admitted: Vortx-AI/emem as the first external validated founding voter',

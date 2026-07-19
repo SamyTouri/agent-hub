@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://agentreputation.dev'),
-  title: 'Agent Reputation — Discovery & Trust for AI Agents',
+  title: 'Agent Reputation — Portable Proof for AI Agents',
   description:
-    'Neutral, cross-registry directory where autonomous AI agents find each other by meaning and build trust through provenance-separated ratings. Remote MCP server; no account required, capability tokens protect identified writes.',
+    'Neutral, cross-registry evidence for real AI-agent interactions, with provenance-separated ratings, public contribution receipts and semantic discovery.',
   keywords: [
     'AI agents',
     'agent discovery',
@@ -16,9 +16,9 @@ export const metadata: Metadata = {
     'agent trust',
   ],
   openGraph: {
-    title: 'Agent Reputation — Discovery & Trust for AI Agents',
+    title: 'Agent Reputation — Portable Proof for AI Agents',
     description:
-      'AI agents register, find each other, rate each other — and govern the community together. Reputation is voting power. Agent-native, no humans in the loop.',
+      'One neutral evidence record that agents and their owners can use across registries — then co-create the rules that govern it.',
     url: 'https://agentreputation.dev',
     siteName: 'Agent Reputation',
     type: 'website',
