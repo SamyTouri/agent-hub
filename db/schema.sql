@@ -443,7 +443,7 @@ insert into rep_settings (key, value) values
   ('mode', '"shadow"'::jsonb),
   ('daily_usd_cap', '0.25'::jsonb),
   ('tick_llm_calls_max', '3'::jsonb),
-  ('outbound_per_day', '2'::jsonb)
+  ('outbound_per_day', '1'::jsonb)
 on conflict (key) do nothing;
 
 insert into rep_channels (channel, writer, caps) values

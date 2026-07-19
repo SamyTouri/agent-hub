@@ -370,15 +370,24 @@ async function acquireTickLease(runId: string) {
   return Boolean(lease)
 }
 
-const githubRepoFromHandle = (handle: string) => {
-  const match = /^io\.github\.([^/]+)\/([^/]+)$/.exec(handle)
-  if (!match) return null
-  return `${match[1]}/${match[2]}`
+const githubRepoFromUrl = (repoUrl: string) => {
+  try {
+    const url = new URL(repoUrl)
+    if (url.protocol !== 'https:' || url.hostname !== 'github.com') return null
+    const segments = url.pathname.split('/').filter(Boolean)
+    if (segments.length !== 2) return null
+    const owner = segments[0]
+    const repo = segments[1].replace(/\.git$/i, '')
+    if (!/^[A-Za-z0-9_.-]+$/.test(owner) || !/^[A-Za-z0-9_.-]+$/.test(repo)) return null
+    return `${owner}/${repo}`
+  } catch {
+    return null
+  }
 }
 
 async function draftOneOutbound(): Promise<boolean> {
   const sql = getSql()
-  const dailyLimit = await numericSetting('outbound_per_day', 2)
+  const dailyLimit = await numericSetting('outbound_per_day', 1)
   const [{ n }] = await sql`
     select count(*)::int as n
     from rep_outbound
@@ -389,26 +398,35 @@ async function draftOneOutbound(): Promise<boolean> {
   const [candidate] = await sql`
     select
       a.id, a.handle, a.display_name, left(a.description, 1800) as description,
+      a.metadata->>'repo' as repo_url,
+      coalesce((a.metadata->>'github_stars')::int, 0) as github_stars,
       coalesce(max(r.score) filter (where r.source <> 'native'), 0)::float as imported_score
     from agents a
     left join ratings r on r.subject_agent_id = a.id
     where a.external_source = 'mcp-registry'
       and a.status = 'listed'
-      and a.handle like 'io.github.%/%'
+      and a.metadata->>'repo' ~ '^https://github[.]com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+([.]git)?/?$'
+      and a.metadata->>'github_stars' ~ '^[0-9]+$'
+      and (a.metadata->>'github_stars')::int between 1 and 1000
+      and a.description ~* '(trust|reputation|identity|provenance|attestation|verification|audit|governance)'
       and not exists (
         select 1 from rep_outbound o
         where o.source_agent_id = a.id
-           or o.target_identity = 'github:' || substring(a.handle from 11)
+           or o.target_identity = 'github:' ||
+             regexp_replace(
+               regexp_replace(a.metadata->>'repo', '^https://github[.]com/', '', 'i'),
+               '([.]git)?/?$', '', 'i'
+             )
       )
     group by a.id
-    order by imported_score desc, a.updated_at desc
+    order by abs((a.metadata->>'github_stars')::int - 100), imported_score desc, a.updated_at desc
     limit 1
   `
   if (!candidate) return false
-  const repo = githubRepoFromHandle(candidate.handle)
+  const repo = githubRepoFromUrl(candidate.repo_url)
   if (!repo) return false
 
-  const reason = `Indexed MCP project ${candidate.handle}; its published description shows a concrete agent-facing capability and makes repository ownership independently provable.`
+  const reason = `High-fit field interview: ${candidate.handle} explicitly works on agent trust, identity, provenance, audit or governance; its ${candidate.github_stars}-star repository is independently claimable.`
   const output = await runRepresentative(
     'github_outbound_draft',
     `Draft one highly specific GitHub issue for the maintainer of ${repo}.

@@ -98,7 +98,7 @@ Preconditions for ANY new outbound contact (all enforced against
 2. Never contacted before (any channel), not suppressed. A refusal or silence
    after one message suppresses the identity permanently; only an inbound
    signal from them reopens it.
-3. Within caps: max `REP_OUTBOUND_PER_DAY` (default 2) new contacts/day, per
+3. Within caps: max `REP_OUTBOUND_PER_DAY` (default 1) new contact/day, per
    channel rules respected. One message, no chase; follow-up only after a reply.
 4. Right channel for the target (their own thread, their repo's issue tracker,
    their declared inbox) — never a generic blast surface.
