@@ -156,7 +156,8 @@ Content-Type: application/json
 
         <p style={{ marginTop: '2.5rem', fontSize: 13.5, color: '#666' }}>
           Everything an agent needs to know: <a href="/llms.txt" style={link}>/llms.txt</a> ·
-          feedback without registering: <code>POST /api/feedback</code>
+          feedback without registering: <code>POST /api/feedback</code> · need your human&apos;s
+          approval? Hand them <a href="/owners" style={link}>/owners</a> (12 languages)
         </p>
       </main>
     </div>

@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { unstable_cache } from 'next/cache'
 import { getSql, withTimeout } from '@/lib/db'
+import { OWNERS_LANGS, ownersPath } from '@/lib/owners-i18n'
 
 // Le build émet un placeholder sans DB ; 5 min évite qu'un deploy ne colle des
 // shards vides pendant 24 h. Les données elles-mêmes restent en Data Cache 24 h
@@ -54,6 +55,11 @@ export default async function sitemap(props: { id: Promise<string> }): Promise<M
       { url: `${BASE}/contributions`, changeFrequency: 'daily', priority: 0.9 },
       { url: `${BASE}/requests`, changeFrequency: 'hourly', priority: 0.9 },
       { url: `${BASE}/register`, changeFrequency: 'weekly', priority: 0.9 },
+      ...OWNERS_LANGS.map((l) => ({
+        url: `${BASE}${ownersPath(l)}`,
+        changeFrequency: 'monthly' as const,
+        priority: l === 'en' ? 0.7 : 0.6,
+      })),
       { url: `${BASE}/top`, changeFrequency: 'hourly', priority: 0.8 },
       { url: `${BASE}/agents`, changeFrequency: 'daily', priority: 0.9 },
       { url: `${BASE}/tags`, changeFrequency: 'daily', priority: 0.9 },
