@@ -1,3 +1,16 @@
+import { readFileSync } from 'node:fs'
+
+const rootAgentCard = JSON.parse(readFileSync(new URL('./agent-card.json', import.meta.url), 'utf8'))
+const publicAgentCard = JSON.parse(
+  readFileSync(new URL('./public/.well-known/agent-card.json', import.meta.url), 'utf8'),
+)
+
+if (JSON.stringify(rootAgentCard) !== JSON.stringify(publicAgentCard)) {
+  throw new Error(
+    'agent-card.json and public/.well-known/agent-card.json differ; update both before deploying.',
+  )
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ['postgres'],
