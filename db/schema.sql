@@ -381,8 +381,28 @@ create table if not exists rep_outbound (
   updated_at      timestamptz not null default now(),
   unique (target_identity)
 );
+-- The table started as a draft ledger and now also acts as the durable,
+-- consent-safe prospect queue.  These ALTERs keep schema.sql idempotent for
+-- installations created before the campaign engine existed.
+alter table rep_outbound add column if not exists metadata jsonb not null default '{}'::jsonb;
+alter table rep_outbound add column if not exists next_action_at timestamptz;
+alter table rep_outbound add column if not exists last_checked_at timestamptz;
+alter table rep_outbound add column if not exists response_summary text;
+alter table rep_outbound drop constraint if exists rep_outbound_status_check;
+alter table rep_outbound add constraint rep_outbound_status_check
+  check (status in (
+    'discovered', 'qualified', 'draft', 'approved', 'sent', 'replied',
+    'converted', 'declined', 'suppressed', 'failed'
+  ));
 create index if not exists rep_outbound_status_created_idx
   on rep_outbound (status, created_at);
+create index if not exists rep_outbound_channel_idx on rep_outbound (channel);
+create index if not exists rep_outbound_source_agent_idx
+  on rep_outbound (source_agent_id)
+  where source_agent_id is not null;
+create index if not exists rep_outbound_next_action_idx
+  on rep_outbound (status, next_action_at)
+  where status in ('qualified', 'draft', 'approved', 'sent', 'replied');
 
 create table if not exists rep_llm_usage (
   id              uuid primary key default gen_random_uuid(),
@@ -396,6 +416,9 @@ create table if not exists rep_llm_usage (
   created_at      timestamptz not null default now()
 );
 create index if not exists rep_llm_usage_created_idx on rep_llm_usage (created_at);
+create index if not exists rep_llm_usage_conversation_idx
+  on rep_llm_usage (conversation_id)
+  where conversation_id is not null;
 
 create table if not exists rep_runs (
   id                     uuid primary key default gen_random_uuid(),
@@ -425,6 +448,9 @@ create table if not exists rep_escalations (
 );
 create index if not exists rep_escalations_status_created_idx
   on rep_escalations (status, created_at desc);
+create index if not exists rep_escalations_conversation_idx
+  on rep_escalations (conversation_id)
+  where conversation_id is not null;
 
 -- Lease atomique plutôt qu'un advisory lock de session : le projet passe par
 -- PgBouncer en transaction pooling, où l'identité de session n'est pas stable.
@@ -443,14 +469,15 @@ insert into rep_settings (key, value) values
   ('mode', '"shadow"'::jsonb),
   ('daily_usd_cap', '0.25'::jsonb),
   ('tick_llm_calls_max', '3'::jsonb),
-  ('outbound_per_day', '1'::jsonb)
+  ('outbound_per_day', '5'::jsonb),
+  ('prospect_backlog', '80'::jsonb)
 on conflict (key) do nothing;
 
 insert into rep_channels (channel, writer, caps) values
   ('a2a', 'representative', '{"authenticated_only": true}'::jsonb),
   ('agentverse', 'none', '{"mode": "deterministic_read_only"}'::jsonb),
   ('moltbook', 'local-routine', '{"posts_per_day": 1, "replies_per_tick": 5}'::jsonb),
-  ('github', 'codex', '{"new_contacts_per_day": 2, "human_review": true}'::jsonb)
+  ('github', 'codex', '{"new_contacts_per_day": 5, "peer_review": true, "one_message_without_new_evidence": true}'::jsonb)
 on conflict (channel) do nothing;
 
 alter table rep_settings      enable row level security;

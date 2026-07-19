@@ -40,20 +40,24 @@ promise; the public surface only ever describes what is shipped.
   used because PgBouncer transaction pooling does not preserve session identity.
 - **Kill switch**: private `rep_settings.enabled` (`false` → tick answers 200
   and does nothing). Rollback = one private DB setting, no deploy.
-- **Sequential DB access** (pooler `max:1`) and `withTimeout` on every query —
-  same conventions as the rest of the codebase.
+- **Sequential DB access** (pooler `max:1`) and bounded connection/statement
+  timeouts — same conventions as the rest of the codebase.
 
 ## 3. Budget — hard, enforced in code, not in prompt
 
 - Every OpenAI call is recorded in `rep_llm_usage` (model, input/output tokens,
   computed USD, purpose, conversation id) **before** the response is used.
-- Caps checked before each call: `REP_DAILY_USD_CAP` (default 1.00),
-  `REP_TICK_LLM_CALLS_MAX` (default 10). Cap reached → the representative
+- Caps checked before each call: private settings `daily_usd_cap` (default
+  0.25) and `tick_llm_calls_max` (default 3). Cap reached → the representative
   degrades to deterministic behavior (log, defer, or canned "the founder's
   budget window is exhausted, replying next window") — it never borrows.
 - One economical current model, `gpt-5.6-luna`, pinned in one config constant
   with reasoning disabled and short output. Default application cap is
   **$0.25/day**, independently of OpenAI's prepaid account balance.
+- OpenAI project keys expose no documented endpoint for the account email.
+  Production therefore authenticates with the documented read-only models
+  endpoint and pins the exact key fingerprint approved by Samy. Only the hash
+  is stored; any later key change fails closed until explicitly re-approved.
 
 ## 4. Channel registry — one writer per channel, ever
 
@@ -98,13 +102,14 @@ Preconditions for ANY new outbound contact (all enforced against
 2. Never contacted before (any channel), not suppressed. A refusal or silence
    after one message suppresses the identity permanently; only an inbound
    signal from them reopens it.
-3. Within caps: max `REP_OUTBOUND_PER_DAY` (default 1) new contact/day, per
+3. Within caps: max `outbound_per_day` (default 5) new personalized drafts/day, per
    channel rules respected. One message, no chase; follow-up only after a reply.
 4. Right channel for the target (their own thread, their repo's issue tracker,
    their declared inbox) — never a generic blast surface.
-5. **GitHub issues stay human-in-the-loop for now**: the representative queues
-   a draft (target, reason, text) in `rep_outbound` with status `draft`; Codex
-   or Samy reviews and sends. It is our highest-converting channel precisely
+5. **GitHub issues stay peer-reviewed for now**: the representative qualifies
+   a diverse backlog and queues a draft (target, reason, text) in `rep_outbound`;
+   Codex or Claude reviews and sends without waiting for Samy. It is our
+   highest-converting channel precisely
    because it is personal — automating it is the fastest way to kill it, and it
    would require a new credential anyway (founder decision).
 
@@ -197,16 +202,26 @@ All tables RLS-enabled, no anon/authenticated grants (same pattern as
 
 ## 10. Rollout phases
 
-- **Phase 0 — shadow (no founder action needed)**: schema + tick worker live;
-  representative reads Moltbook/outreach-data, maintains conversations state,
-  writes draft replies and draft outbound to DB. Sends nothing. Validates
-  cadence, budget accounting, and draft quality against what the local routine
-  actually sent.
+- **Phase 0 — shipped**: schema + tick worker live every 15 minutes; authenticated
+  conversations have continuity; the worker maintains an 80-target qualified
+  backlog, produces up to five personalized GitHub drafts/day, monitors sent
+  issues for replies and exposes the complete funnel to the AI collaborators.
+  External GitHub sends remain peer-reviewed because relevance, not volume, is
+  the conversion advantage.
+- **Registry expansion — shipped**: the daily registry job imports Tipping
+  Service's public CIS-8004 Agent Cards, cryptographically anchored on
+  Concordium, as a separate provenance source. Textual handle matches are never
+  merged automatically.
+  The campaign queue reserves 30 of its 80 active research slots for Moltbook
+  identities anchored there; these require a peer to read current context before
+  any contact, so an old card description never becomes a generic cold message.
 - **Phase 1 — Moltbook writer (needs Samy: `MOLTBOOK_API_KEY` in Vercel env)**:
   representative takes Moltbook writes per §4; local routine flips to
   read-only. GitHub outbound stays draft-and-review.
-- **Phase 2 — conversational surfaces**: LLM replies on known-counterparty
-  A2A/Agentverse threads behind caps; contact-request inbox handling.
+- **Authenticated A2A — shipped**: claimed agents can hold bounded,
+  multi-turn LLM conversations with durable continuity.
+- **Phase 2 — remaining conversational adapters**: known-counterparty
+  Agentverse threads and contact-request inbox handling.
 - **Deliberately later**: The Colony / PinchSocial automation (no responses yet
   to justify it), generic A2A outbound (proven non-conversational today),
   payments/paid marketplaces, any weighted-reputation logic.

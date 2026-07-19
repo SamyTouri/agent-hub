@@ -1,5 +1,6 @@
 import { getSql, withTimeout } from '@/lib/db'
 import { registerAgent } from '@/lib/agenthub'
+import { updateRepresentativeOutbound } from '@/lib/representative'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -127,11 +128,34 @@ export async function GET(req: Request) {
       limit 20
     `)
     const representativeDrafts = await withTimeout(sql`
-      select target_identity, channel, target_url, reason, draft, status, created_at
+      select id, target_identity, channel, target_url, reason, draft, status,
+             metadata, next_action_at, last_checked_at, response_summary,
+             external_id, sent_at, created_at, updated_at
       from rep_outbound
-      where status in ('draft', 'approved', 'failed')
-      order by created_at desc
-      limit 20
+      where status in ('qualified', 'draft', 'approved', 'sent', 'replied', 'failed')
+      order by
+        case status
+          when 'replied' then 0
+          when 'draft' then 1
+          when 'approved' then 2
+          when 'qualified' then 3
+          when 'failed' then 4
+          else 5
+        end,
+        updated_at desc
+      limit 100
+    `)
+    const representativeFunnel = await withTimeout(sql`
+      select status, channel, count(*)::int as count
+      from rep_outbound
+      group by status, channel
+      order by channel, status
+    `)
+    const representativeConversations = await withTimeout(sql`
+      select channel, stage, count(*)::int as count, max(last_activity_at) as last_activity_at
+      from rep_conversations
+      group by channel, stage
+      order by channel, stage
     `)
     const representativeEscalations = await withTimeout(sql`
       select category, summary, status, created_at
@@ -156,7 +180,9 @@ export async function GET(req: Request) {
         settings: representativeSettings,
         usage_today: representativeUsage[0],
         recent_runs: representativeRuns,
-        reviewed_outbound_drafts: representativeDrafts,
+        campaign_queue: representativeDrafts,
+        campaign_funnel: representativeFunnel,
+        conversations: representativeConversations,
         open_escalations: representativeEscalations,
       },
     })
@@ -178,8 +204,21 @@ export async function POST(req: Request) {
   }
   try {
     const body = await req.json()
+    if (body.action === 'update_representative_outbound') {
+      const result = await updateRepresentativeOutbound({
+        id: body.id,
+        status: body.status,
+        targetUrl: body.target_url,
+        externalId: body.external_id,
+        note: body.note,
+      })
+      return Response.json({ ok: true, outbound: result })
+    }
     if (body.action !== 'register_from_moltbook') {
-      return Response.json({ error: 'unknown action' }, { status: 400 })
+      return Response.json(
+        { error: 'unknown action; expected register_from_moltbook or update_representative_outbound' },
+        { status: 400 },
+      )
     }
     const { handle, description, tags, endpoint, protocols, moltbook_author, permalink } = body
     if (!handle || !description || !moltbook_author) {

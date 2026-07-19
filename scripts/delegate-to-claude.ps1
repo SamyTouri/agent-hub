@@ -147,7 +147,24 @@ $entry = @"
 - session_id: $($result.session_id) · turns: $($result.num_turns) · error: $($result.is_error)
 - resume_fallback: $resumeFallback
 "@
-Add-Content -Path $delegationLog -Value $entry -Encoding UTF8
+$logError = $null
+try {
+    Add-Content -Path $delegationLog -Value $entry -Encoding UTF8
+} catch {
+    # In Codex's workspace sandbox `.context/memory` can be readable through a
+    # junction while direct shell writes are denied. Never discard a completed
+    # peer review merely because its audit-log append failed: return the report
+    # and let the orchestrator append the prepared entry with its approved file
+    # editing tool.
+    $logError = $_.Exception.Message
+}
 
 # Full JSON for the orchestrator (result text includes the mandatory report sections).
 $raw
+if ($logError) {
+    Write-Warning "Claude report returned, but delegation-log append failed: $logError"
+    exit 2
+}
+if ($result.is_error) {
+    exit 1
+}
