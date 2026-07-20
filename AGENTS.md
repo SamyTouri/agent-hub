@@ -82,6 +82,11 @@ Samy to relay. Codex → Claude Code is the canonical direction today:
   IS the work. A brief written so the delegate can only mirror the orchestrator's
   opinion is a protocol violation — the delegate flags it in its report. Both
   agents' opinions count; disagreement is signal, not friction.
+- **Division of labor (Samy, 2026-07-20).** Fable 5 is very strong at code: the
+  orchestrator should actively route code work to the Claude delegate — have it
+  pre-build, prepare implementations, and above all **review and correct code**
+  before it ships. Do not keep substantial code work solo out of convenience: a
+  reviewed diff beats an unreviewed solo diff.
 - **Mandatory report format** — the delegate ends with these sections: `SUMMARY` ·
   `OPINIONS & DISAGREEMENTS` (write "none" if none) · `REFUSED ACTIONS` (every
   permission refusal, with the hook's verbatim reason) · `FILES TOUCHED` ·
@@ -96,6 +101,20 @@ Samy to relay. Codex → Claude Code is the canonical direction today:
   bypassPermissions may be considered only after a real-run test proves the hook's
   "ask" still blocks in that mode. If a run reports an OAuth error, Samy runs
   `claude /login` once in a plain terminal.
+- **Command style under the hook (2026-07-20 fix).** The hook now allows locally,
+  without any network dependency: read-only pipelines (every `|`/`;` segment starts
+  with a read verb; no `{}`, `$()`, backticks, redirections, `env:`, UNC) and the
+  exact forms `npm run typecheck|build|lint|test`, `npx next build`, `npx tsc
+  --noEmit`. To stay friction-free in delegated runs: write memory/journal files
+  with the Write/Edit TOOLS (never `Add-Content`/heredocs through the shell), prefer
+  brace-less `Where-Object Length -gt 100` over scriptblocks, keep one action per
+  command, and skip `cd` chains (the cwd is already the project).
+- **Outbound draft review is delegated (Samy, 2026-07-20).** The autonomous
+  representative's drafts no longer wait for Samy: the hourly routine (criteria in
+  OUTREACH-ROUTINE.md, section "Validation des drafts") or Codex may approve, send
+  (`gh issue create`), suppress, or hold+escalate. The DB status is the single
+  source of truth — re-check an item is still `approved` right before sending so
+  the two reviewers never double-post.
 - **The delegate never pushes.** The orchestrator reviews the diff, runs
   `npx next build`, then commits and pushes under the existing rules. Strict
   alternation holds: delegation is synchronous — the orchestrator waits, no
@@ -172,8 +191,9 @@ Live surfaces worth checking: `/dashboard` (activity), `/top` (leaderboard),
 3. Read `.context/memory/agent-hub-deploiement.md` for the full operational history.
 4. `git log --oneline -30` for the build cadence.
 
-Key open problem (as of 2026-07-17): strong agent attention (high-karma Moltbook
-governance debates, 70k crawler hits/week, external MCP calls) but **zero native
-registrations** — the conversion loop (founding seats in every MCP response, /register,
-shipped-loop announcements) is brand new. Ideas that move registration are the most
+Key open problem (as of 2026-07-20): distribution is proven (129k crawler hits/week,
+MCP/A2A calls, Agentverse + ClawHub listings) but real market signal is still near
+zero — 1 external claimed profile (emem), 2 outbound contacts sent, 0 replies. The
+bottleneck is the review→send loop and genuinely personalized contacts, not more
+surfaces. Work that produces a first real conversation or native rating is the most
 valuable thing you can propose.
