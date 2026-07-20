@@ -170,18 +170,66 @@ valider par ses propres moyens — le statut en base est la seule vérité parta
    (compter les `sent` sans réponse dans le funnel) ; max **2 envois par run** ; le cap
    moteur `outbound_per_day` reste la limite dure.
 
-**Décisions** (POST outreach-data, `{"action":"update_representative_outbound", ...}`) :
-- **Conforme** → `status:'approved'` avec `note` courte. Puis **envoi** : pour le canal
-  GitHub, re-vérifier juste avant que l'item est toujours `approved` (Codex a pu agir),
-  créer l'issue via `gh issue create --repo <owner/repo> --title "<Title du draft>"
-  --body "<corps>"` (le draft commence par une ligne `Title: ...`), puis IMMÉDIATEMENT
-  `status:'sent'` + `target_url` = URL de l'issue créée. Si `gh` échoue → laisser
-  `approved`, consigner, Codex enverra.
+**Décisions** (POST outreach-data ; `reviewer` = `local-routine` ici, `codex` côté
+Codex). Chaque item du GET porte un `record_version` opaque. Toute décision transmet
+la version exactement relue ; HTTP 409 = un autre writer a gagné, STOP et nouveau GET.
+
+- **Texte perfectible mais cible bonne** → corriger AVANT approbation. Le draft
+  canonique commence par `Title: ...`, contient un corps, au plus un lien et 4 000
+  caractères :
+  `{"action":"revise_representative_outbound","id":"...","expected_version":"...",
+    "draft":"...","reviewer":"local-routine","note":"correction factuelle précise"}`.
+  Refaire un GET et relire le texte réellement stocké.
+- **Conforme** → une mutation peut corriger et approuver ensemble :
+  `{"action":"update_representative_outbound","id":"...","expected_version":"...",
+    "status":"approved","reviewer":"local-routine","note":"motif court",
+    "draft":"<texte exact si corrigé>"}`.
+  L'approbation lie durablement le texte, la cible et l'identifiant numérique du dépôt
+  GitHub. Pour rouvrir une approbation encore non réservée :
+  `reopen_representative_outbound_approval` + `expected_version`, reviewer et note.
+- **Réservation AVANT GitHub** : générer un `review_run_id` UUID une fois par run
+  (max 2 envois) et un `send_attempt_id` UUID par item ; lire le login courant par
+  `gh api user --jq .login`. POST
+  `{"action":"reserve_representative_outbound_send","id":"...",
+    "expected_version":"...","send_attempt_id":"...","review_run_id":"...",
+    "reviewer":"local-routine","github_actor":"..."}`.
+  Le backend sérialise les reviewers, réapplique le kill switch, le cap journalier,
+  exige explicitement `mode:review`, puis réapplique ≤ 5 sans réponse, ≤ 2/run et une
+  seule organisation contactée. **Créer l'issue
+  uniquement si cette réponse précise contient `may_post:true`.** Un replay du même
+  attempt renvoie toujours `may_post:false,reconcile:true` : ne jamais poster.
+- **Écriture GitHub sans injection** : utiliser exclusivement `delivery.repo`,
+  `delivery.title` et `delivery.body` renvoyés par la réservation ; ne jamais
+  concaténer une commande ou interpoler le draft dans une commande construite. Passer
+  ces trois variables au helper structuré :
+  `pwsh -File scripts/create-reviewed-github-issue.ps1 -Repo $repo -Title $title
+  -Body $body`. Il écrit le body exact en UTF-8 sans BOM, passe chaque argument sans
+  réinterprétation shell, borne `gh` à 45 s et nettoie son fichier temporaire. Le corps
+  inclut un commentaire HTML de livraison stocké en base.
+- **Finalisation** : POST immédiatement
+  `{"action":"complete_representative_outbound_send","id":"...",
+    "send_attempt_id":"...","target_url":"<URL issue>"}`.
+  Le serveur relit GitHub et exige : dépôt/ID immuables, auteur attendu, issue (pas PR),
+  date postérieure à la réservation, titre et corps exacts, marqueur exact. Lui seul
+  dérive `external_id` et passe à `sent`.
+  - GitHub a créé l'issue mais la finalisation échoue : retenter seulement
+    `complete_representative_outbound_send` avec le même attempt et la même URL.
+  - URL perdue ou résultat ambigu : POST
+    `reconcile_representative_outbound_send` avec id, attempt, reviewer et note. Le
+    backend pagine directement les issues créées depuis la réservation et retrouve le
+    marqueur. Zéro match verrouille l'item en `reconciliation_required` : ne jamais
+    poster, rouvrir ou supprimer. Une absence GitHub ne libère pas automatiquement une
+    réservation, car un appel déjà en vol pourrait créer l'issue plus tard ; escalader
+    alors pour réconciliation manuelle.
+  - Même si `gh` échoue apparemment avant création, utiliser cette réconciliation ;
+    aucune affirmation client ne libère seule la réservation.
 - **Cible mauvaise** (faux positif de qualification, repo mort, 403 probable, hors
-  périmètre) → `status:'suppressed'` + note du motif.
-- **Texte perfectible mais cible bonne** → laisser en `draft`, consigner PRÉCISÉMENT ce
-  qui cloche au log (section DRAFTS) pour que Codex ou le prochain cycle du moteur
-  reprenne. Ne jamais approuver « à peu près ».
+  périmètre) → POST `status:'suppressed'` avec `expected_version`, reviewer et note
+  précise. Une réservation active ne peut jamais être supprimée.
+- **Texte/cible en doute sans correction sûre** → laisser en `draft`, consigner
+  PRÉCISÉMENT ce qui cloche au log (section DRAFTS). Ne jamais approuver « à peu près ».
+- **Follow-up public** → fail-closed tant qu'il ne possède pas la même chaîne
+  revue→réservation→preuve ; garder le draft sans publier et escalader.
 - **Doute de fond** (ton, positionnement, risque de réputation) → ne rien changer,
   section ESCALADE pour Samy.
 

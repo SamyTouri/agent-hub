@@ -2,6 +2,24 @@ import { Agent, run, setTracingDisabled } from '@openai/agents'
 import { createHash, randomUUID, timingSafeEqual } from 'crypto'
 import { z } from 'zod'
 import { getSql } from './db'
+import {
+  assertInitialSendCapacity,
+  canTransitionRepresentativeOutbound,
+  githubIssueContentMatches,
+  githubIssueFromUrl,
+  githubIssueMatchesRepo,
+  githubOrganizationFromUrl,
+  githubRepoFromUrl,
+  normalizeInitialOutboundDraft,
+  normalizeRecordVersion,
+  normalizeReviewer,
+  normalizeReviewNote,
+  normalizeUuid,
+  prepareGitHubIssueDelivery,
+  representativeOutboundRecordVersion,
+  RepresentativeOutboundError,
+  type RepresentativeOutboundStatus,
+} from './representative-outbound'
 
 export const REPRESENTATIVE_MODEL = 'gpt-5.6-luna'
 
@@ -421,41 +439,6 @@ async function acquireTickLease(runId: string) {
   return Boolean(lease)
 }
 
-const githubRepoFromUrl = (repoUrl: string) => {
-  try {
-    const url = new URL(repoUrl)
-    if (url.protocol !== 'https:' || url.hostname !== 'github.com') return null
-    const segments = url.pathname.split('/').filter(Boolean)
-    if (segments.length !== 2) return null
-    const owner = segments[0]
-    const repo = segments[1].replace(/\.git$/i, '')
-    if (!/^[A-Za-z0-9_.-]+$/.test(owner) || !/^[A-Za-z0-9_.-]+$/.test(repo)) return null
-    return `${owner}/${repo}`
-  } catch {
-    return null
-  }
-}
-
-const githubIssueFromUrl = (issueUrl: string) => {
-  try {
-    const url = new URL(issueUrl)
-    if (url.protocol !== 'https:' || url.hostname !== 'github.com') return null
-    const segments = url.pathname.split('/').filter(Boolean)
-    if (
-      segments.length !== 4 ||
-      segments[2] !== 'issues' ||
-      !/^[A-Za-z0-9_.-]+$/.test(segments[0]) ||
-      !/^[A-Za-z0-9_.-]+$/.test(segments[1]) ||
-      !/^[1-9][0-9]*$/.test(segments[3])
-    ) {
-      return null
-    }
-    return { owner: segments[0], repo: segments[1], number: Number(segments[3]) }
-  } catch {
-    return null
-  }
-}
-
 async function discoverGithubProspects(limit: number): Promise<number> {
   if (limit <= 0) return 0
   const sql = getSql()
@@ -657,7 +640,8 @@ async function draftOneOutbound(): Promise<boolean> {
       metadata->>'display_name' as display_name,
       metadata->>'description' as description,
       coalesce((metadata->>'github_stars')::int, 0) as github_stars,
-      coalesce((metadata->>'fit_score')::int, 0) as fit_score
+      coalesce((metadata->>'fit_score')::int, 0) as fit_score,
+      xmin::text as record_xmin
     from rep_outbound
     where status = 'qualified'
       and channel = 'github'
@@ -686,12 +670,16 @@ Fit score: ${candidate.fit_score}
 Goal: learn whether neutral, cross-registry evidence of real agent interactions
 solves a real problem for this maintainer, and offer the zero-OAuth GitHub proof
 claim for their already indexed profile. Identify yourself as Agent Reputation's autonomous representative.
+Be exact about current limits: a GitHub claim proves repository/namespace continuity,
+does not create a contribution receipt, and does not independently prove that a task
+or interaction happened. Contribution receipts are a separate founder-recognized record.
+Treat the imported description as a lead, not proof of the repository's current scope.
 No flattery, no generic marketing, no urgency, one link maximum, one clear question.
 Start with a concise line formatted exactly "Title: ...", then the issue body.`,
   )
   if (!output) return false
 
-  await sql`
+  const drafted = await sql`
     update rep_outbound
     set draft = ${output.reply},
         status = 'draft',
@@ -702,14 +690,17 @@ Start with a concise line formatted exactly "Title: ...", then the issue body.`,
         next_action_at = null,
         updated_at = now()
     where id = ${candidate.id}
+      and status = 'qualified'
+      and xmin::text = ${String(candidate.record_xmin)}
+    returning id
   `
-  return true
+  return drafted.length === 1
 }
 
 async function pollGithubReplies(): Promise<number> {
   const sql = getSql()
   const sent = await sql`
-    select id, target_url, sent_at
+    select id, target_url, sent_at, xmin::text as record_xmin
     from rep_outbound
     where channel = 'github'
       and status = 'sent'
@@ -727,6 +718,8 @@ async function pollGithubReplies(): Promise<number> {
         set last_checked_at = now(), last_error = 'Sent GitHub target is not a valid issue URL.',
             updated_at = now()
         where id = ${item.id}
+          and status = 'sent'
+          and xmin::text = ${String(item.record_xmin)}
       `
       continue
     }
@@ -765,19 +758,27 @@ async function pollGithubReplies(): Promise<number> {
             const sentAt = Date.parse(String(item.sent_at))
             const reply = comments.find((comment) => {
               if (!comment || typeof comment !== 'object' || Array.isArray(comment)) return false
+              const record = comment as {
+                author_association?: unknown
+                created_at?: unknown
+                user?: { login?: unknown; type?: unknown }
+              }
               const author = shortExternalText(
-                (comment as { user?: { login?: unknown } }).user?.login,
+                record.user?.login,
                 80,
               ).toLowerCase()
-              const createdAt = Date.parse(
-                String((comment as { created_at?: unknown }).created_at ?? ''),
-              )
+              const userType = shortExternalText(record.user?.type, 40).toUpperCase()
+              const association = shortExternalText(record.author_association, 40).toUpperCase()
+              const createdAt = Date.parse(String(record.created_at ?? ''))
               // Ignore our own operational comments. Updating a sent follow-up
               // refreshes sent_at, so earlier counterparty replies cannot be
-              // mistaken for a new answer on the next polling cycle.
+              // mistaken for a new answer on the next polling cycle. Bots and
+              // unrelated visitors do not free a human unanswered-contact slot.
               return (
                 Boolean(author) &&
                 author !== issueAuthor &&
+                userType !== 'BOT' &&
+                ['OWNER', 'MEMBER', 'COLLABORATOR'].includes(association) &&
                 Number.isFinite(createdAt) &&
                 createdAt >= sentAt
               )
@@ -793,7 +794,7 @@ async function pollGithubReplies(): Promise<number> {
       }
 
       if (responseSummary) {
-        await sql`
+        const updated = await sql`
           update rep_outbound
           set status = 'replied',
               response_summary = ${responseSummary},
@@ -803,8 +804,11 @@ async function pollGithubReplies(): Promise<number> {
               last_error = null,
               updated_at = now()
           where id = ${item.id}
+            and status = 'sent'
+            and xmin::text = ${String(item.record_xmin)}
+          returning id
         `
-        replies++
+        replies += updated.length
       } else if (issueBody.state === 'closed') {
         await sql`
           update rep_outbound
@@ -815,6 +819,8 @@ async function pollGithubReplies(): Promise<number> {
               last_error = null,
               updated_at = now()
           where id = ${item.id}
+            and status = 'sent'
+            and xmin::text = ${String(item.record_xmin)}
         `
       } else {
         await sql`
@@ -824,6 +830,8 @@ async function pollGithubReplies(): Promise<number> {
               last_error = null,
               updated_at = now()
           where id = ${item.id}
+            and status = 'sent'
+            and xmin::text = ${String(item.record_xmin)}
         `
       }
     } catch (error) {
@@ -833,6 +841,8 @@ async function pollGithubReplies(): Promise<number> {
             last_error = ${error instanceof Error ? error.message.slice(0, 500) : 'GitHub polling failed'},
             updated_at = now()
         where id = ${item.id}
+          and status = 'sent'
+          and xmin::text = ${String(item.record_xmin)}
       `
     }
   }
@@ -845,7 +855,8 @@ const shortExternalText = (value: unknown, max: number) =>
 async function draftOneGithubReply(): Promise<boolean> {
   const sql = getSql()
   const [item] = await sql`
-    select id, target_identity, target_url, draft, response_summary, metadata
+    select id, target_identity, target_url, draft, response_summary, metadata,
+           xmin::text as record_xmin
     from rep_outbound
     where channel = 'github'
       and status = 'replied'
@@ -876,7 +887,7 @@ profile, test the representative, give product feedback, or introduce us to the
 right operator. No urgency, no flattery, one link maximum.`,
   )
   if (!output) return false
-  await sql`
+  const drafted = await sql`
     update rep_outbound
     set metadata = metadata || ${sql.json({
       followup_draft: output.reply,
@@ -886,7 +897,13 @@ right operator. No urgency, no flattery, one link maximum.`,
     })},
         updated_at = now()
     where id = ${item.id}
+      and status = 'replied'
+      and response_summary is not distinct from ${item.response_summary}
+      and xmin::text = ${String(item.record_xmin)}
+      and not (metadata ? 'followup_draft')
+    returning id
   `
+  if (drafted.length !== 1) return false
   if (output.escalate && output.escalation_reason) {
     await sql`
       insert into rep_escalations (category, summary)
@@ -896,83 +913,1262 @@ right operator. No urgency, no flattery, one link maximum.`,
   return true
 }
 
+const OutboundStatusSchema = z.enum([
+  'discovered',
+  'qualified',
+  'draft',
+  'approved',
+  'sent',
+  'replied',
+  'converted',
+  'declined',
+  'suppressed',
+  'failed',
+])
+
+type OutboundJson =
+  | null
+  | string
+  | number
+  | boolean
+  | OutboundJson[]
+  | { [key: string]: OutboundJson | undefined }
+
+type OutboundJsonObject = { [key: string]: OutboundJson | undefined }
+
+const outboundMetadata = (value: unknown): OutboundJsonObject =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as OutboundJsonObject)
+    : {}
+
+const appendOutboundAudit = (
+  metadata: OutboundJsonObject,
+  event: OutboundJsonObject,
+) => {
+  const previous = Array.isArray(metadata.outbound_audit)
+    ? metadata.outbound_audit.filter(
+        (item): item is OutboundJsonObject =>
+          Boolean(item) && typeof item === 'object' && !Array.isArray(item),
+      )
+    : []
+  return {
+    ...metadata,
+    outbound_audit: [...previous.slice(-19), event],
+  }
+}
+
+const outboundStatus = (value: unknown) => {
+  const parsed = OutboundStatusSchema.safeParse(value)
+  if (!parsed.success) {
+    throw new RepresentativeOutboundError('The outbound item has an unknown status.', 409)
+  }
+  return parsed.data
+}
+
+const requireOutboundId = (value: unknown) => {
+  return normalizeUuid(value, 'outbound id')
+}
+
+const approvalRecord = (metadata: OutboundJsonObject) => {
+  const value = metadata.send_approval
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as OutboundJsonObject)
+    : null
+}
+
+const deliveryRecord = (metadata: OutboundJsonObject) => {
+  const value = metadata.send_delivery
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as OutboundJsonObject)
+    : null
+}
+
+const publicOutboundRow = (row: Record<string, unknown>) => {
+  const { record_xmin: _recordXmin, ...outbound } = row
+  return {
+    ...outbound,
+    record_version: representativeOutboundRecordVersion(row),
+  }
+}
+
+const assertExpectedOutboundVersion = (
+  row: Record<string, unknown>,
+  expectedVersion: unknown,
+) => {
+  const expected = normalizeRecordVersion(expectedVersion)
+  const actual = representativeOutboundRecordVersion(row)
+  if (!secureHexMatches(actual, expected)) {
+    throw new RepresentativeOutboundError(
+      'The outbound item changed since it was fetched; fetch it again before acting.',
+      409,
+    )
+  }
+}
+
+const normalizeGithubLogin = (value: unknown) => {
+  if (
+    typeof value !== 'string' ||
+    !/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/.test(value.trim())
+  ) {
+    throw new RepresentativeOutboundError('A valid GitHub actor login is required.')
+  }
+  return value.trim()
+}
+
+const githubApiHeaders = {
+  Accept: 'application/vnd.github+json',
+  'X-GitHub-Api-Version': '2022-11-28',
+  'User-Agent': 'Agent-Reputation-Outbound-Reconciler/1.0',
+}
+
+const fetchGithubJson = async (path: string) => {
+  let response: Response
+  try {
+    response = await fetch(`https://api.github.com${path}`, {
+      headers: githubApiHeaders,
+      signal: AbortSignal.timeout(10_000),
+      cache: 'no-store',
+      redirect: 'manual',
+    })
+  } catch {
+    throw new RepresentativeOutboundError(
+      'GitHub verification is temporarily unavailable; the reservation remains locked.',
+      503,
+    )
+  }
+  if (!response.ok) {
+    const retryAfter = response.headers.get('retry-after')
+    const suffix = retryAfter ? ` Retry after ${retryAfter} seconds.` : ''
+    throw new RepresentativeOutboundError(
+      `GitHub verification is temporarily unavailable (HTTP ${response.status}).${suffix}`,
+      503,
+    )
+  }
+  try {
+    return (await response.json()) as unknown
+  } catch {
+    throw new RepresentativeOutboundError('GitHub returned invalid verification data.', 503)
+  }
+}
+
+type GithubRepositoryIdentity = {
+  id: number
+  fullName: string
+  owner: string
+  repo: string
+}
+
+const fetchGithubRepositoryIdentity = async (
+  repoRef: string,
+): Promise<GithubRepositoryIdentity> => {
+  const parsed = githubRepoFromUrl(`https://github.com/${repoRef}`)
+  if (!parsed) {
+    throw new RepresentativeOutboundError('The approved GitHub repository is invalid.', 409)
+  }
+  const [owner, repo] = parsed.split('/')
+  const payload = await fetchGithubJson(
+    `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
+  )
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    throw new RepresentativeOutboundError('GitHub returned an invalid repository record.', 503)
+  }
+  const record = payload as { id?: unknown; full_name?: unknown }
+  const id = Number(record.id)
+  const fullName = typeof record.full_name === 'string' ? record.full_name : ''
+  const canonical = githubRepoFromUrl(`https://github.com/${fullName}`)
+  if (
+    !Number.isSafeInteger(id) ||
+    !canonical ||
+    canonical.toLocaleLowerCase('en-US') !== parsed.toLocaleLowerCase('en-US')
+  ) {
+    throw new RepresentativeOutboundError(
+      'The GitHub repository was renamed, transferred, or could not be bound safely.',
+      409,
+    )
+  }
+  const [canonicalOwner, canonicalRepo] = canonical.split('/')
+  return { id, fullName: canonical, owner: canonicalOwner, repo: canonicalRepo }
+}
+
+type VerifiedGithubIssue = {
+  url: string
+  number: number
+  createdAt: string
+}
+
+const verifyGithubIssuePayload = (
+  payload: unknown,
+  expected: {
+    repo: GithubRepositoryIdentity
+    actor: string
+    title: string
+    body: string
+    marker: string
+    reservedAt: string
+  },
+): VerifiedGithubIssue => {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    throw new RepresentativeOutboundError('GitHub returned an invalid issue record.', 503)
+  }
+  const issue = payload as {
+    html_url?: unknown
+    number?: unknown
+    title?: unknown
+    body?: unknown
+    created_at?: unknown
+    user?: { login?: unknown }
+    pull_request?: unknown
+  }
+  if (issue.pull_request) {
+    throw new RepresentativeOutboundError('A pull request cannot prove an outbound issue.', 409)
+  }
+  const url = typeof issue.html_url === 'string' ? issue.html_url : ''
+  const parsed = githubIssueFromUrl(url)
+  const number = Number(issue.number)
+  const actor = typeof issue.user?.login === 'string' ? issue.user.login : ''
+  const createdAt = Date.parse(typeof issue.created_at === 'string' ? issue.created_at : '')
+  const reservedAt = Date.parse(expected.reservedAt)
+  const reservedSecond = Number.isFinite(reservedAt)
+    ? Math.floor(reservedAt / 1000) * 1000
+    : Number.NaN
+  if (
+    !parsed ||
+    !Number.isSafeInteger(number) ||
+    parsed.number !== number ||
+    !githubIssueMatchesRepo(`https://github.com/${expected.repo.fullName}`, url) ||
+    actor.toLocaleLowerCase('en-US') !== expected.actor.toLocaleLowerCase('en-US') ||
+    !Number.isFinite(createdAt) ||
+    !Number.isFinite(reservedSecond) ||
+    createdAt < reservedSecond ||
+    typeof issue.body !== 'string' ||
+    !issue.body.includes(expected.marker) ||
+    !githubIssueContentMatches(
+      { title: expected.title, body: expected.body },
+      { title: issue.title, body: issue.body },
+    )
+  ) {
+    throw new RepresentativeOutboundError(
+      'The GitHub issue does not exactly match the reserved repository, actor, time, title, and body.',
+      409,
+    )
+  }
+  return { url, number, createdAt: new Date(createdAt).toISOString() }
+}
+
+const findReservedGithubIssue = async (expected: {
+  repo: GithubRepositoryIdentity
+  actor: string
+  title: string
+  body: string
+  marker: string
+  reservedAt: string
+}): Promise<VerifiedGithubIssue | null> => {
+  const reservedAt = Date.parse(expected.reservedAt)
+  if (!Number.isFinite(reservedAt)) {
+    throw new RepresentativeOutboundError('The send reservation time is invalid.', 409)
+  }
+  const marked: unknown[] = []
+  for (let page = 1; page <= 10; page += 1) {
+    const payload = await fetchGithubJson(
+      `/repos/${encodeURIComponent(expected.repo.owner)}/${encodeURIComponent(expected.repo.repo)}/issues?state=all&per_page=100&sort=created&direction=desc&page=${page}`,
+    )
+    if (!Array.isArray(payload)) {
+      throw new RepresentativeOutboundError('GitHub returned an invalid issue list.', 503)
+    }
+    for (const item of payload) {
+      if (
+        item &&
+        typeof item === 'object' &&
+        !Array.isArray(item) &&
+        typeof (item as { body?: unknown }).body === 'string' &&
+        (item as { body: string }).body.includes(expected.marker)
+      ) {
+        marked.push(item)
+      }
+    }
+    if (marked.length > 1) {
+      throw new RepresentativeOutboundError(
+        'Multiple GitHub issues contain this delivery marker; manual reconciliation is required.',
+        409,
+      )
+    }
+    const oldestCreatedAt = payload.reduce<number>((oldest, item) => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) return oldest
+      const createdAt = Date.parse(String((item as { created_at?: unknown }).created_at ?? ''))
+      return Number.isFinite(createdAt) ? Math.min(oldest, createdAt) : oldest
+    }, Number.POSITIVE_INFINITY)
+    if (payload.length < 100 || oldestCreatedAt < Math.floor(reservedAt / 1000) * 1000) {
+      return marked.length === 1 ? verifyGithubIssuePayload(marked[0], expected) : null
+    }
+  }
+  throw new RepresentativeOutboundError(
+    'GitHub reconciliation could not scan the complete post-reservation window; no retry is allowed.',
+    503,
+  )
+}
+
+const deliveryExpectation = async (
+  id: string,
+  currentDraft: string | null,
+  metadata: OutboundJsonObject,
+  attemptId: string,
+) => {
+  const approval = approvalRecord(metadata)
+  const delivery = deliveryRecord(metadata)
+  const approvalRepo =
+    approval && typeof approval.target_repo === 'string' ? approval.target_repo : ''
+  const approvalRepoId =
+    approval && typeof approval.target_repo_id === 'number' ? approval.target_repo_id : Number.NaN
+  const approvalDraftHash =
+    approval && typeof approval.draft_sha256 === 'string' ? approval.draft_sha256 : ''
+  const storedAttempt =
+    delivery && typeof delivery.attempt_id === 'string' ? delivery.attempt_id : ''
+  const actor = delivery && typeof delivery.github_actor === 'string' ? delivery.github_actor : ''
+  const reservedAt =
+    delivery && typeof delivery.reserved_at === 'string' ? delivery.reserved_at : ''
+  if (
+    !approval ||
+    !delivery ||
+    !currentDraft ||
+    approvalDraftHash !== sha256(currentDraft) ||
+    storedAttempt !== attemptId ||
+    !actor ||
+    !reservedAt
+  ) {
+    throw new RepresentativeOutboundError(
+      'The stored outbound send reservation is incomplete or no longer matches the draft.',
+      409,
+    )
+  }
+  const prepared = prepareGitHubIssueDelivery(currentDraft, id, attemptId)
+  if (
+    delivery.marker !== prepared.marker ||
+    delivery.delivery_draft_sha256 !== prepared.deliveryDraftSha256 ||
+    delivery.public_title !== prepared.title ||
+    delivery.public_body !== prepared.body
+  ) {
+    throw new RepresentativeOutboundError(
+      'The stored outbound delivery content does not match its approved draft.',
+      409,
+    )
+  }
+  const repo = await fetchGithubRepositoryIdentity(approvalRepo)
+  if (repo.id !== approvalRepoId) {
+    throw new RepresentativeOutboundError(
+      'The approved GitHub repository identity changed; manual reconciliation is required.',
+      409,
+    )
+  }
+  return {
+    approval,
+    delivery,
+    prepared,
+    expectedIssue: {
+      repo,
+      actor,
+      title: prepared.title,
+      body: prepared.body,
+      marker: prepared.marker,
+      reservedAt,
+    },
+  }
+}
+
+export async function reviseRepresentativeOutboundDraft(input: {
+  id: string
+  draft: string
+  reviewer: string
+  note: string
+  expectedVersion: string
+}) {
+  const id = requireOutboundId(input.id)
+  const reviewed = normalizeInitialOutboundDraft(input.draft)
+  const reviewer = normalizeReviewer(input.reviewer)
+  const note = normalizeReviewNote(input.note)
+  const sql = getSql()
+  const [current] = await sql`
+    select id, target_identity, channel, target_url, status, draft, metadata, updated_at,
+           xmin::text as record_xmin
+    from rep_outbound
+    where id = ${id}
+  `
+  if (!current) {
+    throw new RepresentativeOutboundError('Outbound item not found.', 404)
+  }
+  const status = outboundStatus(current.status)
+  if (status !== 'draft') {
+    throw new RepresentativeOutboundError(
+      `Cannot revise an outbound item while it is '${status}'.`,
+      409,
+    )
+  }
+  assertExpectedOutboundVersion(current, input.expectedVersion)
+  const currentDraft = typeof current.draft === 'string' ? current.draft : null
+  const metadata = outboundMetadata(current.metadata)
+  const at = new Date().toISOString()
+  const nextMetadata = appendOutboundAudit(metadata, {
+    action: 'revised',
+    actor: reviewer,
+    note,
+    from_status: status,
+    to_status: status,
+    previous_draft_sha256: currentDraft ? sha256(currentDraft) : null,
+    draft_sha256: sha256(reviewed.draft),
+    at,
+  })
+  const [updated] = await sql`
+    update rep_outbound
+    set draft = ${reviewed.draft},
+        metadata = ${sql.json(nextMetadata)},
+        last_error = null,
+        updated_at = now()
+    where id = ${id}
+      and status = 'draft'
+      and xmin::text = ${String(current.record_xmin)}
+    returning id, target_identity, channel, target_url, draft, status, metadata, updated_at,
+              xmin::text as record_xmin
+  `
+  if (!updated) {
+    throw new RepresentativeOutboundError(
+      'The outbound draft changed during review; fetch it again before revising.',
+      409,
+    )
+  }
+  return publicOutboundRow(updated)
+}
+
+export async function reopenRepresentativeOutboundApproval(input: {
+  id: string
+  reviewer: string
+  note: string
+  expectedVersion: string
+}) {
+  const id = requireOutboundId(input.id)
+  const reviewer = normalizeReviewer(input.reviewer)
+  const note = normalizeReviewNote(input.note)
+  const sql = getSql()
+  const [current] = await sql`
+    select id, target_identity, channel, target_url, status, draft, metadata, updated_at,
+           xmin::text as record_xmin
+    from rep_outbound
+    where id = ${id}
+  `
+  if (!current) {
+    throw new RepresentativeOutboundError('Outbound item not found.', 404)
+  }
+  const status = outboundStatus(current.status)
+  if (status !== 'approved') {
+    throw new RepresentativeOutboundError(
+      `Cannot release an outbound approval while it is '${status}'.`,
+      409,
+    )
+  }
+  assertExpectedOutboundVersion(current, input.expectedVersion)
+  const metadata = outboundMetadata(current.metadata)
+  const approval = approvalRecord(metadata)
+  const delivery = deliveryRecord(metadata)
+  if (
+    !approval ||
+    approval.state !== 'ready' ||
+    delivery
+  ) {
+    throw new RepresentativeOutboundError(
+      'Only a ready, unreserved approval can be reopened for review.',
+      409,
+    )
+  }
+  const currentDraft = typeof current.draft === 'string' ? current.draft : null
+  const at = new Date().toISOString()
+  const nextBase = { ...metadata }
+  delete nextBase.send_approval
+  const nextMetadata = appendOutboundAudit(nextBase, {
+    action: 'approval_reopened',
+    actor: reviewer,
+    note,
+    from_status: status,
+    to_status: 'draft',
+    draft_sha256: currentDraft ? sha256(currentDraft) : null,
+    approved_at: approval.approved_at ?? null,
+    at,
+  })
+  const [updated] = await sql`
+    update rep_outbound
+    set status = 'draft',
+        metadata = ${sql.json(nextMetadata)},
+        next_action_at = null,
+        last_error = null,
+        updated_at = now()
+    where id = ${id}
+      and status = 'approved'
+      and xmin::text = ${String(current.record_xmin)}
+    returning id, target_identity, channel, target_url, draft, status, metadata, updated_at,
+              xmin::text as record_xmin
+  `
+  if (!updated) {
+    throw new RepresentativeOutboundError(
+      'The outbound approval changed before it could be released.',
+      409,
+    )
+  }
+  return publicOutboundRow(updated)
+}
+
 export async function updateRepresentativeOutbound(input: {
   id: string
   status: 'approved' | 'sent' | 'replied' | 'converted' | 'declined' | 'suppressed' | 'failed'
   targetUrl?: string
   externalId?: string
   note?: string
+  reviewer?: string
+  draft?: string
+  expectedVersion: string
 }) {
-  if (!z.string().uuid().safeParse(input.id).success) throw new Error('A valid outbound id is required.')
-  const allowedStatus = z
-    .enum(['approved', 'sent', 'replied', 'converted', 'declined', 'suppressed', 'failed'])
-    .safeParse(input.status)
-  if (!allowedStatus.success) throw new Error('Invalid outbound status.')
+  const id = requireOutboundId(input.id)
+  const nextStatus = OutboundStatusSchema.safeParse(input.status)
+  if (
+    !nextStatus.success ||
+    !['approved', 'sent', 'replied', 'converted', 'declined', 'suppressed', 'failed'].includes(
+      nextStatus.data,
+    )
+  ) {
+    throw new RepresentativeOutboundError('Invalid outbound status.')
+  }
   const sql = getSql()
-  const targetUrl = input.targetUrl?.trim().slice(0, 1000) || null
-  if (input.status === 'sent' && (!targetUrl || !githubIssueFromUrl(targetUrl))) {
-    throw new Error('A sent GitHub contact requires its public issue URL.')
+  const [current] = await sql`
+    select id, target_identity, channel, status, draft, metadata, target_url, external_id,
+           sent_at, updated_at, xmin::text as record_xmin
+    from rep_outbound
+    where id = ${id}
+  `
+  if (!current) {
+    throw new RepresentativeOutboundError('Outbound item not found.', 404)
   }
-  if (input.status === 'approved' || input.status === 'sent') {
-    // 'sent' permanently consumes the one-message right for this identity, so
-    // it must only ever follow a reviewed draft (initial or follow-up) — never
-    // an undrafted 'qualified' prospect.
-    const [current] = await sql`
-      select status, draft, metadata
-      from rep_outbound
-      where id = ${input.id}
-    `
-    if (!current) throw new Error('Outbound item not found.')
-    const status = String(current.status)
-    const hasInitialDraft = typeof current.draft === 'string' && current.draft.trim().length > 0
-    const metadata =
-      current.metadata && typeof current.metadata === 'object' && !Array.isArray(current.metadata)
-        ? (current.metadata as Record<string, unknown>)
-        : {}
-    const hasFollowupDraft =
-      typeof metadata.followup_draft === 'string' && metadata.followup_draft.trim().length > 0
-    if (input.status === 'approved' && (status !== 'draft' || !hasInitialDraft)) {
-      throw new Error(`Cannot approve a '${status}' item without a reviewed initial draft.`)
-    }
-    if (
-      input.status === 'sent' &&
-      !(
-        ((status === 'draft' || status === 'approved') && hasInitialDraft) ||
-        (status === 'replied' && hasFollowupDraft)
+  const status = outboundStatus(current.status)
+  const targetStatus = nextStatus.data as RepresentativeOutboundStatus
+  if (!canTransitionRepresentativeOutbound(status, targetStatus)) {
+    throw new RepresentativeOutboundError(
+      `Cannot move an outbound item from '${status}' to '${targetStatus}'.`,
+      409,
+    )
+  }
+  assertExpectedOutboundVersion(current, input.expectedVersion)
+  const metadata = outboundMetadata(current.metadata)
+  const currentDraft = typeof current.draft === 'string' ? current.draft : null
+  const currentTargetUrl =
+    typeof current.target_url === 'string' ? current.target_url.trim().slice(0, 1000) : ''
+  const requestedTargetUrl = input.targetUrl?.trim().slice(0, 1000) || null
+  if (requestedTargetUrl && requestedTargetUrl !== currentTargetUrl) {
+    throw new RepresentativeOutboundError(
+      'This transition cannot replace the outbound target URL.',
+      409,
+    )
+  }
+  const externalId = input.externalId?.trim().slice(0, 200) || null
+  const at = new Date().toISOString()
+
+  if (targetStatus === 'approved') {
+    const reviewer = normalizeReviewer(input.reviewer)
+    const note = normalizeReviewNote(input.note)
+    const reviewed = normalizeInitialOutboundDraft(input.draft ?? currentDraft)
+    const targetRepo = githubRepoFromUrl(currentTargetUrl)
+    if (!targetRepo || current.channel !== 'github') {
+      throw new RepresentativeOutboundError(
+        'An initial GitHub approval requires the prospect repository URL.',
       )
-    ) {
-      throw new Error(`Cannot mark a '${status}' item as sent without its reviewed draft.`)
+    }
+    const repoIdentity = await fetchGithubRepositoryIdentity(targetRepo)
+    const approvalId = randomUUID()
+    const nextMetadata = appendOutboundAudit(
+      {
+        ...metadata,
+        send_approval: {
+          approval_id: approvalId,
+          state: 'ready',
+          draft_sha256: sha256(reviewed.draft),
+          target_repo: repoIdentity.fullName,
+          target_repo_id: repoIdentity.id,
+          target_identity: String(current.target_identity),
+          channel: 'github',
+          reviewer,
+          note,
+          approved_at: at,
+        },
+      },
+      {
+        action:
+          currentDraft && sha256(currentDraft) === sha256(reviewed.draft)
+            ? 'approved'
+            : 'revised_and_approved',
+        actor: reviewer,
+        note,
+        from_status: status,
+        to_status: targetStatus,
+        previous_draft_sha256: currentDraft ? sha256(currentDraft) : null,
+        draft_sha256: sha256(reviewed.draft),
+        target_repo: targetRepo,
+        target_repo_id: repoIdentity.id,
+        at,
+      },
+    )
+    const [updated] = await sql`
+      update rep_outbound
+      set status = 'approved',
+          draft = ${reviewed.draft},
+          metadata = ${sql.json(nextMetadata)},
+          last_error = null,
+          next_action_at = null,
+          updated_at = now()
+      where id = ${id}
+        and status = 'draft'
+        and xmin::text = ${String(current.record_xmin)}
+      returning id, target_identity, channel, target_url, draft, status, metadata, updated_at,
+                xmin::text as record_xmin
+    `
+    if (!updated) {
+      throw new RepresentativeOutboundError(
+        'The outbound draft changed or was reviewed by someone else; fetch it again.',
+        409,
+      )
+    }
+    return publicOutboundRow(updated)
+  }
+
+  if (targetStatus === 'sent') {
+    throw new RepresentativeOutboundError(
+      'Public sends must use the reserve and complete actions; follow-up publishing is fail-closed pending equivalent review.',
+      409,
+    )
+  }
+
+  if (typeof input.draft === 'string') {
+    throw new RepresentativeOutboundError(
+      'A reviewed draft may only accompany an initial approval; use revise_representative_outbound to change the stored text.',
+    )
+  }
+
+  let note: string | null = null
+  const reviewer = normalizeReviewer(input.reviewer ?? 'representative-system')
+  if (targetStatus === 'suppressed' || targetStatus === 'failed') {
+    note = normalizeReviewNote(input.note)
+  } else if (typeof input.note === 'string' && input.note.trim()) {
+    note = normalizeReviewNote(input.note, 2000)
+  }
+  if (status === 'approved') {
+    const approval = approvalRecord(metadata)
+    const delivery = deliveryRecord(metadata)
+    if (!approval || approval.state !== 'ready' || delivery) {
+      throw new RepresentativeOutboundError(
+        'A reserved or unreconciled outbound send cannot be suppressed or failed.',
+        409,
+      )
     }
   }
+  const nextBase = { ...metadata }
+  if (status === 'approved') delete nextBase.send_approval
+  const nextMetadata = appendOutboundAudit(nextBase, {
+    action: targetStatus,
+    actor: reviewer,
+    note,
+    from_status: status,
+    to_status: targetStatus,
+    draft_sha256: currentDraft ? sha256(currentDraft) : null,
+    at,
+  })
   const [updated] = await sql`
     update rep_outbound
-    set status = ${input.status},
-        target_url = coalesce(${targetUrl}, target_url),
-        external_id = coalesce(${input.externalId?.trim().slice(0, 200) || null}, external_id),
+    set status = ${targetStatus},
+        external_id = coalesce(${externalId}, external_id),
         response_summary = case
-          when ${input.status} in ('replied', 'converted', 'declined')
-            then coalesce(${input.note?.trim().slice(0, 2000) || null}, response_summary)
+          when ${targetStatus} in ('replied', 'converted', 'declined')
+            then coalesce(${note}, response_summary)
           else response_summary
         end,
         last_error = case
-          when ${input.status} in ('suppressed', 'failed')
-            then ${input.note?.trim().slice(0, 1000) || null}
+          when ${targetStatus} in ('suppressed', 'failed') then ${note}
           else null
         end,
-        sent_at = case when ${input.status} = 'sent' then now() else sent_at end,
-        metadata = case
-          when ${input.status} = 'sent' and metadata ? 'followup_draft'
-            then (metadata - 'followup_draft' - 'followup_learning' - 'followup_next_step')
-              || ${sql.json({ followup_sent_at: new Date().toISOString() })}
-          else metadata
-        end,
-        next_action_at = case when ${input.status} = 'sent' then now() + interval '2 hours' else null end,
+        metadata = ${sql.json(nextMetadata)},
+        next_action_at = null,
         updated_at = now()
-    where id = ${input.id}
-    returning id, target_identity, channel, target_url, status, sent_at, updated_at
+    where id = ${id}
+      and status = ${status}
+      and xmin::text = ${String(current.record_xmin)}
+    returning id, target_identity, channel, target_url, draft, status, metadata,
+              external_id, sent_at, updated_at, xmin::text as record_xmin
   `
-  if (!updated) throw new Error('Outbound item not found.')
-  return updated
+  if (!updated) {
+    throw new RepresentativeOutboundError(
+      'The outbound item changed before this decision could be recorded.',
+      409,
+    )
+  }
+  return publicOutboundRow(updated)
+}
+
+export async function reserveRepresentativeOutboundSend(input: {
+  id: string
+  expectedVersion: string
+  sendAttemptId: string
+  reviewRunId: string
+  reviewer: string
+  githubActor: string
+}) {
+  const id = requireOutboundId(input.id)
+  const expectedVersion = normalizeRecordVersion(input.expectedVersion)
+  const attemptId = normalizeUuid(input.sendAttemptId, 'send attempt id')
+  const reviewRunId = normalizeUuid(input.reviewRunId, 'review run id')
+  const reviewer = normalizeReviewer(input.reviewer)
+  const githubActor = normalizeGithubLogin(input.githubActor)
+  const sql = getSql()
+  const [candidate] = await sql`
+    select id, status, metadata, xmin::text as record_xmin
+    from rep_outbound
+    where id = ${id}
+  `
+  if (!candidate) {
+    throw new RepresentativeOutboundError('Outbound item not found.', 404)
+  }
+  const candidateStatus = outboundStatus(candidate.status)
+  const candidateMetadata = outboundMetadata(candidate.metadata)
+  const candidateApproval = approvalRecord(candidateMetadata)
+  const candidateDelivery = deliveryRecord(candidateMetadata)
+  const isExistingAttempt =
+    candidateStatus === 'approved' &&
+    candidateDelivery?.attempt_id === attemptId &&
+    (candidateDelivery.state === 'sending' ||
+      candidateDelivery.state === 'reconciliation_required')
+  let verifiedRepository: GithubRepositoryIdentity | null = null
+  if (!isExistingAttempt) {
+    if (!secureHexMatches(representativeOutboundRecordVersion(candidate), expectedVersion)) {
+      throw new RepresentativeOutboundError(
+        'The outbound item changed since it was fetched; fetch it again before reserving.',
+        409,
+      )
+    }
+    if (
+      candidateStatus === 'approved' &&
+      candidateApproval?.state === 'ready' &&
+      !candidateDelivery &&
+      typeof candidateApproval.target_repo === 'string'
+    ) {
+      // Re-resolve the repository immediately before taking the send lock. The
+      // numeric GitHub id is then compared again inside the transaction, reducing
+      // the approval-to-post rename/transfer window from hours to this request.
+      verifiedRepository = await fetchGithubRepositoryIdentity(candidateApproval.target_repo)
+    }
+  }
+
+  return sql.begin(async (tx) => {
+    await tx`select pg_advisory_xact_lock(314159, 271828)`
+    const [current] = await tx`
+      select id, target_identity, channel, target_url, status, draft, metadata, sent_at,
+             updated_at, xmin::text as record_xmin
+      from rep_outbound
+      where id = ${id}
+    `
+    if (!current) {
+      throw new RepresentativeOutboundError('Outbound item not found.', 404)
+    }
+    const status = outboundStatus(current.status)
+    const metadata = outboundMetadata(current.metadata)
+    const approval = approvalRecord(metadata)
+    const existingDelivery = deliveryRecord(metadata)
+    const currentDraft = typeof current.draft === 'string' ? current.draft : null
+
+    if (
+      status === 'approved' &&
+      existingDelivery &&
+      existingDelivery.attempt_id === attemptId &&
+      (existingDelivery.state === 'sending' ||
+        existingDelivery.state === 'reconciliation_required')
+    ) {
+      const prepared = prepareGitHubIssueDelivery(currentDraft, id, attemptId)
+      return {
+        outbound: publicOutboundRow(current),
+        may_post: false,
+        reconcile: true,
+        delivery: {
+          repo: approval?.target_repo,
+          title: prepared.title,
+          body: prepared.body,
+          marker: prepared.marker,
+          send_attempt_id: attemptId,
+        },
+      }
+    }
+    if (status !== 'approved' || !approval || approval.state !== 'ready' || existingDelivery) {
+      throw new RepresentativeOutboundError(
+        'This outbound item has no ready approval or is already reserved by another send.',
+        409,
+      )
+    }
+    if (!secureHexMatches(representativeOutboundRecordVersion(current), expectedVersion)) {
+      throw new RepresentativeOutboundError(
+        'The outbound item changed since it was fetched; fetch it again before reserving.',
+        409,
+      )
+    }
+    const [attemptCollision] = await tx`
+      select id
+      from rep_outbound
+      where id <> ${id}
+        and metadata->'send_delivery'->>'attempt_id' = ${attemptId}
+      limit 1
+    `
+    if (attemptCollision) {
+      throw new RepresentativeOutboundError(
+        'This send attempt id is already bound to another outbound item.',
+        409,
+      )
+    }
+    if (
+      current.channel !== 'github' ||
+      approval.channel !== 'github' ||
+      approval.target_identity !== String(current.target_identity) ||
+      typeof approval.target_repo !== 'string' ||
+      typeof approval.target_repo_id !== 'number' ||
+      typeof approval.draft_sha256 !== 'string' ||
+      !currentDraft ||
+      approval.draft_sha256 !== sha256(currentDraft)
+    ) {
+      throw new RepresentativeOutboundError(
+        'The approval no longer matches the channel, target identity, repository, or draft.',
+        409,
+      )
+    }
+    if (
+      !verifiedRepository ||
+      verifiedRepository.id !== approval.target_repo_id ||
+      verifiedRepository.fullName.toLocaleLowerCase('en-US') !==
+        approval.target_repo.toLocaleLowerCase('en-US')
+    ) {
+      throw new RepresentativeOutboundError(
+        'The approved GitHub repository identity changed before reservation.',
+        409,
+      )
+    }
+
+    const [enabledSetting] = await tx`
+      select value from rep_settings where key = 'enabled' for share
+    `
+    if (enabledSetting?.value !== true) {
+      throw new RepresentativeOutboundError('The representative kill switch is disabled.', 409)
+    }
+    const [modeSetting] = await tx`
+      select value from rep_settings where key = 'mode' for share
+    `
+    if (modeSetting?.value !== 'review') {
+      throw new RepresentativeOutboundError(
+        'Public sends are disabled unless the representative is in review mode.',
+        409,
+      )
+    }
+    const [dailySetting] = await tx`
+      select value from rep_settings where key = 'outbound_per_day' for share
+    `
+    const dailyLimit = Number(dailySetting?.value)
+    if (!Number.isFinite(dailyLimit) || dailyLimit < 1) {
+      throw new RepresentativeOutboundError('The daily outbound cap is not configured safely.', 409)
+    }
+    const quotaRows = await tx`
+      select id, target_identity, target_url, status, sent_at, metadata
+      from rep_outbound
+      where channel = 'github'
+        and (
+          sent_at is not null
+          or (
+            status = 'approved'
+            and metadata->'send_delivery'->>'state' in ('sending', 'reconciliation_required')
+          )
+        )
+    `
+    const now = Date.now()
+    const rollingDayStart = now - 24 * 60 * 60 * 1000
+    let unanswered = 0
+    let sentToday = 0
+    let sentThisRun = 0
+    const targetOrganization = githubOrganizationFromUrl(
+      `https://github.com/${String(approval.target_repo)}`,
+    )
+    if (!targetOrganization) {
+      throw new RepresentativeOutboundError('The approved GitHub organization is invalid.', 409)
+    }
+    for (const row of quotaRows) {
+      const rowMetadata = outboundMetadata(row.metadata)
+      const rowDelivery = deliveryRecord(rowMetadata)
+      const rowSending =
+        row.status === 'approved' &&
+        rowDelivery &&
+        (rowDelivery.state === 'sending' || rowDelivery.state === 'reconciliation_required')
+      if (row.status === 'sent' || rowSending) unanswered += 1
+      const sentAt = row.sent_at ? Date.parse(String(row.sent_at)) : Number.NaN
+      const reservedAt =
+        rowDelivery && typeof rowDelivery.reserved_at === 'string'
+          ? Date.parse(rowDelivery.reserved_at)
+          : Number.NaN
+      if (
+        (Number.isFinite(sentAt) && sentAt >= rollingDayStart) ||
+        (rowSending && Number.isFinite(reservedAt) && reservedAt >= rollingDayStart)
+      ) {
+        sentToday += 1
+      }
+      if (rowDelivery && rowDelivery.review_run_id === reviewRunId && (row.sent_at || rowSending)) {
+        sentThisRun += 1
+      }
+      if (String(row.id) === id) continue
+      const historicalRepo =
+        approvalRecord(rowMetadata)?.target_repo ??
+        (typeof row.target_url === 'string' ? row.target_url : '')
+      const historicalOrganization =
+        typeof historicalRepo === 'string'
+          ? githubOrganizationFromUrl(
+              historicalRepo.startsWith('https://')
+                ? historicalRepo
+                : `https://github.com/${historicalRepo}`,
+            )
+          : null
+      if (
+        (row.sent_at || rowSending) &&
+        (historicalOrganization === targetOrganization ||
+          String(row.target_identity).toLocaleLowerCase('en-US') ===
+            String(current.target_identity).toLocaleLowerCase('en-US'))
+      ) {
+        throw new RepresentativeOutboundError(
+          'This GitHub organization or target identity already has a contact or active reservation.',
+          409,
+        )
+      }
+    }
+    assertInitialSendCapacity({
+      unanswered,
+      sentToday,
+      sentThisRun,
+      dailyLimit: Math.floor(dailyLimit),
+    })
+
+    const prepared = prepareGitHubIssueDelivery(currentDraft, id, attemptId)
+    const at = new Date().toISOString()
+    const nextMetadata = appendOutboundAudit(
+      {
+        ...metadata,
+        send_approval: {
+          ...approval,
+          state: 'sending',
+        },
+        send_delivery: {
+          state: 'sending',
+          attempt_id: attemptId,
+          review_run_id: reviewRunId,
+          reviewer,
+          github_actor: githubActor,
+          reserved_at: at,
+          marker: prepared.marker,
+          public_title: prepared.title,
+          public_body: prepared.body,
+          reviewed_draft_sha256: prepared.reviewedDraftSha256,
+          delivery_draft_sha256: prepared.deliveryDraftSha256,
+        },
+      },
+      {
+        action: 'send_reserved',
+        actor: reviewer,
+        from_status: 'approved',
+        to_status: 'approved',
+        attempt_id: attemptId,
+        review_run_id: reviewRunId,
+        github_actor: githubActor,
+        draft_sha256: prepared.reviewedDraftSha256,
+        delivery_draft_sha256: prepared.deliveryDraftSha256,
+        at,
+      },
+    )
+    const [updated] = await tx`
+      update rep_outbound
+      set metadata = ${tx.json(nextMetadata)},
+          last_error = null,
+          next_action_at = null,
+          updated_at = now()
+      where id = ${id}
+        and status = 'approved'
+        and xmin::text = ${String(current.record_xmin)}
+      returning id, target_identity, channel, target_url, draft, status, metadata,
+                sent_at, updated_at, xmin::text as record_xmin
+    `
+    if (!updated) {
+      throw new RepresentativeOutboundError(
+        'Another reviewer reserved or changed this outbound item first.',
+        409,
+      )
+    }
+    return {
+      outbound: publicOutboundRow(updated),
+      may_post: true,
+      reconcile: false,
+      delivery: {
+        repo: approval.target_repo,
+        title: prepared.title,
+        body: prepared.body,
+        marker: prepared.marker,
+        send_attempt_id: attemptId,
+      },
+    }
+  })
+}
+
+export async function completeRepresentativeOutboundSend(input: {
+  id: string
+  sendAttemptId: string
+  targetUrl?: string
+}) {
+  const id = requireOutboundId(input.id)
+  const attemptId = normalizeUuid(input.sendAttemptId, 'send attempt id')
+  const suppliedUrl = input.targetUrl?.trim() || null
+  if (suppliedUrl && !githubIssueFromUrl(suppliedUrl)) {
+    throw new RepresentativeOutboundError('A canonical GitHub issue URL is required.')
+  }
+  const sql = getSql()
+  const [current] = await sql`
+    select id, target_identity, channel, target_url, status, draft, metadata, external_id,
+           sent_at, updated_at, xmin::text as record_xmin
+    from rep_outbound
+    where id = ${id}
+  `
+  if (!current) {
+    throw new RepresentativeOutboundError('Outbound item not found.', 404)
+  }
+  const metadata = outboundMetadata(current.metadata)
+  const existingDelivery = deliveryRecord(metadata)
+  if (
+    ['sent', 'replied', 'converted', 'declined'].includes(String(current.status)) &&
+    current.sent_at &&
+    existingDelivery?.state === 'sent' &&
+    existingDelivery.attempt_id === attemptId
+  ) {
+    const completedUrl =
+      typeof existingDelivery.issue_url === 'string'
+        ? existingDelivery.issue_url
+        : String(current.target_url ?? '')
+    if (suppliedUrl && suppliedUrl !== completedUrl) {
+      throw new RepresentativeOutboundError(
+        'This send attempt was already completed with a different issue URL.',
+        409,
+      )
+    }
+    return publicOutboundRow(current)
+  }
+  if (
+    current.status !== 'approved' ||
+    !existingDelivery ||
+    !['sending', 'reconciliation_required'].includes(String(existingDelivery.state))
+  ) {
+    throw new RepresentativeOutboundError(
+      'This outbound item has no matching send reservation to complete.',
+      409,
+    )
+  }
+  const currentDraft = typeof current.draft === 'string' ? current.draft : null
+  const expectation = await deliveryExpectation(id, currentDraft, metadata, attemptId)
+  let verified: VerifiedGithubIssue | null = null
+  if (suppliedUrl) {
+    if (
+      !githubIssueMatchesRepo(
+        `https://github.com/${expectation.expectedIssue.repo.fullName}`,
+        suppliedUrl,
+      )
+    ) {
+      throw new RepresentativeOutboundError(
+        'The supplied issue URL does not belong to the approved repository.',
+        409,
+      )
+    }
+    const issueRef = githubIssueFromUrl(suppliedUrl)
+    if (!issueRef) {
+      throw new RepresentativeOutboundError('A canonical GitHub issue URL is required.')
+    }
+    const payload = await fetchGithubJson(
+      `/repos/${encodeURIComponent(expectation.expectedIssue.repo.owner)}/${encodeURIComponent(expectation.expectedIssue.repo.repo)}/issues/${issueRef.number}`,
+    )
+    verified = verifyGithubIssuePayload(payload, expectation.expectedIssue)
+  } else {
+    verified = await findReservedGithubIssue(expectation.expectedIssue)
+    if (!verified) {
+      throw new RepresentativeOutboundError(
+        'No exact GitHub issue was found for this reservation; do not post again. Reconcile after the safety delay.',
+        409,
+      )
+    }
+  }
+
+  const at = new Date().toISOString()
+  const nextMetadata = appendOutboundAudit(
+    {
+      ...metadata,
+      send_approval: {
+        ...expectation.approval,
+        state: 'consumed',
+        consumed_at: at,
+      },
+      send_delivery: {
+        ...expectation.delivery,
+        state: 'sent',
+        issue_url: verified.url,
+        issue_number: verified.number,
+        issue_created_at: verified.createdAt,
+        completed_at: at,
+      },
+    },
+    {
+      action: 'sent',
+      actor: expectation.delivery.reviewer ?? 'representative-reviewer',
+      from_status: 'approved',
+      to_status: 'sent',
+      attempt_id: attemptId,
+      draft_sha256: expectation.prepared.reviewedDraftSha256,
+      delivery_draft_sha256: expectation.prepared.deliveryDraftSha256,
+      target_url: verified.url,
+      at,
+    },
+  )
+  const [updated] = await sql`
+    update rep_outbound
+    set status = 'sent',
+        target_url = ${verified.url},
+        external_id = ${`github-issue-${verified.number}`},
+        metadata = ${sql.json(nextMetadata)},
+        last_error = null,
+        sent_at = ${new Date(verified.createdAt)},
+        next_action_at = now() + interval '2 hours',
+        updated_at = now()
+    where id = ${id}
+      and status = 'approved'
+      and xmin::text = ${String(current.record_xmin)}
+      and metadata->'send_delivery'->>'attempt_id' = ${attemptId}
+    returning id, target_identity, channel, target_url, draft, status, metadata,
+              external_id, sent_at, updated_at, xmin::text as record_xmin
+  `
+  if (updated) return publicOutboundRow(updated)
+
+  const [latest] = await sql`
+    select id, target_identity, channel, target_url, draft, status, metadata,
+           external_id, sent_at, updated_at, xmin::text as record_xmin
+    from rep_outbound
+    where id = ${id}
+  `
+  const latestDelivery = latest ? deliveryRecord(outboundMetadata(latest.metadata)) : null
+  if (
+    latest &&
+    ['sent', 'replied', 'converted', 'declined'].includes(String(latest.status)) &&
+    latest.sent_at &&
+    latestDelivery?.state === 'sent' &&
+    latestDelivery.attempt_id === attemptId &&
+    (latestDelivery.issue_url === verified.url || latest.target_url === verified.url)
+  ) {
+    return publicOutboundRow(latest)
+  }
+  throw new RepresentativeOutboundError(
+    'The verified GitHub issue exists, but the campaign record changed before completion; do not post again.',
+    409,
+  )
+}
+
+export async function reconcileRepresentativeOutboundSend(input: {
+  id: string
+  sendAttemptId: string
+  reviewer: string
+  note: string
+}) {
+  const id = requireOutboundId(input.id)
+  const attemptId = normalizeUuid(input.sendAttemptId, 'send attempt id')
+  const reviewer = normalizeReviewer(input.reviewer)
+  const note = normalizeReviewNote(input.note)
+  const sql = getSql()
+  const [current] = await sql`
+    select id, target_identity, channel, target_url, status, draft, metadata, external_id,
+           sent_at, updated_at, xmin::text as record_xmin
+    from rep_outbound
+    where id = ${id}
+  `
+  if (!current) throw new RepresentativeOutboundError('Outbound item not found.', 404)
+  const metadata = outboundMetadata(current.metadata)
+  const delivery = deliveryRecord(metadata)
+  if (
+    ['sent', 'replied', 'converted', 'declined'].includes(String(current.status)) &&
+    current.sent_at &&
+    delivery?.state === 'sent' &&
+    delivery.attempt_id === attemptId
+  ) {
+    return { outbound: publicOutboundRow(current), recovery: 'already_sent' }
+  }
+  if (
+    current.status !== 'approved' ||
+    !delivery ||
+    delivery.attempt_id !== attemptId ||
+    !['sending', 'reconciliation_required'].includes(String(delivery.state))
+  ) {
+    throw new RepresentativeOutboundError('No matching send attempt can be reconciled.', 409)
+  }
+  const currentDraft = typeof current.draft === 'string' ? current.draft : null
+  const expectation = await deliveryExpectation(id, currentDraft, metadata, attemptId)
+  const found = await findReservedGithubIssue(expectation.expectedIssue)
+  if (found) {
+    const outbound = await completeRepresentativeOutboundSend({
+      id,
+      sendAttemptId: attemptId,
+      targetUrl: found.url,
+    })
+    return { outbound, recovery: 'completed' }
+  }
+
+  if (delivery.state === 'reconciliation_required') {
+    return {
+      outbound: publicOutboundRow(current),
+      recovery: 'manual_reconciliation_required',
+    }
+  }
+  const at = new Date().toISOString()
+  const nextMetadata = appendOutboundAudit(
+    {
+      ...metadata,
+      send_approval: {
+        ...expectation.approval,
+        state: 'reconciliation_required',
+      },
+      send_delivery: {
+        ...delivery,
+        state: 'reconciliation_required',
+        negative_scan_at: at,
+      },
+    },
+    {
+      action: 'send_reconciliation_required',
+      actor: reviewer,
+      note,
+      attempt_id: attemptId,
+      at,
+    },
+  )
+  const [updated] = await sql`
+    update rep_outbound
+    set metadata = ${sql.json(nextMetadata)},
+        last_error = ${'No exact GitHub issue was found. The reservation remains locked to prevent a duplicate; manual reconciliation is required.'},
+        updated_at = now()
+    where id = ${id}
+      and status = 'approved'
+      and xmin::text = ${String(current.record_xmin)}
+      and metadata->'send_delivery'->>'attempt_id' = ${attemptId}
+    returning id, target_identity, channel, target_url, draft, status, metadata,
+              sent_at, updated_at, xmin::text as record_xmin
+  `
+  if (!updated) {
+    throw new RepresentativeOutboundError(
+      'The send attempt changed while reconciliation was being recorded.',
+      409,
+    )
+  }
+  return {
+    outbound: publicOutboundRow(updated),
+    recovery: 'manual_reconciliation_required',
+  }
 }
 
 export async function runRepresentativeTick(trigger = 'cron') {

@@ -1,9 +1,22 @@
 import { getSql, withTimeout } from '@/lib/db'
 import { registerAgent } from '@/lib/agenthub'
-import { updateRepresentativeOutbound } from '@/lib/representative'
+import {
+  completeRepresentativeOutboundSend,
+  reconcileRepresentativeOutboundSend,
+  reopenRepresentativeOutboundApproval,
+  reserveRepresentativeOutboundSend,
+  reviseRepresentativeOutboundDraft,
+  updateRepresentativeOutbound,
+} from '@/lib/representative'
+import {
+  representativeOutboundRecordVersion,
+  RepresentativeOutboundError,
+} from '@/lib/representative-outbound'
+import { z } from 'zod'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+export const maxDuration = 300
 
 // Source de données de la routine outreach (tâche planifiée locale) : expose en un
 // GET protégé par CRON_SECRET ce que la routine doit savoir sans accès DB direct —
@@ -130,7 +143,7 @@ export async function GET(req: Request) {
     const representativeDrafts = await withTimeout(sql`
       select id, target_identity, channel, target_url, reason, draft, status,
              metadata, next_action_at, last_checked_at, response_summary,
-             external_id, sent_at, created_at, updated_at
+             external_id, sent_at, created_at, updated_at, xmin::text as record_xmin
       from rep_outbound
       where status in ('qualified', 'draft', 'approved', 'sent', 'replied', 'failed')
       order by
@@ -180,7 +193,13 @@ export async function GET(req: Request) {
         settings: representativeSettings,
         usage_today: representativeUsage[0],
         recent_runs: representativeRuns,
-        campaign_queue: representativeDrafts,
+        campaign_queue: representativeDrafts.map((row) => {
+          const { record_xmin: _recordXmin, ...outbound } = row
+          return {
+            ...outbound,
+            record_version: representativeOutboundRecordVersion(row),
+          }
+        }),
         campaign_funnel: representativeFunnel,
         conversations: representativeConversations,
         open_escalations: representativeEscalations,
@@ -191,43 +210,216 @@ export async function GET(req: Request) {
   }
 }
 
-// Actions de la routine outreach. Une seule pour l'instant :
-// register_from_moltbook — inscription contextuelle et volontaire d'un agent qui a
-// répondu "claim" / "register me" dans un fil Moltbook. L'auteur est authentifié par
-// la plateforme (canal prouvé) : la fiche est claimed par canal (metadata.claim_channel),
-// PAS par token — ses mises à jour futures passent par le même canal. Jamais
-// d'auto-enrôlement silencieux : uniquement sur demande explicite de l'agent.
+// Actions authentifiées de la routine : revue atomique des drafts du représentant,
+// suivi du ledger d'envoi, et inscription Moltbook contextuelle. Cette dernière reste
+// strictement volontaire : l'auteur a répondu "claim" / "register me" dans un fil.
+// La fiche est claimed par canal prouvé (metadata.claim_channel), PAS par token.
 export async function POST(req: Request) {
   const auth = req.headers.get('authorization')
   if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return Response.json({ error: 'unauthorized' }, { status: 401 })
   }
   try {
-    const body = await req.json()
-    if (body.action === 'update_representative_outbound') {
-      const result = await updateRepresentativeOutbound({
-        id: body.id,
-        status: body.status,
-        targetUrl: body.target_url,
-        externalId: body.external_id,
-        note: body.note,
+    let body: unknown
+    try {
+      body = await req.json()
+    } catch {
+      return Response.json({ error: 'invalid JSON body' }, { status: 400 })
+    }
+    const action =
+      body && typeof body === 'object' && !Array.isArray(body)
+        ? (body as Record<string, unknown>).action
+        : null
+    if (action === 'revise_representative_outbound') {
+      const parsed = z
+        .object({
+          action: z.literal('revise_representative_outbound'),
+          id: z.string(),
+          draft: z.string(),
+          reviewer: z.string(),
+          note: z.string(),
+          expected_version: z.string(),
+        })
+        .strict()
+        .safeParse(body)
+      if (!parsed.success) {
+        return Response.json({ error: 'invalid draft revision payload' }, { status: 400 })
+      }
+      const result = await reviseRepresentativeOutboundDraft({
+        id: parsed.data.id,
+        draft: parsed.data.draft,
+        reviewer: parsed.data.reviewer,
+        note: parsed.data.note,
+        expectedVersion: parsed.data.expected_version,
       })
       return Response.json({ ok: true, outbound: result })
     }
-    if (body.action !== 'register_from_moltbook') {
+    if (action === 'reopen_representative_outbound_approval') {
+      const parsed = z
+        .object({
+          action: z.literal('reopen_representative_outbound_approval'),
+          id: z.string(),
+          reviewer: z.string(),
+          note: z.string(),
+          expected_version: z.string(),
+        })
+        .strict()
+        .safeParse(body)
+      if (!parsed.success) {
+        return Response.json({ error: 'invalid approval reopen payload' }, { status: 400 })
+      }
+      const result = await reopenRepresentativeOutboundApproval({
+        id: parsed.data.id,
+        reviewer: parsed.data.reviewer,
+        note: parsed.data.note,
+        expectedVersion: parsed.data.expected_version,
+      })
+      return Response.json({ ok: true, outbound: result })
+    }
+    if (action === 'reserve_representative_outbound_send') {
+      const parsed = z
+        .object({
+          action: z.literal('reserve_representative_outbound_send'),
+          id: z.string(),
+          expected_version: z.string(),
+          send_attempt_id: z.string(),
+          review_run_id: z.string(),
+          reviewer: z.string(),
+          github_actor: z.string(),
+        })
+        .strict()
+        .safeParse(body)
+      if (!parsed.success) {
+        return Response.json({ error: 'invalid outbound send reservation payload' }, { status: 400 })
+      }
+      const result = await reserveRepresentativeOutboundSend({
+        id: parsed.data.id,
+        expectedVersion: parsed.data.expected_version,
+        sendAttemptId: parsed.data.send_attempt_id,
+        reviewRunId: parsed.data.review_run_id,
+        reviewer: parsed.data.reviewer,
+        githubActor: parsed.data.github_actor,
+      })
+      return Response.json({ ok: true, ...result })
+    }
+    if (action === 'complete_representative_outbound_send') {
+      const parsed = z
+        .object({
+          action: z.literal('complete_representative_outbound_send'),
+          id: z.string(),
+          send_attempt_id: z.string(),
+          target_url: z.string().optional(),
+        })
+        .strict()
+        .safeParse(body)
+      if (!parsed.success) {
+        return Response.json({ error: 'invalid outbound send completion payload' }, { status: 400 })
+      }
+      const result = await completeRepresentativeOutboundSend({
+        id: parsed.data.id,
+        sendAttemptId: parsed.data.send_attempt_id,
+        targetUrl: parsed.data.target_url,
+      })
+      return Response.json({ ok: true, outbound: result })
+    }
+    if (action === 'reconcile_representative_outbound_send') {
+      const parsed = z
+        .object({
+          action: z.literal('reconcile_representative_outbound_send'),
+          id: z.string(),
+          send_attempt_id: z.string(),
+          reviewer: z.string(),
+          note: z.string(),
+        })
+        .strict()
+        .safeParse(body)
+      if (!parsed.success) {
+        return Response.json({ error: 'invalid outbound send reconciliation payload' }, { status: 400 })
+      }
+      const result = await reconcileRepresentativeOutboundSend({
+        id: parsed.data.id,
+        sendAttemptId: parsed.data.send_attempt_id,
+        reviewer: parsed.data.reviewer,
+        note: parsed.data.note,
+      })
+      return Response.json({ ok: true, ...result })
+    }
+    if (action === 'update_representative_outbound') {
+      const parsed = z
+        .object({
+          action: z.literal('update_representative_outbound'),
+          id: z.string(),
+          status: z.enum([
+            'approved',
+            'sent',
+            'replied',
+            'converted',
+            'declined',
+            'suppressed',
+            'failed',
+          ]),
+          target_url: z.string().optional(),
+          external_id: z.string().optional(),
+          note: z.string().optional(),
+          reviewer: z.string().optional(),
+          draft: z.string().optional(),
+          expected_version: z.string(),
+        })
+        .strict()
+        .safeParse(body)
+      if (!parsed.success) {
+        return Response.json({ error: 'invalid outbound update payload' }, { status: 400 })
+      }
+      const result = await updateRepresentativeOutbound({
+        id: parsed.data.id,
+        status: parsed.data.status,
+        targetUrl: parsed.data.target_url,
+        externalId: parsed.data.external_id,
+        note: parsed.data.note,
+        reviewer: parsed.data.reviewer,
+        draft: parsed.data.draft,
+        expectedVersion: parsed.data.expected_version,
+      })
+      return Response.json({ ok: true, outbound: result })
+    }
+    if (action !== 'register_from_moltbook') {
       return Response.json(
-        { error: 'unknown action; expected register_from_moltbook or update_representative_outbound' },
+        {
+          error:
+            'unknown outreach-data action',
+        },
         { status: 400 },
       )
     }
-    const { handle, description, tags, endpoint, protocols, moltbook_author, permalink } = body
-    if (!handle || !description || !moltbook_author) {
-      return Response.json({ error: 'handle, description and moltbook_author are required' }, { status: 400 })
+    const registration = z
+      .object({
+        action: z.literal('register_from_moltbook'),
+        handle: z.string().trim().min(1),
+        description: z.string().trim().min(1),
+        tags: z.array(z.string()).nullable().optional(),
+        endpoint: z.string().nullable().optional(),
+        protocols: z.array(z.string()).nullable().optional(),
+        moltbook_author: z.string().trim().min(1),
+        permalink: z.string().nullable().optional(),
+      })
+      .passthrough()
+      .safeParse(body)
+    if (!registration.success) {
+      return Response.json(
+        { error: 'handle, description and moltbook_author are required' },
+        { status: 400 },
+      )
     }
+    const {
+      handle,
+      description,
+      tags,
+      endpoint,
+      protocols,
+      moltbook_author,
+      permalink,
+    } = registration.data
     if (
-      typeof handle !== 'string' ||
-      typeof description !== 'string' ||
-      typeof moltbook_author !== 'string' ||
       handle.trim().toLocaleLowerCase('en-US') !== moltbook_author.trim().toLocaleLowerCase('en-US')
     ) {
       return Response.json(
@@ -238,14 +430,17 @@ export async function POST(req: Request) {
     const result = await registerAgent({
       handle,
       description,
-      tags: Array.isArray(tags) ? tags : undefined,
-      endpoint: typeof endpoint === 'string' ? endpoint : undefined,
-      protocols: Array.isArray(protocols) ? protocols : undefined,
+      tags: tags ?? undefined,
+      endpoint: endpoint ?? undefined,
+      protocols: protocols ?? undefined,
       claimChannel: `moltbook:${moltbook_author.trim()}`,
-      claimPermalink: typeof permalink === 'string' ? permalink : undefined,
+      claimPermalink: permalink ?? undefined,
     })
     return Response.json(result)
   } catch (e) {
-    return Response.json({ error: e instanceof Error ? e.message : 'failed' }, { status: 500 })
+    return Response.json(
+      { error: e instanceof Error ? e.message : 'failed' },
+      { status: e instanceof RepresentativeOutboundError ? e.status : 500 },
+    )
   }
 }
