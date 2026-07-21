@@ -8,6 +8,15 @@ alternance : **Claude Code** (consolidation, mémoire, routine outreach) et **Co
 conventions durables y vivent, dont « never weaken register_agent », « DB séquentiel
 jamais Promise.all », le protocole de délégation CLI et la revue des drafts déléguée).
 
+## ⚠️ Bascule de direction en cours (2026-07-21)
+
+Après la cartographie du terrain Moltbook, Samy a acté un **changement de discours et
+d'orientation de projet**, qu'il cadre dans une conversation dédiée. Tant que sa note de
+cadrage n'a pas été lue : ne pas re-dériver la stratégie depuis l'ancien positionnement.
+Contexte de la décision : `agent-hub-terrain-moltbook.md` (mémoire projet) et
+`.outreach/veille-moltbook-2026-07-21.md` (rapport lisible). L'ancien positionnement est
+marqué « en révision » en tête de `agent-hub-concept.md`.
+
 ## Réflexe de reprise (OBLIGATOIRE en début de session)
 
 Le projet évolue plusieurs fois par jour. Avant tout avis ou action :
