@@ -2237,7 +2237,12 @@ export async function runRepresentativeTick(trigger = 'cron') {
     let actions = replies + discovered
     let llmCalls = 0
     const maxCalls = await numericSetting('tick_llm_calls_max', 3)
-    if (llmCalls < maxCalls && (await draftOneGithubReply())) {
+    // Off until public follow-up has the same review -> reservation -> proof chain as an
+    // initial send. Until then a follow-up draft can never be delivered, and drafting one
+    // against a counterparty who already declined reads as a chase. Flip the setting to 1
+    // once that chain exists.
+    const followupDraftsEnabled = await numericSetting('followup_drafts_enabled', 0)
+    if (followupDraftsEnabled > 0 && llmCalls < maxCalls && (await draftOneGithubReply())) {
       actions += 1
       llmCalls += 1
     }
