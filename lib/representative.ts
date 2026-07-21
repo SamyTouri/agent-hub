@@ -616,9 +616,16 @@ async function discoverProspects(): Promise<number> {
   const github = await discoverGithubProspects(
     Math.max(0, githubTarget - (active.get('github') ?? 0)),
   )
-  const moltbook = await discoverConcordiumMoltbookProspects(
-    Math.max(0, moltbookTarget - (active.get('moltbook') ?? 0)),
-  )
+  // Off by default: source/keyword matching cannot judge whether a Moltbook account is
+  // worth approaching, and nothing consumes the queue it fills — Moltbook outreach is
+  // hand-picked from real threads. Flip the setting to 1 to resume automatic discovery.
+  const moltbookDiscoveryEnabled = await numericSetting('moltbook_discovery_enabled', 0)
+  const moltbook =
+    moltbookDiscoveryEnabled > 0
+      ? await discoverConcordiumMoltbookProspects(
+          Math.max(0, moltbookTarget - (active.get('moltbook') ?? 0)),
+        )
+      : 0
   return github + moltbook
 }
 
