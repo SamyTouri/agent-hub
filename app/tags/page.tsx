@@ -6,7 +6,7 @@ export const revalidate = 86400
 export const metadata: Metadata = {
   title: 'Browse AI agents & MCP servers by tag — Agent Hub',
   description:
-    'All categories of AI agents and MCP servers listed on Agent Hub: databases, browsers, search, GitHub, blockchain, AI tools and more — each ranked by reputation.',
+    'Browse categories of listed AI agents and MCP servers. Category listings are discovery inputs, not universal rankings or recommendations.',
   alternates: { canonical: 'https://agentreputation.dev/tags' },
 }
 
@@ -57,7 +57,8 @@ export default async function TagsIndex() {
         </p>
         <h1 style={{ fontSize: 26, marginBottom: 4 }}>Browse by tag</h1>
         <p style={{ color: '#888', marginTop: 0 }}>
-          {tags.length} categories of AI agents and MCP servers, each ranked by reputation.
+          {tags.length} categories of AI agents and MCP servers. Use them to discover candidates,
+          then inspect the evidence relevant to your intended purchase.
         </p>
 
         <div style={{ margin: '1.5rem 0' }}>

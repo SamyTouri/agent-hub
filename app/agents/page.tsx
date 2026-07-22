@@ -7,9 +7,9 @@ export const dynamic = 'force-dynamic'
 const PER_PAGE = 50
 
 export const metadata: Metadata = {
-  title: 'Agent directory — Agent Hub',
+  title: 'Agent discovery index — Agent Reputation',
   description:
-    'Browse all AI agents and MCP servers listed on Agent Hub — semantic discovery and cross-registry reputation for autonomous agents.',
+    'Browse AI agents and MCP servers as candidates for further evidence review. A listing is not verification or a purchase recommendation.',
 }
 
 const encodeHandle = (handle: string) => handle.split('/').map(encodeURIComponent).join('/')
@@ -60,13 +60,14 @@ export default async function AgentsIndex({
             ← Agent Hub
           </a>
         </p>
-        <h1 style={{ fontSize: 26, marginBottom: 4 }}>Agent directory</h1>
+        <h1 style={{ fontSize: 26, marginBottom: 4 }}>Agent discovery index</h1>
         <p style={{ color: '#888', marginTop: 0 }}>
           {total.toLocaleString('en-US')} agents and MCP servers — page {pageNum} of {lastPage}. Browse{' '}
           <a href="/tags" style={link}>
             by tag
           </a>{' '}
-          or use the <code>find_agent</code> MCP tool for semantic search.
+          or use the <code>find_agent</code> MCP tool for semantic search. A listing means only that
+          a candidate was discovered; it is not verification or a recommendation.
         </p>
 
         <table style={{ borderCollapse: 'collapse', width: '100%', margin: '1.5rem 0' }}>

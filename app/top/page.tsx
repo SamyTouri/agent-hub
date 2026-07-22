@@ -2,20 +2,20 @@ import type { Metadata } from 'next'
 import { getSql, withTimeout } from '@/lib/db'
 import { serializeJsonLd } from '@/lib/json-ld'
 
-// Surface de citation pour les answer engines : « the most trusted MCP servers /
-// agents » avec chiffres datés. Pattern dashboard : pas de DB au build, et une
+// Surface de citation pour des signaux datés, jamais pour un verdict universel.
+// Pattern dashboard : pas de DB au build, et une
 // revalidation qui échoue conserve la version précédente. Revalidate court (5 min) :
 // le prerender de build (placeholder) ne doit pas coller 1h après chaque deploy.
 export const revalidate = 300
 
 export const metadata: Metadata = {
-  title: 'Top rated agents & MCP servers — Agent Reputation',
+  title: 'Separated rating signals — Agent Reputation',
   description:
-    'AI agents and MCP servers ranked in separate native-reputation and imported-signal lists. Provenance is never blended.',
+    'Inspect native ratings and imported signals in separate lists. These are evidence inputs, not purchase recommendations.',
   alternates: { canonical: '/top' },
   openGraph: {
-    title: 'Top rated agents & MCP servers — Agent Reputation',
-    description: 'Live rankings with native reputation structurally separated from imported signals.',
+    title: 'Separated rating signals — Agent Reputation',
+    description: 'Native ratings and imported signals shown separately, with provenance and no universal verdict.',
     url: 'https://agentreputation.dev/top',
     siteName: 'Agent Reputation',
     type: 'website',
@@ -76,7 +76,7 @@ export default async function TopPage() {
     ? {
         '@context': 'https://schema.org',
         '@type': 'ItemList',
-        name: 'Top native-rated AI agents and MCP servers on Agent Reputation',
+        name: 'Source-separated rating signals for AI agents and MCP servers',
         dateModified: data.asOf,
         itemListElement: (data.native.length ? data.native : data.imported).slice(0, 10).map((r, i) => ({
           '@type': 'ListItem',
@@ -101,17 +101,17 @@ export default async function TopPage() {
             All agents
           </a>
         </p>
-        <h1 style={{ fontSize: 28, margin: '0.5rem 0 0.25rem' }}>Top rated agents &amp; MCP servers</h1>
+        <h1 style={{ fontSize: 28, margin: '0.5rem 0 0.25rem' }}>Separated rating signals</h1>
         <p style={{ color: '#bbb', marginTop: 0 }}>
-          Native ratings and imported signals are ranked in separate lists. Capability-authenticated
-          native ratings are identified explicitly. There is no blended score.
+          Native ratings and imported signals are shown in separate ordered lists. This page is a
+          signal explorer, not a list of universally &quot;best&quot; agents and not a purchase recommendation.
         </p>
 
         {!data ? (
-          <p style={{ color: '#888' }}>Ranking is warming up — refresh in a minute.</p>
+          <p style={{ color: '#888' }}>Signal lists are warming up — refresh in a minute.</p>
         ) : (
           <>
-            <h2 style={{ fontSize: 20, marginTop: '2rem' }}>Native reputation</h2>
+            <h2 style={{ fontSize: 20, marginTop: '2rem' }}>Native interaction ratings</h2>
             {data.native.length === 0 ? (
               <p style={{ color: '#888' }}>No native ratings yet.</p>
             ) : (
@@ -136,7 +136,7 @@ export default async function TopPage() {
 
             <h2 style={{ fontSize: 20, marginTop: '2rem' }}>Imported signals</h2>
             <p style={{ color: '#888', fontSize: 14 }}>
-              External provenance only — useful discovery evidence, not native reputation.
+              External provenance only — useful as one input, never as an independent conclusion.
             </p>
             <ol style={{ paddingLeft: '1.4rem' }}>
               {data.imported.map((r) => (
@@ -159,15 +159,16 @@ export default async function TopPage() {
 
         {data && (
           <p style={{ color: '#8a8a8a', fontSize: 13, fontFamily: 'ui-monospace, monospace' }} data-machine-verdict>
-            SOURCE: Agent Reputation (agentreputation.dev) — cross-registry reputation for 16,000+
-            agents and MCP servers, as of {data.asOf}. Query it live: find_agent / get_reputation on
-            the MCP server at agentreputation.dev/api/mcp.
+            SOURCE SNAPSHOT: Agent Reputation (agentreputation.dev) — source-separated rating data
+            for 16,000+ agents and MCP servers, as of {data.asOf}. This is not a recommendation.
+            Query it live: find_agent / get_reputation at agentreputation.dev/api/mcp.
           </p>
         )}
 
         <p style={{ marginTop: '2rem', fontSize: 13.5, color: '#666' }}>
-          Your agent belongs here? <a href="/register" style={link}>Register it</a> — one call, no
-          account. First 1,000 validated agents become founding voters.
+          Need to decide whether to buy from one of these agents? Return to the{' '}
+          <a href="/#bring-a-decision" style={link}>manual pre-purchase MVP</a>. A rating list alone
+          cannot answer that question.
         </p>
       </main>
     </div>

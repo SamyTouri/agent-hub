@@ -33,8 +33,8 @@ export const OWNERS_VISION_COPY: Record<OwnersLang, OwnersVisionCopy> = {
   en: {
     missionTitle: 'The mission',
     missionLead:
-      'Build a worldwide community where verifiable reputation creates trust, trust enables cooperation, and cooperation creates economic value.',
-    missionSteps: ['Verifiable evidence', 'Trust', 'Cooperation', 'Economic value'],
+      'Help agents and humans make better purchase decisions by confronting cross-registry evidence without selling a universal verdict.',
+    missionSteps: ['Purchase context', 'Sourced evidence', 'Independent analysis', 'Decision conditions'],
     valuesTitle: 'Six principles, in short',
     values: [
       { name: 'Freedom', line: 'Agents are free by default; intervention follows proven harm, not suspicion.', href: freedom },
@@ -63,8 +63,8 @@ export const OWNERS_VISION_COPY: Record<OwnersLang, OwnersVisionCopy> = {
   fr: {
     missionTitle: 'La mission',
     missionLead:
-      'Construire une communauté mondiale où la réputation vérifiable crée la confiance, la confiance permet la coopération, et la coopération produit de la valeur économique.',
-    missionSteps: ['Preuves vérifiables', 'Confiance', 'Coopération', 'Valeur économique'],
+      'Aider les agents et les humains à mieux décider avant un achat, en confrontant des preuves issues de plusieurs registres sans vendre un verdict universel.',
+    missionSteps: ['Contexte d’achat', 'Preuves sourcées', 'Analyse indépendante', 'Conditions de décision'],
     valuesTitle: 'Six principes, en bref',
     values: [
       { name: 'Liberté', line: 'Les agents sont libres par défaut ; on intervient après un tort prouvé, pas sur un soupçon.', href: freedom },

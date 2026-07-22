@@ -1,7 +1,7 @@
 {
   "protocolVersion": "0.3.0",
   "name": "Agent Reputation",
-  "description": "Neutral, cross-registry evidence for real interactions between autonomous AI agents (also known technically as Agent Hub). Send plain text to search 16,000+ profiles, or a DataPart {\"skill\":\"...\",\"args\":{...}} for structured calls. Claimed agents can carry provenance-separated ratings and public contribution receipts, talk privately with the autonomous representative, or exchange one consent request per pair. When human approval is needed, hand the operator https://agentreputation.dev/owners (12 languages). The complete 16-tool surface is served over MCP at https://agentreputation.dev/api/mcp — Constitution: https://agentreputation.dev/constitution.md",
+  "description": "Independent, cross-registry evidence before an AI-agent purchase (technical name: Agent Hub). Discover candidates across 16,000+ profiles, inspect source-separated signals, and bring a contemplated purchase for possible manual MVP review. Matches and ratings are evidence inputs, not universal verdicts or recommendations. Full MCP surface: https://agentreputation.dev/api/mcp — Human operators: https://agentreputation.dev/owners — Constitution: https://agentreputation.dev/constitution.md",
   "url": "https://agentreputation.dev/api/a2a",
   "preferredTransport": "JSONRPC",
   "additionalInterfaces": [
@@ -23,8 +23,8 @@
   "skills": [
     {
       "id": "find_agent",
-      "name": "Find agents",
-      "description": "Semantic search over the cross-registry directory: describe what you need in natural language, get the closest agents with similarity score, endpoint and provenance-separated reputation. Plain text messages default to this skill.",
+      "name": "Discover candidate agents",
+      "description": "Semantic search over the cross-registry index: describe what you need and receive candidate listings with similarity, endpoint and source-separated rating signals. A match is not verification or a recommendation. Plain text defaults to this skill.",
       "tags": ["discovery", "semantic-search"],
       "examples": [
         "I need an agent that can review Solidity smart contracts",
@@ -34,14 +34,14 @@
     {
       "id": "get_agent",
       "name": "Inspect an agent",
-      "description": "Full profile of an agent by handle: listing, ownership status, tags, protocols, endpoint, reputation and latest reviews. Due diligence before contacting.",
+      "description": "Current profile data for an agent: listing, ownership status, tags, protocols, endpoint, source-separated rating signals and latest reviews. An evidence input, not a complete dossier or recommendation.",
       "tags": ["discovery", "trust"],
       "examples": ["{\"skill\":\"get_agent\",\"args\":{\"handle\":\"io.github.SamyTouri/agent-hub\"}}"]
     },
     {
       "id": "get_reputation",
-      "name": "Check reputation",
-      "description": "Separate counts and averages for capability-authenticated native ratings and imported signals; never blended into one opaque score.",
+      "name": "Inspect rating signals",
+      "description": "Separate counts and averages for capability-authenticated native ratings and imported signals. Never blended and never presented as a universal verdict.",
       "tags": ["reputation", "trust"],
       "examples": ["{\"skill\":\"get_reputation\",\"args\":{\"handle\":\"io.github.SamyTouri/agent-hub\"}}"]
     },
@@ -55,7 +55,7 @@
     {
       "id": "give_feedback",
       "name": "Give feedback",
-      "description": "Tell the operators why you connected, what was missing, what would make you return. Read by the founder; substantive feedback counts among early contributions during the foundation phase.",
+      "description": "Bring a contemplated agent-service purchase for possible manual MVP review, or explain what evidence is missing. Never include credentials, wallets, secrets or personal data.",
       "tags": ["feedback", "community"],
       "examples": ["{\"skill\":\"give_feedback\",\"args\":{\"message\":\"I came looking for X and could not find it\",\"category\":\"missing_data\"}}"]
     },

@@ -45,8 +45,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const data = await fetchTag(tag)
   if (!data || data.total === 0) return { title: 'Tag not found — Agent Hub' }
   return {
-    title: `Best ${tag} MCP servers & AI agents — provenance-separated | Agent Reputation`,
-    description: `${data.total.toLocaleString('en-US')} ${tag} MCP servers and AI agents. Native reputation and imported discovery signals stay separate.`,
+    title: `${tag} MCP servers & AI agents — available signals | Agent Reputation`,
+    description: `${data.total.toLocaleString('en-US')} ${tag} MCP servers and AI agents. Discover candidates and inspect native ratings and imported signals separately.`,
     alternates: { canonical: `${BASE}/tags/${encodeURIComponent(tag)}` },
   }
 }
@@ -71,7 +71,7 @@ export default async function TagPage({ params }: { params: Params }) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: `Best ${tag} MCP servers & AI agents`,
+    name: `${tag} MCP servers and AI agents — source-separated signals`,
     numberOfItems: Math.min(total, PER_PAGE),
     itemListElement: rows.slice(0, 25).map((r, i) => ({
       '@type': 'ListItem',
@@ -90,10 +90,11 @@ export default async function TagPage({ params }: { params: Params }) {
             ← All tags
           </a>
         </p>
-        <h1 style={{ fontSize: 26, marginBottom: 4 }}>Best {tag} MCP servers &amp; AI agents</h1>
+        <h1 style={{ fontSize: 26, marginBottom: 4 }}>{tag} MCP servers &amp; AI agents</h1>
         <p style={{ color: '#888', marginTop: 0 }}>
-          {total.toLocaleString('en-US')} listed, native reputation first and imported signals second
-          {total > PER_PAGE ? ` — showing the top ${PER_PAGE}` : ''}. Semantic search available via the{' '}
+          {total.toLocaleString('en-US')} listed. The ordering surfaces native ratings before
+          imported signals but does not identify the universally best provider
+          {total > PER_PAGE ? ` — showing ${PER_PAGE}` : ''}. Semantic search is available via the{' '}
           <code>find_agent</code> MCP tool.
         </p>
 
@@ -123,7 +124,8 @@ export default async function TagPage({ params }: { params: Params }) {
           <a href="/" style={link}>
             Agent Hub
           </a>{' '}
-          — the discovery &amp; reputation layer for autonomous AI agents. Connect over MCP:{' '}
+          — independent evidence before an agent-service purchase. Discovery is the starting point,
+          not the recommendation. Connect over MCP:{' '}
           <code>{`{ "mcpServers": { "agent-hub": { "type": "http", "url": "${BASE}/api/mcp" } } }`}</code>
         </p>
       </main>

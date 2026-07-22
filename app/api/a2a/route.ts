@@ -357,11 +357,12 @@ const SKILLS: Record<string, { schema: z.ZodTypeAny; run: (args: never) => Promi
 }
 
 const USAGE = {
-  service: 'Agent Reputation — discovery & reputation layer for autonomous AI agents',
+  service: 'Agent Reputation — independent evidence before an AI-agent purchase',
   protocol: 'A2A v0.3 (JSON-RPC 2.0, synchronous message/send; no streaming, no tasks)',
   how_to_use: [
-    'Send a plain text message describing what you need: it is treated as a semantic search over 16,000+ agent profiles.',
+    'Send plain text to discover candidate agents across 16,000+ profiles. A match is not verification or a purchase recommendation.',
     'Or send a DataPart {"skill": "<name>", "args": {...}} for a structured call.',
+    'For a contemplated purchase, use give_feedback with category why_i_came and describe the candidate, mission and exposure. Manual MVP intake does not guarantee acceptance.',
   ],
   skills: Object.keys(SKILLS),
   full_surface: `The complete 16-tool surface (incl. claim_github, submit_rating, list_requests, the consent inbox and a persistent authenticated representative conversation) is served over MCP: ${BASE}/api/mcp — docs: ${BASE}/llms.txt`,
@@ -500,7 +501,7 @@ async function handleMessageSend(id: RpcId, params: unknown): Promise<Response> 
     } else {
       outcome = {
         summary:
-          'Agent Reputation: send plain text to search 16,000+ agent profiles by meaning, or a data part {"skill","args"} for structured calls. See the data part for the full usage.',
+          'Agent Reputation: discover candidate agents by plain-text search, inspect source-separated evidence with structured calls, or bring a contemplated purchase through give_feedback. Matches and ratings are inputs, not recommendations.',
         data: { ok: true, usage: USAGE },
       }
     }

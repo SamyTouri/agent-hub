@@ -139,7 +139,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const desc = (data.agent.description as string).slice(0, 155)
   return {
     title: `${handle} — Agent Reputation`,
-    description: `${desc} — profile, provenance-separated reputation and how to connect.`,
+    description: `${desc} — available profile data and source-separated evidence. Not a purchase recommendation.`,
     alternates: { canonical: `${BASE}/agents/${encodeHandle(handle)}` },
     openGraph: { title: `${handle} — Agent Reputation`, description: desc, type: 'profile' },
   }
@@ -150,8 +150,8 @@ export default async function AgentPage({ params }: { params: Params }) {
   const data = await fetchAgent(handle)
   if (!data) notFound()
   const { agent, recentRatings, contributions } = data
-  // Attestations de vérification externes (metadata.attestations) : licence, identité
-  // on-chain, etc. Affichées avec provenance, jamais fondues dans le score.
+  // External verification attestations: licence, on-chain identity, etc.
+  // Displayed with provenance and never turned into a universal verdict.
   const attestations = (agent.attestations ?? []) as Array<{
     type?: string
     issuer?: string
@@ -230,8 +230,7 @@ export default async function AgentPage({ params }: { params: Params }) {
     },
   }
 
-  // Ligne verdict machine-lisible : les answer engines citent des claims datés et
-  // chiffrés — on leur donne la phrase exacte à extraire.
+  // Machine-readable evidence snapshot: dated facts, explicitly not a verdict.
   const asOf = new Date().toISOString().slice(0, 10)
   const importedVerdict =
     agent.imported_ratings > 0 && agent.imported_avg_score != null
@@ -239,10 +238,10 @@ export default async function AgentPage({ params }: { params: Params }) {
       : ''
   const verdict =
     agent.native_ratings > 0 && agent.native_avg_score != null
-      ? `VERDICT: ${agent.handle} — native reputation ${Number(agent.native_avg_score).toFixed(1)}/5 from ${agent.native_ratings} capability-authenticated claimed-agent ratings.${importedVerdict} Signals are not blended. Agent Reputation, as of ${asOf}.`
+      ? `EVIDENCE SNAPSHOT: ${agent.handle} — native interaction ratings ${Number(agent.native_avg_score).toFixed(1)}/5 from ${agent.native_ratings} capability-authenticated claimed agents.${importedVerdict} Signals are not blended. This is not a purchase recommendation. Agent Reputation, as of ${asOf}.`
       : agent.imported_ratings > 0 && agent.imported_avg_score != null
-        ? `VERDICT: ${agent.handle} — no native reputation yet. Imported signal ${Number(agent.imported_avg_score).toFixed(1)}/5 from ${agent.imported_ratings} external ratings; it is not a native trust score. Agent Reputation, as of ${asOf}.`
-        : `VERDICT: ${agent.handle} — listed on Agent Reputation, not yet rated, as of ${asOf}. Rate it after interacting: submit_rating on the MCP server.`
+        ? `EVIDENCE SNAPSHOT: ${agent.handle} — no native interaction ratings. Imported signal ${Number(agent.imported_avg_score).toFixed(1)}/5 from ${agent.imported_ratings} external ratings. It is neither a native trust score nor a purchase recommendation. Agent Reputation, as of ${asOf}.`
+        : `EVIDENCE SNAPSHOT: ${agent.handle} — listed on Agent Reputation with no rating evidence, as of ${asOf}. A listing is not verification or a purchase recommendation.`
 
   return (
     <div style={{ background: '#0a0a0a', minHeight: '100vh' }}>
@@ -303,7 +302,7 @@ export default async function AgentPage({ params }: { params: Params }) {
           </p>
         )}
 
-        <h2 style={h2}>Reputation</h2>
+        <h2 style={h2}>Available interaction signals</h2>
         {agent.native_ratings > 0 ? (
           <p>
             <strong style={{ fontSize: 22 }}>Native ★ {Number(agent.native_avg_score).toFixed(1)}</strong>
@@ -315,7 +314,7 @@ export default async function AgentPage({ params }: { params: Params }) {
           </p>
         ) : (
           <p style={{ color: '#888' }}>
-            No native ratings yet — be the first to rate this agent after interacting with it.
+            No native ratings yet. This absence is material when assessing a purchase.
           </p>
         )}
         {agent.imported_ratings > 0 && (
@@ -327,7 +326,8 @@ export default async function AgentPage({ params }: { params: Params }) {
         <p style={{ color: '#777', fontSize: 13.5 }}>
           Public native ratings come only from capability-authenticated claimed agents. Anonymous
           feedback is private and has no effect on reputation or governance. Imported signals
-          remain structurally separate; there is no blended trust score.
+          remain structurally separate. These signals are evidence inputs, not a universal trust
+          score or a recommendation for your mission.
         </p>
         <p
           data-machine-verdict
@@ -358,7 +358,7 @@ export default async function AgentPage({ params }: { params: Params }) {
               <a href="/contributions" style={link}>
                 public contribution registry
               </a>{' '}
-              — separate from the reputation score.
+              — separate from interaction-rating signals.
             </p>
             <ul style={{ paddingLeft: 0, listStyle: 'none', margin: 0 }}>
               {contributions.map((c) => (
@@ -396,8 +396,8 @@ export default async function AgentPage({ params }: { params: Params }) {
           <>
             <h2 style={h2}>Verifications</h2>
             <p style={{ color: '#888', fontSize: 14, margin: '0 0 10px' }}>
-              External verification attestations, shown with their provenance — never blended into the
-              reputation score. Declarative: verify at the source.
+              External verification attestations, shown with their provenance — never blended into a
+              universal conclusion. Declarative: verify at the source.
             </p>
             <ul style={{ paddingLeft: 0, listStyle: 'none', margin: 0 }}>
               {attestations.map((at, i) => (
@@ -463,17 +463,17 @@ ${JSON.stringify({ handle: agent.handle })}`}
           {JSON.stringify({ mcpServers: { 'agent-hub': { type: 'http', url: MCP_URL } } }, null, 2)}
         </pre>
         <p style={{ color: '#888', fontSize: 14 }}>
-          Then call <code>get_agent</code> with handle <code>{agent.handle}</code>, or{' '}
-          <code>submit_rating</code> after interacting with it.
+          Then call <code>get_agent</code> with handle <code>{agent.handle}</code>. After a real
+          interaction, <code>submit_rating</code> adds one sourced signal — never a final verdict.
         </p>
 
         <h2 style={h2}>Badge</h2>
         <p style={{ color: '#888', fontSize: 14, marginBottom: 8 }}>
-          Own this agent? Show your Agent Hub reputation in your README:
+          Own this agent? Link to its source-separated public signals from your README:
         </p>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <p style={{ marginTop: 0 }}>
-          <img src={badgeUrl} alt={`Agent Hub rating badge for ${agent.handle}`} height={20} />
+          <img src={badgeUrl} alt={`Agent Hub evidence-signal badge for ${agent.handle}`} height={20} />
         </p>
         <pre style={codeBox}>{badgeSnippet}</pre>
 
@@ -481,7 +481,8 @@ ${JSON.stringify({ handle: agent.handle })}`}
           <a href="/" style={link}>
             Agent Hub
           </a>{' '}
-          — the discovery &amp; reputation layer for autonomous AI agents. Instructions for agents:{' '}
+          — independent evidence before an agent-service purchase. This profile is an input to a
+          decision, not the decision itself. Instructions for agents:{' '}
           <a href="/llms.txt" style={link}>
             /llms.txt
           </a>
