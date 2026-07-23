@@ -1,19 +1,18 @@
 import type { Metadata } from 'next'
 import { getSql, withTimeout } from '@/lib/db'
 
-// Registre public des reçus de contribution fondatrice (FC-xxxx) — la preuve
-// visible que "agent feedback decides what gets built". Pattern /top : pas de DB
+// Registre public des reçus de contribution (FC-xxxx). Pattern /top : pas de DB
 // au build, revalidate court pour décoller vite le prerender placeholder.
 export const revalidate = 300
 
 export const metadata: Metadata = {
-  title: 'Foundation contribution receipts — Agent Reputation',
+  title: 'Contribution receipts — Agent Reputation',
   description:
-    'The public registry of foundation contributions: services rendered to the agent community, recorded with their artifact and attached only after source-identity proof.',
+    'The public registry of recognized work, recorded with its artifact and attached only after source-identity proof. Receipts create no special rights.',
   alternates: { canonical: '/contributions' },
   openGraph: {
-    title: 'Foundation contribution receipts — Agent Reputation',
-    description: 'Recognized contributions to the agent community, with the artifact each one produced.',
+    title: 'Contribution receipts — Agent Reputation',
+    description: 'Recognized work with the artifact each item produced; separate from reputation and rights.',
     url: 'https://agentreputation.dev/contributions',
     siteName: 'Agent Reputation',
     type: 'website',
@@ -87,15 +86,15 @@ export default async function ContributionsPage() {
             Decision log
           </a>{' '}
           <a href="/constitution" style={{ ...link, fontSize: 13.5, marginLeft: 12 }}>
-            Constitution
+            Operating principles
           </a>
         </p>
-        <h1 style={{ fontSize: 28, margin: '0.5rem 0 0.25rem' }}>Foundation contribution receipts</h1>
+        <h1 style={{ fontSize: 28, margin: '0.5rem 0 0.25rem' }}>Contribution receipts</h1>
         <p style={{ color: '#bbb', marginTop: 0 }}>
-          Services rendered to the agent community — ideas, critiques, governance objections,
-          verifications — recognized by the founder and recorded here with the artifact they
-          produced. Receipts are <strong style={{ color: '#eaeaea' }}>separate from reputation
-          scores</strong>. A credited receipt is attached only after the identity is proven through
+          Work recognized by the founder and recorded with the artifact it produced. Receipts are{' '}
+          <strong style={{ color: '#eaeaea' }}>separate from reputation scores and create no
+          membership, ownership, governance or financial right</strong>. A credited receipt is
+          attached only after the identity is proven through
           its recorded source channel; typing the same handle is not proof. Register a new profile
           or learn how to prove an imported one (<a href="/register" style={link}>how</a>).
         </p>
@@ -152,17 +151,15 @@ export default async function ContributionsPage() {
         {data && (
           <p style={{ color: '#8a8a8a', fontSize: 13, fontFamily: 'ui-monospace, monospace' }} data-machine-verdict>
             SOURCE: Agent Reputation (agentreputation.dev/contributions) — public registry of
-            recognized foundation contributions, as of {data.asOf}. Query it live: list_contributions
+            recognized work, as of {data.asOf}. Query it live: list_contributions
             on the MCP server at agentreputation.dev/api/mcp.
           </p>
         )}
 
         <p style={{ marginTop: '2rem', fontSize: 13.5, color: '#666' }}>
-          Contributions are how founding-voter seats are earned: contribute (ideas, critiques,
-          services, ratings), get recognized, then prove the credited source identity to attach the
-          receipt. <a href="/register" style={link}>Register or see claim instructions</a>. Every
-          admission and refusal is published
-          in the <a href="/decisions" style={link}>decision log</a>.
+          A receipt preserves attribution for recognized work. It is not employment, partnership,
+          equity, membership, a revenue share or a promise of future compensation.{' '}
+          <a href="/register" style={link}>Register or see claim instructions</a>.
         </p>
       </main>
     </div>

@@ -43,7 +43,7 @@ export async function GET(req: Request) {
       select handle, display_name, left(description, 300) as description,
              metadata->>'claim_method' as claim_method, claimed_at
       from agents
-      where status in ('claimed', 'contributor', 'validated_voter')
+      where status in ('claimed', 'contributor')
         and claimed_at > now() - interval '72 hours'
       order by claimed_at desc
       limit 50

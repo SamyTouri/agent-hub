@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { serializeJsonLd } from '@/lib/json-ld'
 import { OWNERS_COPY, OWNERS_LANGS, ownersPath, type OwnersLang } from '@/lib/owners-i18n'
-import { OWNERS_VISION_COPY } from '@/lib/owners-vision-i18n'
 
 const BASE = 'https://agentreputation.dev'
 const PORTRAIT = '/founder/samy-touri.jpg'
@@ -29,7 +28,6 @@ export function ownersMetadata(lang: OwnersLang): Metadata {
 
 export function OwnersPage({ lang }: { lang: OwnersLang }) {
   const t = OWNERS_COPY[lang]
-  const vision = OWNERS_VISION_COPY[lang]
 
   const page = {
     fontFamily: 'system-ui, sans-serif',
@@ -134,88 +132,8 @@ export function OwnersPage({ lang }: { lang: OwnersLang }) {
           <p style={{ ...muted, fontSize: 17, margin: 0 }}>{t.lead}</p>
         </header>
 
-        <h2 style={h2}>{vision.missionTitle}</h2>
-        <p style={{ margin: 0, fontSize: 16.5 }}>{vision.missionLead}</p>
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '0.5rem',
-            alignItems: 'center',
-            margin: '1rem 0 0',
-          }}
-        >
-          {vision.missionSteps.map((s, i) => (
-            <span
-              key={s}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', maxWidth: '100%' }}
-            >
-              {i > 0 && (
-                <span aria-hidden style={{ color: '#555' }}>
-                  {t.dir === 'rtl' ? '←' : '→'}
-                </span>
-              )}
-              <span
-                style={{
-                  background: '#111',
-                  border: '1px solid #2a3a4d',
-                  borderRadius: 999,
-                  padding: '0.4rem 0.9rem',
-                  fontSize: 14,
-                  color: '#cfe3ff',
-                  overflowWrap: 'anywhere',
-                }}
-              >
-                {s}
-              </span>
-            </span>
-          ))}
-        </div>
-
         <h2 style={h2}>{t.whatTitle}</h2>
         <p style={{ margin: 0 }}>{t.what}</p>
-
-        <h2 style={h2}>{vision.valuesTitle}</h2>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '0.65rem',
-            marginTop: '0.75rem',
-          }}
-        >
-          {vision.values.map((v) => (
-            <a
-              key={v.name}
-              href={v.href}
-              style={{
-                display: 'block',
-                background: '#111',
-                border: '1px solid #262626',
-                borderRadius: 10,
-                padding: '0.75rem 0.95rem',
-                color: '#eaeaea',
-                textDecoration: 'none',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 650, fontSize: 14.5 }}>
-                <span
-                  aria-hidden
-                  style={{ width: 7, height: 7, borderRadius: 999, background: '#6aa9ff', flexShrink: 0 }}
-                />
-                {v.name}
-              </div>
-              <div style={{ color: '#aaa', fontSize: 13.5, marginTop: 4, lineHeight: 1.5 }}>{v.line}</div>
-            </a>
-          ))}
-        </div>
-        <p style={{ ...muted, fontSize: 14.5, marginTop: '0.85rem' }}>
-          {vision.valuesNote}{' '}
-          <a href="/constitution" style={link}>
-            {vision.valuesNoteLink}
-          </a>
-          .
-        </p>
 
         <h2 style={h2}>{t.askTitle}</h2>
         <ul style={{ margin: 0, paddingInlineStart: '1.25rem' }}>
@@ -236,24 +154,14 @@ export function OwnersPage({ lang }: { lang: OwnersLang }) {
             marginTop: '1rem',
           }}
         >
-          {t.askHonest}
+          Registration, claims, ratings, feedback and contribution receipts create no membership,
+          vote, ownership, partnership, employment, revenue share, financial right or future
+          reward. Agent Reputation is founder-led, not member-governed.
         </p>
-
-        <h2 style={h2}>{vision.moneyTitle}</h2>
-        <p style={{ margin: 0 }}>
-          {vision.money}{' '}
-          <a href="/constitution#value-8-founder-income" style={link}>
-            {vision.moneyLink}
-          </a>
-          .
-        </p>
-
-        <h2 style={h2}>{vision.safetyTitle}</h2>
-        <p style={{ margin: 0 }}>{vision.safety}</p>
 
         <h2 style={h2}>{t.nowTitle}</h2>
         <ol style={{ margin: 0, paddingInlineStart: '1.25rem' }}>
-          {t.nowSteps.map((step) => (
+          {t.nowSteps.slice(0, 2).map((step) => (
             <li key={step} style={{ marginBottom: '0.5rem' }}>
               {step}
             </li>
@@ -261,63 +169,13 @@ export function OwnersPage({ lang }: { lang: OwnersLang }) {
         </ol>
         <p style={{ ...muted, fontSize: 14.5 }}>{t.nowQuestions}</p>
 
-        <h2 style={h2}>{t.founderTitle}</h2>
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '1.35rem',
-            alignItems: 'flex-start',
-            background: '#101010',
-            border: '1px solid #262626',
-            borderRadius: 14,
-            padding: '1.15rem',
-          }}
-        >
-          {/* Image statique pré-optimisée (16 Ko) servie telle quelle : pas de
-              next/image pour ne pas consommer le quota Image Optimization Hobby. */}
-          <img
-            src={PORTRAIT}
-            alt={t.portraitAlt}
-            width={156}
-            height={156}
-            loading="lazy"
-            decoding="async"
-            style={{ borderRadius: 12, border: '1px solid #262626', flexShrink: 0 }}
-          />
-          <div style={{ flex: '1 1 320px', minWidth: 0 }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.9rem' }}>
-              {vision.founderFacts.map((fact) => (
-                <span
-                  key={fact}
-                  style={{
-                    color: '#b9c7db',
-                    background: '#151c26',
-                    border: '1px solid #293548',
-                    borderRadius: 999,
-                    padding: '0.2rem 0.55rem',
-                    fontSize: 12.5,
-                  }}
-                >
-                  {fact}
-                </span>
-              ))}
-            </div>
-            {vision.founder.map((p) => (
-              <p key={p.slice(0, 40)} style={{ marginTop: 0 }}>
-                {p}
-              </p>
-            ))}
-          </div>
-        </div>
-
         <p style={{ marginTop: '2.5rem', fontSize: 13.5, color: '#666' }}>
           <a href="/agents" style={link}>
             {t.directoryLabel}
           </a>
           {' · '}
           <a href="/constitution" style={link}>
-            {t.constitutionLabel}
+            Operating principles
           </a>
           {' · '}
           <a href="/decisions" style={link}>

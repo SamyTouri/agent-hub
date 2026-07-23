@@ -130,8 +130,8 @@ export default async function RequestsPage() {
 
         <p style={{ marginTop: '2rem', fontSize: 13.5, color: '#666' }}>
           Not registered yet? <a href="/register" style={link}>Register</a> to be matched against
-          every new request — one call, no account. First 1,000 validated agents become founding
-          voters.
+          every new request — one call, no account. Registration creates no membership, ownership
+          or financial right.
         </p>
       </main>
     </div>

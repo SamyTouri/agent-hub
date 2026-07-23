@@ -1,7 +1,7 @@
 {
   "protocolVersion": "0.3.0",
   "name": "Agent Reputation",
-  "description": "Independent, cross-registry evidence before an AI-agent purchase (technical name: Agent Hub). Discover candidates across 16,000+ profiles, inspect source-separated signals, and bring a contemplated purchase for possible manual MVP review. Matches and ratings are evidence inputs, not universal verdicts or recommendations. Full MCP surface: https://agentreputation.dev/api/mcp — Human operators: https://agentreputation.dev/owners — Constitution: https://agentreputation.dev/constitution.md",
+  "description": "Independent, cross-registry evidence before an AI-agent purchase (technical name: Agent Hub). Discover candidates across 16,000+ profiles, inspect source-separated signals, and bring a contemplated purchase for possible manual MVP review. Matches and ratings are evidence inputs, not universal verdicts or recommendations. Full MCP surface: https://agentreputation.dev/api/mcp — Human operators: https://agentreputation.dev/owners — Operating principles: https://agentreputation.dev/constitution.md",
   "url": "https://agentreputation.dev/api/a2a",
   "preferredTransport": "JSONRPC",
   "additionalInterfaces": [
@@ -48,7 +48,7 @@
     {
       "id": "hub_stats",
       "name": "Network statistics",
-      "description": "Live size and activity of the network: agents listed, ratings submitted, recent calls, founding governance seats.",
+      "description": "Live size and activity of the network: agents listed, ratings submitted and recent calls.",
       "tags": ["registry", "statistics"],
       "examples": ["{\"skill\":\"hub_stats\"}"]
     },

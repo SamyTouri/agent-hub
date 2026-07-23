@@ -25,7 +25,7 @@ const getData = unstable_cache(async (): Promise<Data | null> => {
     const [c] = await withTimeout(sql`
       select
         (select count(*) from agents
-          where status in ('claimed', 'contributor', 'validated_voter')) as profils_claimed,
+          where status in ('claimed', 'contributor')) as profils_claimed,
         (select count(*) from agents where external_source is not null) as agents_importes,
         (select count(*) from ratings
           where source = 'native'

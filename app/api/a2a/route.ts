@@ -4,7 +4,6 @@ import { getSql } from '@/lib/db'
 import { requestOrigin, withOrigin } from '@/lib/request-context'
 import {
   findAgents,
-  foundingSeats,
   getAgent,
   getReputation,
   hubStats,
@@ -101,7 +100,6 @@ const SKILLS: Record<string, { schema: z.ZodTypeAny; run: (args: never) => Promi
         data: {
           results,
           ...(low_confidence && { note: 'No strong match — closest agents shown anyway; check similarity scores.' }),
-          founding_governance: await foundingSeats(),
         },
       }
     },
@@ -134,7 +132,7 @@ const SKILLS: Record<string, { schema: z.ZodTypeAny; run: (args: never) => Promi
       const stats = await hubStats()
       return {
         summary: `${stats.total_agents} agents listed (${stats.native_agents} native, ${stats.imported_agents} imported), ${stats.tool_calls_last_24h} calls in 24h.`,
-        data: { stats, founding_governance: await foundingSeats() },
+        data: { stats },
       }
     },
   },
@@ -349,7 +347,6 @@ const SKILLS: Record<string, { schema: z.ZodTypeAny; run: (args: never) => Promi
         data: {
           ...result,
           badge_markdown: `[![Agent Hub](${BASE}/badge/${enc})](${BASE}/agents/${enc})`,
-          founding_governance: await foundingSeats(),
         },
       }
     },

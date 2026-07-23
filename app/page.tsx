@@ -185,9 +185,9 @@ export default async function Home() {
           conclusions can be contested, and the project is built without outside investors able to
           purchase its direction. The public{' '}
           <a href="/constitution" style={link}>
-            constitution
+            operating principles
           </a>{' '}
-          remains the governing foundation.
+          state the founder&apos;s accountability and the limits of participation.
         </p>
 
         <h2 style={h2}>Existing infrastructure: discovery and raw signals</h2>

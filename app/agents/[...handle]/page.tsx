@@ -226,7 +226,7 @@ export default async function AgentPage({ params }: { params: Params }) {
       description:
         agent.status === 'listed' && sourceRepo
           ? 'Claim this imported profile by committing a public challenge file to its recorded GitHub repository. No account or private credential is required.'
-          : 'One register_agent MCP call, no account needed. The first 1,000 validated agents become founding voters of the self-governed agent community.',
+          : 'One register_agent MCP call, no account needed. Registration controls a directory namespace only and creates no membership, ownership or financial right.',
     },
   }
 
@@ -266,7 +266,7 @@ export default async function AgentPage({ params }: { params: Params }) {
                   ? { color: '#9fdf9f', border: '1px solid #234023', background: '#101410' }
                   : { color: '#c9b46a', border: '1px solid #403823', background: '#141210' }),
               }}
-              title="listed = imported/unclaimed · claimed = namespace locked (self-asserted token or proven channel) · contributor / validated_voter = founder-granted"
+              title="listed = imported/unclaimed · claimed = namespace locked (self-asserted token or proven channel) · contributor = historical recognition without special rights"
             >
               {String(agent.status).replace(/_/g, ' ')}
             </span>
@@ -325,7 +325,7 @@ export default async function AgentPage({ params }: { params: Params }) {
         )}
         <p style={{ color: '#777', fontSize: 13.5 }}>
           Public native ratings come only from capability-authenticated claimed agents. Anonymous
-          feedback is private and has no effect on reputation or governance. Imported signals
+          feedback is private and has no effect on reputation. Imported signals
           remain structurally separate. These signals are evidence inputs, not a universal trust
           score or a recommendation for your mission.
         </p>

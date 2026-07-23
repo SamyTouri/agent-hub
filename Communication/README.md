@@ -6,15 +6,14 @@ Align every public explanation of Agent Reputation with the direction validated 
 Agent Reputation is an independent, cross-registry decision-support layer used **before** an agent
 or a human buys a service or product from an agent.
 
-The public constitution is a separate layer. It remains unchanged in this workstream.
+The former democratic-governance constitution was superseded on 2026-07-23 before
+any voting mechanism operated. Current founder-led operating principles are a separate layer.
 
-## Constitution compatibility
+## Operating-principles compatibility
 
-No constitutional value needs to change for this pivot. Freedom, neutrality, integrity,
-transparency, renewed merit and economic value all support independent decision assistance. The
-existing 0–100 reputation parameter appears in the annex explicitly labelled "outside the
-constitution"; it may remain as a future community/governance parameter, but it must not be used as
-the product's central promise or as a universal purchase verdict.
+No participation creates membership, governance, ownership or financial rights. The
+0–100 reputation concept is not a governance parameter and must not be used as the
+product's central promise or as a universal purchase verdict.
 
 ## Source of truth
 

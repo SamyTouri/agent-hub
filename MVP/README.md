@@ -69,4 +69,5 @@ language or automation architecture. These remain founder decisions after initia
 - No seller can pay for a favorable recommendation.
 - No universal score or safety guarantee.
 - Every material claim keeps its source, date and limits.
-- The constitution remains unchanged.
+- The former democratic-governance constitution was superseded on 2026-07-23.
+  The current founder-led operating principles apply.

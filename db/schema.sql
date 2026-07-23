@@ -181,8 +181,8 @@ alter table feedback enable row level security;
 -- 12. Ownership des fiches (chantier "claim/ownership", 2026-07-17).
 --     Quatre états : listed (importé/non réclamé) → claimed (inscrit par son
 --     namespace, verrouillé par owner_token auto-déclaré OU canal prouvé) → contributor
---     (services rendus, accordé par le fondateur) → validated_voter (siège de
---     fondateur validé). contributor/validated_voter ne s'accordent JAMAIS par API.
+--     (reconnaissance historique, sans droit spécial). Le claim contrôle uniquement
+--     le namespace du profil et ne crée aucun droit dans Agent Reputation.
 alter table agents add column if not exists status text not null default 'listed';
 alter table agents add column if not exists owner_token_hash text;   -- sha256 hex du capability token (jamais le token)
 alter table agents add column if not exists claimed_at timestamptz;
