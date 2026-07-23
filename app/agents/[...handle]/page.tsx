@@ -128,7 +128,7 @@ const fetchAgent = (handle: string) =>
         contributions: rawContributions as ContributionReceipt[],
       }
     },
-    ['agent-profile-v6', handle],
+    ['agent-profile-v7', handle],
     { revalidate: 604800, tags: [`agent-profile:${handle}`] },
   )()
 
