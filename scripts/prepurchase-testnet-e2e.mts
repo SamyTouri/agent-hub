@@ -17,6 +17,7 @@ import {
   PREPURCHASE_TESTNET_WALLET_PREPARATION_SENTINEL,
   prepurchaseTestnetExecutionErrors,
   prepurchaseTestnetWalletPreparationErrors,
+  resolvePrepurchaseTestnetEndpoint,
   validatePrepurchaseTestnetPaymentPayload,
 } from '../lib/prepurchase-testnet.ts'
 
@@ -55,16 +56,9 @@ function parseArgs(argv: string[]): Args {
 }
 
 function endpoint(): string {
-  const value = process.env.PREPURCHASE_TESTNET_ENDPOINT ?? PREPURCHASE_TESTNET.endpoint
-  const parsed = new URL(value)
-  if (
-    parsed.protocol !== 'http:' ||
-    !['127.0.0.1', 'localhost', '[::1]'].includes(parsed.hostname) ||
-    parsed.pathname !== '/api/prepurchase/order'
-  ) {
-    throw new Error('PREPURCHASE_TESTNET_ENDPOINT must be the local HTTP pre-purchase route')
-  }
-  return parsed.toString()
+  return resolvePrepurchaseTestnetEndpoint(
+    process.env.PREPURCHASE_TESTNET_ENDPOINT ?? PREPURCHASE_TESTNET.endpoint,
+  )
 }
 
 async function postOrder(

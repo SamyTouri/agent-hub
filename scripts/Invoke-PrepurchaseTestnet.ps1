@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [ValidateSet('Build', 'Provision', 'Fund', 'Inspect', 'E2E')]
+    [ValidateSet('Build', 'Provision', 'Fund', 'Inspect', 'E2E', 'E2EProduction')]
     [string]$Action
 )
 
@@ -131,6 +131,24 @@ try {
 
                 Invoke-TypeScript @('scripts/prepurchase-testnet-e2e.mts', '--execute')
             }
+            'E2EProduction' {
+                # Same funded test against the deployed route. No local server,
+                # no DATABASE_URL: production owns its own configuration, and the
+                # buyer can still only sign 1 test USDC on Base Sepolia.
+                $walletStatePath = Join-Path $RepoRoot '.exchange\codex\prepurchase-testnet-wallets.json'
+                if (-not (Test-Path -LiteralPath $walletStatePath)) {
+                    throw 'Wallet state is missing; run Provision and Fund first.'
+                }
+                $walletState = Get-Content -Raw -LiteralPath $walletStatePath | ConvertFrom-Json
+                if ($walletState.network -ne 'eip155:84532') {
+                    throw 'Wallet state is not for Base Sepolia.'
+                }
+
+                $env:PREPURCHASE_TESTNET_ENDPOINT = 'https://agentreputation.dev/api/prepurchase/order'
+                $env:PREPURCHASE_TESTNET_PAY_TO = $walletState.receiver.address
+                $env:PREPURCHASE_TESTNET_EXECUTE = 'I-AUTHORIZE-EXACTLY-1-TEST-USDC-ON-BASE-SEPOLIA'
+                Invoke-TypeScript @('scripts/prepurchase-testnet-e2e.mts', '--execute')
+            }
         }
     } finally {
         Pop-Location
@@ -148,6 +166,7 @@ try {
     Remove-Item Env:PREPURCHASE_NETWORK -ErrorAction SilentlyContinue
     Remove-Item Env:PREPURCHASE_PAY_TO -ErrorAction SilentlyContinue
     Remove-Item Env:PREPURCHASE_TESTNET_PAY_TO -ErrorAction SilentlyContinue
+    Remove-Item Env:PREPURCHASE_TESTNET_ENDPOINT -ErrorAction SilentlyContinue
     Remove-Item Env:PREPURCHASE_TESTNET_EXECUTE -ErrorAction SilentlyContinue
     Remove-Item Env:PREPURCHASE_TESTNET_WALLET_PREPARE -ErrorAction SilentlyContinue
     Remove-Item Env:PREPURCHASE_TESTNET_FAUCET -ErrorAction SilentlyContinue

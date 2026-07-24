@@ -7,7 +7,10 @@ import { dirname, resolve } from 'node:path'
 
 import { CdpClient } from '@coinbase/cdp-sdk'
 
-import { PREPURCHASE_TESTNET } from '../lib/prepurchase-testnet.ts'
+import {
+  PREPURCHASE_TESTNET,
+  prepurchaseTestnetFaucetKey,
+} from '../lib/prepurchase-testnet.ts'
 
 const PROVISION_SENTINEL = 'I-AUTHORIZE-CDP-TESTNET-WALLET-PROVISIONING'
 const FAUCET_SENTINEL = 'I-AUTHORIZE-CDP-BASE-SEPOLIA-FAUCET'
@@ -15,16 +18,27 @@ const statePath = resolve('.exchange/codex/prepurchase-testnet-wallets.json')
 
 type Action = 'provision' | 'fund' | 'inspect'
 
+type FaucetGrant = {
+  token: 'usdc'
+  transaction_hash: string
+  requested_at: string
+  idempotency_key?: string
+}
+
 type WalletState = {
   version: 1
   network: typeof PREPURCHASE_TESTNET.network
   receiver: { name: string; address: string }
   buyer: { name: string; address: string }
-  faucet?: {
-    token: 'usdc'
-    transaction_hash: string
-    requested_at: string
-  }
+  /** Most recent grant, kept so older state files stay readable. */
+  faucet?: FaucetGrant
+  faucet_grants?: FaucetGrant[]
+}
+
+function recordedGrants(state: WalletState | undefined): FaucetGrant[] {
+  if (!state) return []
+  if (state.faucet_grants?.length) return state.faucet_grants
+  return state.faucet ? [state.faucet] : []
 }
 
 function parseAction(argv: string[]): Action {
@@ -119,6 +133,7 @@ async function main() {
       address: buyer.address,
     },
     ...(existing?.faucet ? { faucet: existing.faucet } : {}),
+    ...(recordedGrants(existing).length > 0 ? { faucet_grants: recordedGrants(existing) } : {}),
   }
 
   if (existing) {
@@ -142,25 +157,24 @@ async function main() {
   const receiverUsdcAtomic = usdcBalanceAtomic(receiverBalances.balances)
 
   if (action === 'fund' && buyerUsdcAtomic < BigInt(PREPURCHASE_TESTNET.amountAtomic)) {
-    if (existing?.faucet) {
-      throw new Error(
-        'REFUSED: the recorded faucet request exists but the buyer has less than 1 test USDC',
-      )
-    }
+    // A previous grant that is no longer held was spent by an earlier accepted
+    // test. Each replacement grant carries its own idempotency key, so retrying
+    // one request stays a no-op while a genuinely spent grant can be renewed.
+    const grants = recordedGrants(existing)
+    const idempotencyKey = prepurchaseTestnetFaucetKey(grants.length)
     const faucet = await cdp.evm.requestFaucet({
       address: buyer.address,
       network: 'base-sepolia',
       token: 'usdc',
-      idempotencyKey: 'aghub-prepurchase-base-sepolia-usdc-v1',
+      idempotencyKey,
     })
-    state = {
-      ...state,
-      faucet: {
-        token: 'usdc',
-        transaction_hash: faucet.transactionHash,
-        requested_at: new Date().toISOString(),
-      },
+    const grant: FaucetGrant = {
+      token: 'usdc',
+      transaction_hash: faucet.transactionHash,
+      requested_at: new Date().toISOString(),
+      idempotency_key: idempotencyKey,
     }
+    state = { ...state, faucet: grant, faucet_grants: [...grants, grant] }
     await writeState(state)
 
     const deadline = Date.now() + 120_000
@@ -189,6 +203,7 @@ async function main() {
         buyer_usdc_atomic: buyerUsdcAtomic.toString(),
         receiver_usdc_atomic: receiverUsdcAtomic.toString(),
         faucet_transaction: state.faucet?.transaction_hash ?? null,
+        faucet_grants: recordedGrants(state).length,
         private_keys_exported: false,
       },
       null,

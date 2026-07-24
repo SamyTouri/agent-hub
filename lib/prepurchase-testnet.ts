@@ -28,6 +28,61 @@ export const PREPURCHASE_TESTNET = {
   receiverWalletAccountName: 'aghub-prepurchase-test-receiver',
 } as const
 
+/**
+ * The funded test may talk to the local route or to our own production route,
+ * and to nothing else. This allowlist is defence in depth: the spendable
+ * dimensions (network, asset, price, recipient) stay pinned by the challenge
+ * evaluation and by the CDP spend controls, so a hostile or mistaken endpoint
+ * still cannot widen what the buyer wallet is able to sign.
+ */
+export const PREPURCHASE_TESTNET_PRODUCTION_ENDPOINT =
+  'https://agentreputation.dev/api/prepurchase/order'
+
+export function resolvePrepurchaseTestnetEndpoint(value: string): string {
+  let parsed: URL
+  try {
+    parsed = new URL(value)
+  } catch {
+    throw new Error('PREPURCHASE_TESTNET_ENDPOINT is not a valid URL')
+  }
+  const local =
+    parsed.protocol === 'http:' &&
+    ['127.0.0.1', 'localhost', '[::1]'].includes(parsed.hostname)
+  const production = parsed.protocol === 'https:' && parsed.hostname === 'agentreputation.dev'
+  if (
+    (!local && !production) ||
+    parsed.pathname !== '/api/prepurchase/order' ||
+    parsed.search !== '' ||
+    parsed.hash !== '' ||
+    parsed.username !== '' ||
+    parsed.password !== ''
+  ) {
+    throw new Error(
+      'PREPURCHASE_TESTNET_ENDPOINT must be the local HTTP or the agentreputation.dev HTTPS pre-purchase route',
+    )
+  }
+  return parsed.toString()
+}
+
+/**
+ * Each faucet grant gets its own idempotency key, so a spent grant can be
+ * replaced while a retry of the SAME grant still cannot mint a second one. The
+ * hard ceiling keeps a broken loop from draining the shared testnet faucet.
+ */
+export const PREPURCHASE_TESTNET_MAX_FAUCET_GRANTS = 5
+
+export function prepurchaseTestnetFaucetKey(previousGrants: number): string {
+  if (!Number.isInteger(previousGrants) || previousGrants < 0) {
+    throw new Error('previousGrants must be a non-negative integer')
+  }
+  if (previousGrants >= PREPURCHASE_TESTNET_MAX_FAUCET_GRANTS) {
+    throw new Error(
+      `REFUSED: ${PREPURCHASE_TESTNET_MAX_FAUCET_GRANTS} faucet grants already recorded; diagnose the test before requesting more`,
+    )
+  }
+  return `aghub-prepurchase-base-sepolia-usdc-v${previousGrants + 1}`
+}
+
 export const PREPURCHASE_TESTNET_EXECUTION_SENTINEL =
   'I-AUTHORIZE-EXACTLY-1-TEST-USDC-ON-BASE-SEPOLIA'
 

@@ -40,9 +40,13 @@ import {
   evaluatePrepurchaseTestnetChallenge,
   PREPURCHASE_TESTNET,
   PREPURCHASE_TESTNET_EXECUTION_SENTINEL,
+  PREPURCHASE_TESTNET_MAX_FAUCET_GRANTS,
+  PREPURCHASE_TESTNET_PRODUCTION_ENDPOINT,
   PREPURCHASE_TESTNET_WALLET_PREPARATION_SENTINEL,
   prepurchaseTestnetExecutionErrors,
+  prepurchaseTestnetFaucetKey,
   prepurchaseTestnetWalletPreparationErrors,
+  resolvePrepurchaseTestnetEndpoint,
   validatePrepurchaseTestnetPaymentPayload,
 } from '../lib/prepurchase-testnet.ts'
 import {
@@ -709,4 +713,35 @@ test('testnet order uses a non-deliverable fixture contact and no private data',
   assert.equal(body.delivery_contact, 'testnet-e2e@invalid.example')
   assert.equal(body.budget_exposure.includes('test USDC'), true)
   assert.equal(body.failure_consequence.includes('mainnet'), true)
+})
+
+test('each faucet grant gets its own key and the total stays bounded', () => {
+  assert.equal(prepurchaseTestnetFaucetKey(0), 'aghub-prepurchase-base-sepolia-usdc-v1')
+  assert.equal(prepurchaseTestnetFaucetKey(1), 'aghub-prepurchase-base-sepolia-usdc-v2')
+  assert.throws(() => prepurchaseTestnetFaucetKey(PREPURCHASE_TESTNET_MAX_FAUCET_GRANTS))
+  assert.throws(() => prepurchaseTestnetFaucetKey(-1))
+})
+
+test('the funded test only accepts the local route or our own production route', () => {
+  assert.equal(
+    resolvePrepurchaseTestnetEndpoint(PREPURCHASE_TESTNET.endpoint),
+    'http://127.0.0.1:3000/api/prepurchase/order',
+  )
+  assert.equal(
+    resolvePrepurchaseTestnetEndpoint(PREPURCHASE_TESTNET_PRODUCTION_ENDPOINT),
+    PREPURCHASE_TESTNET_PRODUCTION_ENDPOINT,
+  )
+
+  for (const rejected of [
+    'https://agentreputation.dev.evil.example/api/prepurchase/order',
+    'http://agentreputation.dev/api/prepurchase/order',
+    'https://staging.agentreputation.dev/api/prepurchase/order',
+    'https://agentreputation.dev/api/prepurchase/order?network=eip155:8453',
+    'https://agentreputation.dev/api/other',
+    'https://user:pass@agentreputation.dev/api/prepurchase/order',
+    'https://payanagent.com/api/prepurchase/order',
+    'not-a-url',
+  ]) {
+    assert.throws(() => resolvePrepurchaseTestnetEndpoint(rejected), undefined, rejected)
+  }
 })

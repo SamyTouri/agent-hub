@@ -45,7 +45,7 @@ La mémoire projet est **thématique** et **bornée en taille**, pas en temps :
 
 ## Langue et style
 
-Prose en français, code/identifiants/contenu public en anglais. Réponses naturelles,
-pédagogiques et suffisamment développées pour que Samy comprenne les choix, les
-mécanismes utiles et leurs conséquences, sans remplissage ni longueur artificielle.
+Prose en français, code/identifiants/contenu public en anglais. Réponses naturelles et
+fluides, agréables à lire d'une traite, avec uniquement les détails techniques
+indispensables — ceux qui changent une décision, une action ou la lecture d'un risque.
 La règle complète et prioritaire est dans AGENTS.md, section « Response style ».

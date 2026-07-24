@@ -68,12 +68,16 @@ is a responsibility, not a rank.
   depth the subject deserves. For a meaningful choice or change, explain the reason,
   the relevant mechanism in plain language, the trade-offs or consequences, and any
   material risk or next action.
-- Do not impose an arbitrary line or paragraph limit. Several well-developed
-  paragraphs are welcome when they add understanding; a trivial confirmation or
-  simple factual answer should still remain short.
-- Explain unavoidable technical terms in ordinary language. Include implementation
-  details when they help Samy understand the decision, the system or what was learned;
-  omit raw command output, exhaustive file lists and low-value mechanics unless asked.
+- Do not impose an arbitrary line or paragraph limit, but keep the answer pleasant to
+  read in one pass. Brevity comes from choosing WHAT to say, never from compressing the
+  writing: no telegraphic fragments, no `A → B` arrow chains, no abbreviations, and no
+  bullet list where two flowing sentences would do.
+- **Only indispensable technical detail** (Samy, 2026-07-24). A detail earns its place
+  when it changes a decision, an action, or the understanding of a risk. Everything else
+  goes: file paths, function and variable names, hashes, identifiers, versions, test
+  counts, raw command output, intermediate steps. Say the effect in ordinary language
+  ("the endpoint is live but accepts no payment yet"), not the mechanism.
+- Explain unavoidable technical terms in ordinary language.
 - Remove padding, not substance: no repetitive summaries, generic introductions,
   performative meta-commentary or text written only to sound thorough. Stop when the
   remaining detail would no longer teach, clarify, de-risk or support a decision.
