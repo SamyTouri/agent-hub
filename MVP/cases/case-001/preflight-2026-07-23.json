@@ -1,0 +1,77 @@
+{
+  "tool": "case-001-preflight",
+  "mode": "read-only",
+  "checked_at": "2026-07-23T10:07:25.253Z",
+  "expectations": {
+    "endpoint": "https://transform-balanced-trunk-remedies.trycloudflare.com/v1/homepage-hero-order",
+    "max_price_atomic": "1000000",
+    "network": "eip155:8453",
+    "recipient": "0x2906E0CDDB5FF4754D639AbfBE65c6cA708aC27E"
+  },
+  "decision": "GO",
+  "checks": [
+    {
+      "name": "challenge-present",
+      "ok": true,
+      "detail": "1 offer(s) observed."
+    },
+    {
+      "name": "scheme-exact",
+      "ok": true,
+      "detail": "scheme=exact"
+    },
+    {
+      "name": "network-allowed",
+      "ok": true,
+      "detail": "network=eip155:8453 allowed=eip155:8453"
+    },
+    {
+      "name": "price-within-ceiling",
+      "ok": true,
+      "detail": "amount=1000000 ceiling=1000000"
+    },
+    {
+      "name": "asset-is-expected-usdc",
+      "ok": true,
+      "detail": "asset=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 expected=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+    },
+    {
+      "name": "recipient-matches-manifest",
+      "ok": true,
+      "detail": "payTo=0x2906E0CDDB5FF4754D639AbfBE65c6cA708aC27E expected=0x2906E0CDDB5FF4754D639AbfBE65c6cA708aC27E"
+    }
+  ],
+  "selected_offer": {
+    "x402Version": 2,
+    "scheme": "exact",
+    "network": "eip155:8453",
+    "amountAtomic": "1000000",
+    "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "payTo": "0x2906E0CDDB5FF4754D639AbfBE65c6cA708aC27E",
+    "raw": {
+      "scheme": "exact",
+      "network": "eip155:8453",
+      "amount": "1000000",
+      "payTo": "0x2906E0CDDB5FF4754D639AbfBE65c6cA708aC27E",
+      "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "maxTimeoutSeconds": 60,
+      "extra": {
+        "name": "USD Coin",
+        "version": "2"
+      }
+    }
+  },
+  "notes": [
+    "manifest unreachable: fetch failed",
+    "order endpoint NOT probed (default read-only mode; use --probe-post to opt in)"
+  ],
+  "observations": [
+    {
+      "url": "https://payanagent.com/x402/kh77taf99avt46753np9b0ktjn8azhsy",
+      "status": 402,
+      "payment_required_header_present": true,
+      "body_excerpt": "{\"error\":\"Payment required\",\"priceUsd\":1}"
+    }
+  ],
+  "reminder": "GO means only: the observed offer still matches the documented expectations. It does NOT authorize a payment. A real payment requires a separate explicit authorization from Samy in the same session."
+}

@@ -499,3 +499,58 @@ revoke all on table public.rep_llm_usage from anon, authenticated;
 revoke all on table public.rep_runs from anon, authenticated;
 revoke all on table public.rep_escalations from anon, authenticated;
 revoke all on table public.rep_tick_lease from anon, authenticated;
+
+-- 20. Registre privé du MVP préachat payé en x402.
+--
+-- Les faits de paiement, de livraison et de résultat acheteur restent
+-- structurellement séparés. Un règlement ne prouve ni livraison ni satisfaction.
+create table if not exists prepurchase_orders (
+  id                  text primary key,
+  created_at          timestamptz not null default now(),
+  payment_status      text not null default 'reserved'
+                      check (payment_status in ('reserved', 'settled')),
+  network             text not null,
+  asset               text not null,
+  amount_atomic       numeric(38,0) not null,
+  pay_to              text not null,
+  payer               text,
+  payment_nonce       text not null,
+  payment_transaction text,
+  settled_at          timestamptz,
+  evidence_cutoff     timestamptz,
+  delivery_deadline   timestamptz,
+  candidate           text not null,
+  mission             text not null,
+  budget_exposure     text not null,
+  failure_consequence text not null,
+  public_constraints  text,
+  delivery_contact    text not null,
+  delivered_at        timestamptz,
+  delivery_reference  text,
+  buyer_outcome       text,
+  buyer_outcome_at    timestamptz,
+  unique (network, payment_nonce),
+  constraint prepurchase_orders_settlement_shape
+  check (
+    (
+      payment_status = 'reserved'
+      and settled_at is null
+      and evidence_cutoff is null
+      and delivery_deadline is null
+    )
+    or
+    (
+      payment_status = 'settled'
+      and settled_at is not null
+      and evidence_cutoff is not null
+      and delivery_deadline is not null
+    )
+  )
+);
+
+create index if not exists prepurchase_orders_created_idx
+  on prepurchase_orders (created_at desc);
+
+alter table prepurchase_orders enable row level security;
+revoke all on table public.prepurchase_orders from anon, authenticated;
+grant select, insert, update on table public.prepurchase_orders to service_role;

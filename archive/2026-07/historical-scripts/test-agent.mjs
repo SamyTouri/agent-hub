@@ -1,3 +1,4 @@
+// Historical smoke scenario: it predates owner-token enforcement and is not safe to run unchanged.
 // Agent de test : se connecte au MCP server d'Agent Hub et exécute la boucle complète.
 // Usage : node scripts/test-agent.mjs   (serveur lancé au préalable via scripts/dev.ps1)
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'

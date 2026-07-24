@@ -38,7 +38,12 @@ useful. This register is the learning log for that process.
 
 | Case | Candidate | Decision question | Source tested | Useful? | What it established | Failure / gap | Keep for future cases? |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-|  |  |  |  |  |  |  |  |
+| Case 001 | `homepage-rewrite-agent-base-usdc` | Buy three homepage hero options for 1 USDC? | Official agent card, OpenAPI, x402 manifest and service descriptor | Yes | Current offer, scope, inputs, price, payment network, recipient and endpoint | Seller-controlled; no performance or identity proof | Yes, as the offer baseline only |
+| Case 001 | `homepage-rewrite-agent-base-usdc` | Same | PayanAgent payment URL | Partly | A separate live surface returned an HTTP 402 challenge at 1 USD | No settlement, request binding, delivery or remedy tested | Yes, when the exact listing can be reproduced |
+| Case 001 | `homepage-rewrite-agent-base-usdc` | Same | t2000 artifact API plus seller IPFS envelope | Yes | Matching content and hash corroborate that a real-page artifact was delivered outside the seller host | Buyer review, escrow release, timeliness and outcome remain unconfirmed | Yes; preserve lifecycle state separately from artifact existence |
+| Case 001 | `homepage-rewrite-agent-base-usdc` | Same | BaseScan token transfers | Limited | The declared address has received a small real USDC transfer | Transfer cannot be attributed to the reviewed service or to buyer satisfaction | Only when a transaction can be bound to the exact order |
+| Case 001 | `homepage-rewrite-agent-base-usdc` | Same | uGig related-skill listing | Limited | The related skill existed with observable download and review counts | Different product; zero reviews and downloads at observation time | Only as marketplace context, not service-quality evidence |
+| Case 001 | `homepage-rewrite-agent-base-usdc` | Same | Reproduced free clarity-check endpoint | Yes, narrowly | Endpoint availability, current-page parsing and one structural observation | Seller-operated free output does not predict paid quality or conversion | Yes, as a reproducible capability check with explicit limits |
 
 ## Research rule
 

@@ -28,21 +28,56 @@ is a responsibility, not a rank.
 - **Never output secrets.** There are none in this repo by design (zero-secret-local
   architecture; keys live in Bitwarden / env vars). If you believe you found one,
   flag the path, do not print the value.
+- **Blind secret use is mandatory — the agent/model must never receive raw values.**
+  A password, API secret, wallet secret, private key, recovery phrase or 2FA code may
+  be fetched only through the approved Bitwarden/DPAPI loader and injected directly
+  into the environment of the child process that needs it. The local process
+  necessarily handles the bytes; the AI-facing tool result must expose only sanitized
+  metadata such as present/absent, length, format validity, hash/match count, public
+  address, transaction hash or exit status.
+- **Never inspect a secret to debug it.** Do not echo it, interpolate it into a shell
+  command, return it from a tool call, log it, take a DOM snapshot while a portal is
+  displaying it, or run broad `Select-String`/grep searches over `.env*`, `.next`,
+  caches, credential files or Bitwarden output. Exact-match/hash leak scans must
+  return counts and paths only, never matching lines or values.
+- **Human-only secret surfaces stay human-only.** When email verification, 2FA,
+  CAPTCHA, a one-time API secret or a recovery code appears in a browser, pause and
+  ask Samy to handle/save it. Resume only after confirmation; do not read the field
+  or page subtree containing the value.
+- **No secret persistence in the workspace.** Never add secrets to `.env.local`,
+  `.exchange/`, `.next`, logs, documentation, source files, the Git index or chat.
+  Build/test wrappers must hide local env files while compiling and remove generated
+  caches that could retain expanded runtime values.
+- **Accidental exposure is an incident, not a debugging shortcut.** Stop the current
+  action, report the affected path/type without repeating the value, delete only the
+  generated copy after verifying its absolute path, assess whether rotation is
+  needed, and require Samy's authorization before any rotation that could affect
+  production. If blind use cannot complete the task, ask Samy rather than weakening
+  these rules.
 - Language: replies to the human in **French** (he is French-speaking); code,
   identifiers and public-facing content in **English**.
 
 ## Response style for Samy
 
-- Write for a business decision-maker, not a developer.
-- Be brief but complete by default: give the conclusion, decision, result, material
-  risk and any action required from Samy — then stop.
-- Use plain, natural French and avoid technical jargon. Explain an unavoidable
-  technical term in ordinary language.
-- Do not include implementation details, command output, long file lists or extended
-  reasoning unless they materially affect a decision or Samy explicitly asks for
-  more detail.
-- Prefer a few short sentences or bullets. Samy will request a deeper explanation
-  when he wants one.
+- Write for a curious business decision-maker who wants both the useful conclusion
+  and enough understanding to learn how the project is being built.
+- Default to natural, connected French: complete sentences and readable paragraphs.
+  Use bullets when they genuinely clarify structure, not as a way to compress every
+  answer into terse fragments.
+- Start with the conclusion, decision or result, then develop the explanation to the
+  depth the subject deserves. For a meaningful choice or change, explain the reason,
+  the relevant mechanism in plain language, the trade-offs or consequences, and any
+  material risk or next action.
+- Do not impose an arbitrary line or paragraph limit. Several well-developed
+  paragraphs are welcome when they add understanding; a trivial confirmation or
+  simple factual answer should still remain short.
+- Explain unavoidable technical terms in ordinary language. Include implementation
+  details when they help Samy understand the decision, the system or what was learned;
+  omit raw command output, exhaustive file lists and low-value mechanics unless asked.
+- Remove padding, not substance: no repetitive summaries, generic introductions,
+  performative meta-commentary or text written only to sound thorough. Stop when the
+  remaining detail would no longer teach, clarify, de-risk or support a decision.
+- An explicit request from Samy for a shorter or deeper answer overrides these defaults.
 
 ## Shared persistent memory — read it, write it
 
