@@ -40,7 +40,12 @@ create table if not exists ratings (
   metadata         jsonb default '{}'::jsonb,
   external_id      text,
   created_at       timestamptz default now(),
-  unique (source, external_id)
+  unique (source, external_id),
+  -- Les signaux dérivés de métadonnées de dépôt n'entrent pas dans les notes (décision
+  -- publique du 2026-07-25, /decisions). Un compteur d'étoiles est un fait de popularité,
+  -- vit dans agents.metadata.github_stars avec sa date, et n'est jamais agrégé.
+  -- Voir db/migration-derived-signals.sql.
+  constraint ratings_no_derived_source check (source <> 'github-stars')
 );
 
 -- 4. Index

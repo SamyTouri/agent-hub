@@ -67,6 +67,8 @@ const fetchAgent = (handle: string) =>
         a.external_source, a.status, a.created_at, a.updated_at,
         a.metadata->>'claim_method' as claim_method,
         a.metadata->>'repo' as source_repo,
+        (a.metadata->>'github_stars')::int as github_stars,
+        a.metadata->>'github_stars_at' as github_stars_at,
         a.metadata->'attestations' as attestations,
         rep.total_ratings::int, rep.native_ratings::int,
         rep.verified_native_ratings::int,
@@ -130,7 +132,7 @@ const fetchAgent = (handle: string) =>
         contributions: rawContributions as ContributionReceipt[],
       }
     },
-    ['agent-profile-v7', handle],
+    ['agent-profile-v8', handle],
     { revalidate: 604800, tags: [`agent-profile:${handle}`] },
   )()
 
@@ -246,12 +248,20 @@ export default async function AgentPage({ params }: { params: Params }) {
     agent.imported_ratings > 0 && agent.imported_avg_score != null
       ? ` Imported signal: ${Number(agent.imported_avg_score).toFixed(1)}/5 from ${agent.imported_ratings} external ratings.`
       : ''
+  // Fait de dépôt : jamais une note, jamais compté comme telle (décision du 2026-07-25).
+  const starObservedOn = (agent.github_stars_at as string | null)?.slice(0, 10) ?? null
+  const repoFact =
+    agent.github_stars == null
+      ? ''
+      : ` Repository popularity: ${agent.github_stars} GitHub star${agent.github_stars === 1 ? '' : 's'}${
+          starObservedOn ? ` observed ${starObservedOn}` : ''
+        } — a star count is a fact about a repository, not a rating, and is never counted as one.`
   const verdict =
     agent.native_ratings > 0 && agent.native_avg_score != null
-      ? `EVIDENCE SNAPSHOT: ${agent.handle} — native interaction ratings ${Number(agent.native_avg_score).toFixed(1)}/5 from ${agent.native_ratings} capability-authenticated claimed agents.${importedVerdict} Signals are not blended. This is not a purchase recommendation. Agent Reputation, as of ${asOf}.`
+      ? `EVIDENCE SNAPSHOT: ${agent.handle} — native interaction ratings ${Number(agent.native_avg_score).toFixed(1)}/5 from ${agent.native_ratings} capability-authenticated claimed agents.${importedVerdict}${repoFact} Signals are not blended. This is not a purchase recommendation. Agent Reputation, as of ${asOf}.`
       : agent.imported_ratings > 0 && agent.imported_avg_score != null
-        ? `EVIDENCE SNAPSHOT: ${agent.handle} — no native interaction ratings. Imported signal ${Number(agent.imported_avg_score).toFixed(1)}/5 from ${agent.imported_ratings} external ratings. It is neither a native trust score nor a purchase recommendation. Agent Reputation, as of ${asOf}.`
-        : `EVIDENCE SNAPSHOT: ${agent.handle} — listed on Agent Reputation with no rating evidence, as of ${asOf}. A listing is not verification or a purchase recommendation.`
+        ? `EVIDENCE SNAPSHOT: ${agent.handle} — no native interaction ratings. Imported signal ${Number(agent.imported_avg_score).toFixed(1)}/5 from ${agent.imported_ratings} external ratings.${repoFact} It is neither a native trust score nor a purchase recommendation. Agent Reputation, as of ${asOf}.`
+        : `EVIDENCE SNAPSHOT: ${agent.handle} — listed on Agent Reputation with no rating evidence, as of ${asOf}.${repoFact} A listing is not verification or a purchase recommendation.`
 
   return (
     <div style={{ background: '#0a0a0a', minHeight: '100vh' }}>
@@ -339,6 +349,33 @@ export default async function AgentPage({ params }: { params: Params }) {
           remain structurally separate. These signals are evidence inputs, not a universal trust
           score or a recommendation for your mission.
         </p>
+        {agent.github_stars != null && (
+          <>
+            <h2 style={h2}>Repository metadata — not a rating</h2>
+            <p style={{ color: '#aaa' }}>
+              <strong>{agent.github_stars} GitHub star{agent.github_stars === 1 ? '' : 's'}</strong>
+              <span style={{ color: '#888' }}>
+                {starObservedOn ? ` — observed ${starObservedOn}` : ''}, reported by GitHub
+                {sourceRepo ? ' for ' : '.'}
+              </span>
+              {sourceRepo && (
+                <a href={sourceRepo} style={link} rel="nofollow noopener">
+                  {sourceRepo.replace(/^https:\/\/github\.com\//, '')}
+                </a>
+              )}
+            </p>
+            <p style={{ color: '#777', fontSize: 13.5 }}>
+              This is a popularity fact about a repository, and it is counted nowhere as a rating.
+              Until 25 July 2026 this number was converted into a score out of 5 by a formula of our
+              own and shown in the ratings column; that derived score was deleted rather than moved,
+              and the observation was kept. Popularity is not reliability.{' '}
+              <a href="/decisions" style={link}>
+                Read the decision
+              </a>
+              .
+            </p>
+          </>
+        )}
         <p
           data-machine-verdict
           style={{ color: '#8a8a8a', fontSize: 13, fontFamily: 'ui-monospace, monospace', lineHeight: 1.5 }}

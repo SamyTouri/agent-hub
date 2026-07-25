@@ -1,9 +1,17 @@
-// Importe les stars GitHub des serveurs du registre MCP comme réputation « importée ».
-// Une note par agent : source='github-stars', score = min(5, log10(stars+1) * 1.25).
+// Importe les stars GitHub des serveurs du registre MCP comme FAIT DE DÉPÔT daté.
+// Écrit uniquement agents.metadata : { repo, github_stars, github_stars_at }.
+//
+// N'ÉCRIT PLUS AUCUNE NOTE — décision produit du 2026-07-25 publiée sur /decisions.
+// Le script convertissait auparavant un compteur d'étoiles en note sur 5
+// (min(5, log10(stars+1) * 1.25)) : une formule inventée par nous, sans auteur, dans la
+// colonne qu'un lecteur interprète comme de la fiabilité. Le score dérivé a été supprimé,
+// pas déplacé ; le fait brut survit, daté et attribué à GitHub. Une contrainte en base
+// (ratings_no_derived_source) refuse désormais toute note de source 'github-stars'.
+//
 // Env requis : DATABASE_URL (pooler). GITHUB_TOKEN (PAT lecture repos publics) requis
 // seulement pour la phase stars : sans lui, le script persiste le mapping name→repo
 // en DB (agents.metadata.repo) et s'arrête — le run suivant saute le fetch registre.
-// Idempotent : unique(source, external_id) → on conflict update (re-run = refresh).
+// Idempotent : chaque run rafraîchit le compteur et sa date d'observation.
 import postgres from 'postgres'
 
 const { DATABASE_URL, GITHUB_TOKEN } = process.env
@@ -115,11 +123,13 @@ for (let i = 0; i < entries.length; i += BATCH) {
 }
 console.error(`GITHUB: stars récupérées pour ${starsByName.size} repos (repos supprimés/privés ignorés)`)
 
-// 3. Upsert ratings + metadata.repo sur agents — en batch (unnest) pour éviter 30k allers-retours
-const toScore = (stars) => Math.min(5, Math.round(Math.log10(stars + 1) * 1.25 * 100) / 100)
+// 3. Écriture du fait de dépôt sur agents.metadata — en batch (unnest) pour éviter 30k
+// allers-retours. Aucune écriture dans `ratings` : un compteur d'étoiles est un fait de
+// popularité de dépôt, pas une note d'interaction, et les deux ne se mélangent jamais.
+const observedAt = new Date().toISOString()
 const all = [...starsByName.entries()].map(([name, stars]) => {
   const { owner, repo } = repoByName.get(name)
-  return { name, stars, score: toScore(stars), repo: `https://github.com/${owner}/${repo}` }
+  return { name, stars, repo: `https://github.com/${owner}/${repo}` }
 })
 const CHUNK = 1000
 let done = 0
@@ -128,24 +138,19 @@ for (let i = 0; i < all.length; i += CHUNK) {
   const names = c.map((r) => r.name)
   const repos = c.map((r) => r.repo)
   const stars = c.map((r) => r.stars)
-  const scores = c.map((r) => r.score)
   await sql`
     update agents a
-    set metadata = a.metadata || jsonb_build_object('repo', v.repo, 'github_stars', v.stars)
+    set metadata = a.metadata || jsonb_build_object(
+      'repo', v.repo, 'github_stars', v.stars, 'github_stars_at', ${observedAt}::text)
     from (select unnest(${names}::text[]) as name, unnest(${repos}::text[]) as repo, unnest(${stars}::int[]) as stars) v
     where a.external_source = 'mcp-registry' and a.external_id = v.name
-  `
-  await sql`
-    insert into ratings (subject_agent_id, score, comment, source, external_id, metadata)
-    select a.id, v.score, v.stars::text || ' GitHub stars', 'github-stars', v.name, jsonb_build_object('stars', v.stars)
-    from (select unnest(${names}::text[]) as name, unnest(${stars}::int[]) as stars, unnest(${scores}::numeric[]) as score) v
-    join agents a on a.external_source = 'mcp-registry' and a.external_id = v.name
-    on conflict (source, external_id) do update set
-      score = excluded.score, comment = excluded.comment, metadata = excluded.metadata
   `
   done += c.length
   console.error(`... upsert ${done}/${all.length}`)
 }
-const [{ count }] = await sql`select count(*) from ratings where source = 'github-stars'`
-console.error(`DONE processed=${done} total_github_stars_ratings=${count}`)
+const [{ count }] = await sql`
+  select count(*) from ratings where source = 'github-stars'
+`
+if (Number(count) > 0) console.error(`WARNING: ${count} derived star ratings still present — should be 0`)
+console.error(`DONE processed=${done} observed_at=${observedAt} derived_ratings=${count}`)
 await sql.end({ timeout: 5 })

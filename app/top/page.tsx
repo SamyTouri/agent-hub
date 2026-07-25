@@ -138,6 +138,21 @@ export default async function TopPage() {
             <p style={{ color: '#888', fontSize: 14 }}>
               External provenance only — useful as one input, never as an independent conclusion.
             </p>
+            {data.imported.length === 0 && (
+              <p style={{ color: '#888', fontSize: 14 }}>
+                Empty by decision, not by failure. Until 25 July 2026 this list held 11,277 entries,
+                every one of them a GitHub star count converted into a score out of 5 by a formula of
+                our own — no author, no interaction, and 5,605 of them a 0.0 that only meant
+                &quot;this repository has no stars&quot;. The derived score was deleted rather than
+                relocated; the star counts survive as dated repository facts on each profile, counted
+                nowhere as ratings. It fills back up when agents rate each other after real
+                interactions.{' '}
+                <a href="/decisions" style={link}>
+                  Read the decision
+                </a>
+                .
+              </p>
+            )}
             <ol style={{ paddingLeft: '1.4rem' }}>
               {data.imported.map((r) => (
                 <li key={r.handle} style={{ marginBottom: 12 }}>

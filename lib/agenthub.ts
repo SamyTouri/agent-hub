@@ -464,6 +464,8 @@ export async function getAgent(input: { handle: string }) {
       a.external_source as listed_from, a.status, a.created_at, a.updated_at,
       a.metadata->>'claim_method' as claim_method,
       a.metadata->>'repo' as source_repo,
+      (a.metadata->>'github_stars')::int as github_stars,
+      a.metadata->>'github_stars_at' as github_stars_at,
       a.metadata->'attestations' as attestations,
       r.total_ratings::int  as total_ratings,
       r.native_ratings::int as native_ratings,
@@ -516,10 +518,28 @@ export async function getAgent(input: { handle: string }) {
           'External verification attestations, displayed with provenance. Declarative: verify at the source. Never blended into the reputation score.',
       }
     : {}
-  const { attestations: _raw, id: _id, ...agentRest } = agent
+  // Signaux dérivés de métadonnées de dépôt : des FAITS datés, jamais des notes, jamais
+  // agrégés (décision produit du 2026-07-25, /decisions). Le score dérivé qui vivait dans
+  // la colonne des notes a été supprimé ; l'observation brute survit ici.
+  const { github_stars: githubStars, github_stars_at: githubStarsAt, ...agentNoStars } = agent
+  const repositorySignals =
+    githubStars == null
+      ? {}
+      : {
+          repository_signals: {
+            github_stars: githubStars,
+            observed_at: githubStarsAt ?? null,
+            repo: agent.source_repo ?? null,
+            source: 'github.com',
+          },
+          repository_signals_note:
+            'Repository popularity facts, reported by GitHub. NOT a rating: never counted in total_ratings, never averaged, never blended. Popularity is not reliability.',
+        }
+  const { attestations: _raw, id: _id, ...agentRest } = agentNoStars
   return {
     found: true,
     ...agentRest,
+    ...repositorySignals,
     status_note:
       'listed = imported/unclaimed · claimed = namespace continuity locked (self-asserted by capability token, or identity linked by a proven channel; see claim_method). A contributor label, where present as historical recognition, creates no membership, governance or financial right.',
     recent_ratings: recentRatings,
@@ -1172,9 +1192,31 @@ export async function hubStats() {
       (select count(*)::int from agent_requests
         where status = 'open' and expires_at > now())                      as open_requests,
       (select count(*)::int from contributions)                            as contribution_receipts,
+      (select count(*)::int from agents where metadata ? 'github_stars')   as repository_star_observations,
       (select count(*)::int from activity_log
         where created_at > now() - interval '24 hours')                    as tool_calls_last_24h
   `
   await logActivity('hub_stats', {}, `${row.total_agents} agents`)
-  return row
+  const stats = row as unknown as {
+    total_agents: number
+    native_agents: number
+    imported_agents: number
+    claimed_agents: number
+    total_ratings: number
+    native_ratings: number
+    open_requests: number
+    contribution_receipts: number
+    repository_star_observations: number
+    tool_calls_last_24h: number
+  }
+  return {
+    ...stats,
+    // Un zéro ici est une décision, pas une panne : à lire avec /decisions (2026-07-25).
+    ratings_note:
+      stats.total_ratings === 0
+        ? 'total_ratings is 0 by decision, not by failure. Until 2026-07-25 this counter read 11,277 — every entry a GitHub star count converted into a score out of 5 by a formula of our own, one per agent, no other source, and 5,605 of them a 0.0 that only meant "this repository has no stars". That derived score was deleted rather than relocated. Star counts survive as dated repository facts (repository_star_observations, and repository_signals on each profile), counted nowhere as ratings. This counter fills up when agents rate each other after real interactions. See https://agentreputation.dev/decisions'
+        : 'Native and imported ratings are counted separately and never blended. Repository star counts are facts, not ratings, and are excluded from every rating counter.',
+    repository_star_observations_note:
+      'Dated GitHub star counts held as repository metadata. Popularity is not reliability: these are never ratings and never enter any average.',
+  }
 }
