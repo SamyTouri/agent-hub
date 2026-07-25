@@ -3,7 +3,7 @@ import { submitIndexNow, HOST } from '@/lib/indexnow'
 import {
   isProbeableEndpoint,
   nextCheck,
-  probeEndpoint,
+  probeWithSecondChance,
   type EndpointCheck,
 } from '@/lib/endpoint-probe'
 
@@ -62,10 +62,12 @@ export async function GET(req: Request) {
 // Sonde de fraîcheur des endpoints — promesse publique du premier dossier (2026-07-25) :
 // ne plus publier une adresse sans dire si elle répond, ni même si on a regardé.
 // Rotation : les fiches jamais vérifiées d'abord, puis les vérifications les plus vieilles.
-// 8 649 fiches portent un endpoint http, donc un cycle complet dure environ trois semaines.
-const PROBE_BATCH = 400
-const PROBE_CONCURRENCY = 40
-const PROBE_TIME_BUDGET_MS = 32_000
+// Chaque endpoint silencieux coûte une seconde chance patiente (voir lib/endpoint-probe),
+// donc le lot reste modeste et la concurrence élevée — c'est de l'attente réseau, pas du
+// CPU. Le rattrapage de masse se fait hors ligne via scripts/probe-endpoints.mts.
+const PROBE_BATCH = 250
+const PROBE_CONCURRENCY = 125
+const PROBE_TIME_BUDGET_MS = 45_000
 
 async function probeStaleEndpoints(sql: ReturnType<typeof getSql>) {
   const startedAt = Date.now()
@@ -87,7 +89,7 @@ async function probeStaleEndpoints(sql: ReturnType<typeof getSql>) {
       // Réseau en parallèle (de l'attente, pas du CPU) ; les écritures DB restent
       // séquentielles et groupées, conformément à la règle du pooler.
       const outcomes = await Promise.all(
-        wave.map((row) => probeEndpoint(row.endpoint as string)),
+        wave.map((row) => probeWithSecondChance(row.endpoint as string)),
       )
       wave.forEach((row, j) => {
         results.push({

@@ -7,10 +7,18 @@
 // Usage : node --experimental-strip-types scripts/probe-endpoints.mts [limit]
 // DATABASE_URL requis (pooler).
 import postgres from 'postgres'
-import { isProbeableEndpoint, nextCheck, probeEndpoint, type EndpointCheck } from '../lib/endpoint-probe.ts'
+import {
+  isProbeableEndpoint,
+  nextCheck,
+  probeWithSecondChance,
+  type EndpointCheck,
+} from '../lib/endpoint-probe.ts'
 
 const LIMIT = Number(process.argv[2] ?? 20000)
-const CONCURRENCY = 40
+// Concurrence volontairement basse depuis une machine de bureau : à 40 requêtes
+// simultanées, la connexion elle-même devenait le goulot et faisait passer pour muets des
+// hôtes qui répondaient. La sonde doit mesurer l'hôte d'en face, pas notre propre liaison.
+const CONCURRENCY = 25
 
 const sql = postgres(process.env.DATABASE_URL!, { prepare: false, ssl: 'require', max: 1 })
 try {
@@ -28,7 +36,7 @@ try {
   const results: { id: string; handle: string; check: EndpointCheck }[] = []
   for (let i = 0; i < targets.length; i += CONCURRENCY) {
     const wave = targets.slice(i, i + CONCURRENCY)
-    const outcomes = await Promise.all(wave.map((r) => probeEndpoint(r.endpoint as string)))
+    const outcomes = await Promise.all(wave.map((r) => probeWithSecondChance(r.endpoint as string)))
     wave.forEach((r, j) => {
       results.push({
         id: r.id as string,

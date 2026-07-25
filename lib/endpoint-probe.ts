@@ -91,8 +91,18 @@ export function describeStatus(status: EndpointStatus): string {
   }
 }
 
+// Délais : mesurés, pas choisis à vue. Un premier jet à 3 s et 40 requêtes en parallèle
+// avait rendu 1 196 hôtes « silencieux » sur 8 648 ; une vérification manuelle de
+// l'échantillon a montré que la majorité répondaient — 200, 405, 401, 503 — simplement
+// plus lentement que le délai accordé. Un service qui démarre à froid, une poignée de main
+// TLS et une connexion résidentielle saturée dépassent trois secondes sans rien prouver.
+// D'où deux essais : un rapide pour le volume, puis un second, patient et sans
+// concurrence, avant d'oser écrire en public que personne ne répond.
+export const PROBE_FIRST_TRY_MS = 6000
+export const PROBE_SECOND_TRY_MS = 15000
+
 /** Sonde réseau. Aucune exception ne remonte : une sonde qui casse ne casse pas un cron. */
-export async function probeEndpoint(url: string, timeoutMs = 3000): Promise<ProbeOutcome> {
+export async function probeEndpoint(url: string, timeoutMs = PROBE_FIRST_TRY_MS): Promise<ProbeOutcome> {
   try {
     const res = await fetch(url, {
       method: 'GET',
@@ -104,6 +114,20 @@ export async function probeEndpoint(url: string, timeoutMs = 3000): Promise<Prob
   } catch {
     return { responded: false }
   }
+}
+
+/**
+ * Un échec n'est retenu qu'après une seconde chance, plus longue et hors de toute
+ * concurrence. Le premier essai sert au débit ; le second sert à la vérité, parce que
+ * c'est lui qui autorise une affirmation publique sur l'agent de quelqu'un d'autre.
+ */
+export async function probeWithSecondChance(
+  url: string,
+  probe: (url: string, timeoutMs: number) => Promise<ProbeOutcome> = probeEndpoint,
+): Promise<ProbeOutcome> {
+  const first = await probe(url, PROBE_FIRST_TRY_MS)
+  if (first.responded) return first
+  return probe(url, PROBE_SECOND_TRY_MS)
 }
 
 /** Seules les URLs http(s) publiques sont sondées. */

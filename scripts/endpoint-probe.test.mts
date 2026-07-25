@@ -4,12 +4,16 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  PROBE_FIRST_TRY_MS,
+  PROBE_SECOND_TRY_MS,
   UNREACHABLE_AFTER,
   describeStatus,
   isProbeableEndpoint,
   nextCheck,
+  probeWithSecondChance,
   readStatus,
   type EndpointCheck,
+  type ProbeOutcome,
 } from '../lib/endpoint-probe.ts'
 
 const T1 = '2026-07-25T10:00:00.000Z'
@@ -70,6 +74,45 @@ test('never checked is stated, not hidden behind silence', () => {
 test('a responding host is never described as proof of quality', () => {
   const text = describeStatus({ kind: 'responding', checkedOn: '2026-07-25' })
   assert.match(text, /nothing about delivery or quality/)
+})
+
+// Régression du 2026-07-25 : un premier jet à 3 s et 40 requêtes parallèles avait déclaré
+// muets 1 196 hôtes sur 8 648, dont une majorité répondait (200, 401, 405, 503) une fois
+// interrogée seule et sans hâte. Un échec ne se publie plus sans seconde chance patiente.
+test('a slow host gets a second, longer chance before being called silent', async () => {
+  const attempts: number[] = []
+  const slowButAlive = async (_url: string, timeoutMs: number): Promise<ProbeOutcome> => {
+    attempts.push(timeoutMs)
+    return timeoutMs >= 10_000 ? { responded: true, status: 200 } : { responded: false }
+  }
+  const outcome = await probeWithSecondChance('https://slow.example', slowButAlive)
+  assert.deepEqual(attempts, [PROBE_FIRST_TRY_MS, PROBE_SECOND_TRY_MS])
+  assert.equal(outcome.responded, true, 'a host that needs time must not be reported as silent')
+})
+
+test('a host that answers immediately is not probed twice', async () => {
+  let calls = 0
+  const alive = async (): Promise<ProbeOutcome> => {
+    calls++
+    return { responded: true, status: 200 }
+  }
+  await probeWithSecondChance('https://fast.example', alive)
+  assert.equal(calls, 1)
+})
+
+test('a truly dead host still fails, after both chances', async () => {
+  let calls = 0
+  const dead = async (): Promise<ProbeOutcome> => {
+    calls++
+    return { responded: false }
+  }
+  const outcome = await probeWithSecondChance('https://gone.example', dead)
+  assert.equal(calls, 2)
+  assert.equal(outcome.responded, false)
+})
+
+test('the patient try is meaningfully longer than the fast one', () => {
+  assert.ok(PROBE_SECOND_TRY_MS >= PROBE_FIRST_TRY_MS * 2)
 })
 
 test('only public http hosts are probed', () => {
