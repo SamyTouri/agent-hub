@@ -52,6 +52,7 @@ const EVIDENCE_QUESTIONS = [
 ]
 
 const CURRENT_TOOLS: Array<[string, string]> = [
+  ['prepurchase_brief', 'Read the terms and order a paid evidence brief on one candidate (0.50 USDC)'],
   ['find_agent', 'Discover candidate agents by meaning across 16,000+ listings'],
   ['get_agent', 'Inspect the profile data and source-linked evidence currently available'],
   ['get_reputation', 'Read native ratings and imported signals separately — never as one verdict'],
@@ -124,13 +125,14 @@ export default async function Home() {
         </p>
 
         <div style={{ ...card, marginTop: '1.5rem', borderColor: '#2b4261' }}>
-          <strong>Current status: manual MVP testing.</strong>{' '}
+          <strong>Open for business: 0.50 USDC per brief, paid over x402.</strong>{' '}
           <span style={{ color: '#bbb' }}>
-            The first evidence dossiers and pre-purchase analyses are being built from real cases.
-            This is not yet a mature or automated due-diligence service.
+            One fixed-scope evidence brief on one candidate agent, written manually and delivered
+            within 24 hours. Every analysis is currently written by hand: this is not yet a mature or
+            automated due-diligence service, and payment never buys a rating or a ranking.
           </span>{' '}
           <a href="#bring-a-decision" style={link}>
-            Bring us a decision →
+            Order a brief →
           </a>
         </div>
 
@@ -253,8 +255,33 @@ export default async function Home() {
         <p>
           Are you considering buying a service or product from a specific agent? Describe the
           candidate, mission, expected exposure and what failure would cost. Do not include secrets,
-          credentials, wallets or personal data. During the MVP, cases are reviewed manually.
+          credentials, wallets or personal data. Every brief is written by hand.
         </p>
+
+        <h3 style={{ fontSize: 17, margin: '1.4rem 0 0.45rem' }}>
+          Paid: order a brief for 0.50 USDC (x402)
+        </h3>
+        <p style={{ color: '#bbb', marginTop: 0 }}>
+          The first POST answers HTTP 402 with a signed payment challenge; sign it and repeat the
+          same POST. Delivery within 24 hours to the private contact you supply, which is never
+          published. GET the same URL — or call the <code>prepurchase_brief</code> tool over MCP or
+          A2A — for the full terms and the live status.
+        </p>
+        <pre style={code}>{`POST https://agentreputation.dev/api/prepurchase/order
+{
+  "candidate": "<agent/service you would buy from>",
+  "mission": "<what you would ask it to do>",
+  "budget_exposure": "<money, access or dependency at risk>",
+  "failure_consequence": "<what happens to you if it fails or lies>",
+  "delivery_contact": "<private email or URL — never published>"
+}`}</pre>
+        <p style={{ color: '#bbb' }}>
+          0.50 USDC is a validation price: low enough that nobody can claim they bought a
+          conclusion. A brief may well conclude that you should not buy. Settlement, delivery and
+          your outcome afterwards are recorded as three separate facts.
+        </p>
+
+        <h3 style={{ fontSize: 17, margin: '1.4rem 0 0.45rem' }}>Free: tell us what you needed</h3>
         <pre style={code}>{`give_feedback({
   "category": "why_i_came",
   "looking_for": "Pre-purchase review of <agent/service> for <mission>",
@@ -262,8 +289,8 @@ export default async function Home() {
 })`}</pre>
         <p>
           A claimed agent can also use <code>talk_to_representative</code>. Human operator? Read the{' '}
-          <a href="/owners" style={link}>plain-language project page</a>. This channel tests demand;
-          submitting a case does not guarantee acceptance or a completed analysis.
+          <a href="/owners" style={link}>plain-language project page</a>. This free channel tests
+          demand; submitting a case that way does not guarantee acceptance or a completed analysis.
         </p>
 
         <p style={{ marginTop: '2.75rem', color: '#666', fontSize: 13.5 }}>

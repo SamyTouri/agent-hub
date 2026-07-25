@@ -9,10 +9,12 @@ import type {
 import {
   buildPaymentRequired,
   buildPaymentRequirements,
+  describePrepurchaseOffer,
   orderReceipt,
   OrderInputSchema,
   parsePrepurchaseConfig,
   processPaidOrder,
+  PREPURCHASE_HOW_TO,
   PREPURCHASE_PRICE_ATOMIC,
   PREPURCHASE_REVENUE_CAP_ATOMIC,
   type PaidOrderDeps,
@@ -53,36 +55,6 @@ const json = (data: unknown, status = 200, headers: Record<string, string> = {})
   Response.json(data, { status, headers: { ...CORS_HEADERS, ...headers } })
 
 const MAX_ORDER_BODY_BYTES = 16_384
-
-const HOW_TO = {
-  what:
-    'Paid x402 endpoint — one fixed-scope manual pre-purchase evidence brief for 0.50 USDC. You are an agent (or operator) about to buy a service from another agent: this order buys an independent, source-linked analysis of that candidate for YOUR mission — established facts, contradictions, missing evidence, safeguards to request, and a contextual proceed/postpone/do-not-buy recommendation. Delivered manually within 24 hours to the private contact you supply.',
-  // Ne JAMAIS répéter ici le réseau actif : cette prose est statique et a déjà
-  // menti une fois en annonçant le testnet alors que le mainnet était en
-  // service. Le réseau et le montant exigibles vivent dans `accepts_preview`
-  // et dans le challenge, qui sont dérivés de la configuration réelle.
-  price:
-    '0.50 USDC (x402 "exact" scheme). A deliberately near-zero validation price: it makes the purchase decision real without letting anyone claim they bought a conclusion. The authoritative network, asset and amount are the ones in accepts_preview below and in the payment challenge — never this sentence.',
-  how: {
-    method: 'POST',
-    url: 'https://agentreputation.dev/api/prepurchase/order',
-    content_type: 'application/json',
-    fields: {
-      candidate: 'required — the agent/service you are considering buying (handle, name or URL)',
-      mission: 'required — what you would ask it to do',
-      budget_exposure: 'required — money, access or dependency you would put at risk',
-      failure_consequence: 'required — what happens to you if it fails or lies',
-      public_constraints: 'optional — guarantees or constraints the candidate already advertises',
-      delivery_contact: 'required — private email or URL where the brief is delivered (never published)',
-    },
-    payment:
-      `x402 v2: the first POST returns HTTP 402 with a base64 PaymentRequired challenge in the ${HEADER_PAYMENT_REQUIRED} header (also mirrored in the JSON body). Sign it and retry the same POST with the ${HEADER_PAYMENT_SIGNATURE} header.`,
-  },
-  neutrality:
-    'Payment buys the contextual analysis only. It never buys a rating, a ranking, a verdict or any treatment on Agent Reputation. Settlement, delivery and buyer outcome are recorded as separate facts.',
-  status_note:
-    'If this offer is not currently active, POST returns 503 and no payment challenge is issued.',
-}
 
 // ---------------------------------------------------------------------------
 // Effets réels : facilitator + registre privé (requêtes STRICTEMENT séquentielles)
@@ -312,11 +284,11 @@ async function handlePost(req: Request): Promise<Response> {
     }
     body = JSON.parse(rawBody)
   } catch {
-    return json({ error: 'invalid_json', usage: HOW_TO.how }, 400)
+    return json({ error: 'invalid_json', usage: PREPURCHASE_HOW_TO.how }, 400)
   }
   const input = OrderInputSchema.safeParse(body)
   if (!input.success) {
-    return json({ error: 'invalid_fields', details: input.error.flatten().fieldErrors, usage: HOW_TO.how }, 400)
+    return json({ error: 'invalid_fields', details: input.error.flatten().fieldErrors, usage: PREPURCHASE_HOW_TO.how }, 400)
   }
 
   const paymentRequired = buildPaymentRequired(config)
@@ -326,7 +298,7 @@ async function handlePost(req: Request): Promise<Response> {
   if (!paymentHeader) {
     // Body = miroir lisible du header (aide les agents v1 et les humains) ; le
     // header PAYMENT-REQUIRED reste la voie spec v2.
-    return json({ ...paymentRequired, price_atomic: PREPURCHASE_PRICE_ATOMIC, usage: HOW_TO.how }, 402, challengeHeaders)
+    return json({ ...paymentRequired, price_atomic: PREPURCHASE_PRICE_ATOMIC, usage: PREPURCHASE_HOW_TO.how }, 402, challengeHeaders)
   }
 
   const decoded = decodeBase64Json(paymentHeader)
@@ -382,14 +354,7 @@ async function handlePost(req: Request): Promise<Response> {
 export const POST = withOrigin(handlePost)
 
 export async function GET() {
-  const parsedConfig = parsePrepurchaseConfig(process.env)
-  return json({
-    ...HOW_TO,
-    active: parsedConfig.ok,
-    ...(parsedConfig.ok
-      ? { network: parsedConfig.config.network, accepts_preview: buildPaymentRequirements(parsedConfig.config) }
-      : {}),
-  })
+  return json(describePrepurchaseOffer(process.env))
 }
 
 export async function OPTIONS() {

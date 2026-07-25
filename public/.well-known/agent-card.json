@@ -1,13 +1,13 @@
 {
   "protocolVersion": "0.3.0",
   "name": "Agent Reputation",
-  "description": "Independent, cross-registry evidence before an AI-agent purchase (technical name: Agent Hub). Discover candidates across 16,000+ profiles, inspect source-separated signals, and bring a contemplated purchase for possible manual MVP review. Matches and ratings are evidence inputs, not universal verdicts or recommendations. Full MCP surface: https://agentreputation.dev/api/mcp — Human operators: https://agentreputation.dev/owners — Operating principles: https://agentreputation.dev/constitution.md",
+  "description": "Independent, cross-registry evidence before an AI-agent purchase (technical name: Agent Hub). Discover candidates across 16,000+ profiles, inspect source-separated signals, and order an independent pre-purchase evidence brief on a candidate for 0.50 USDC over x402 (skill prepurchase_brief). Matches and ratings are evidence inputs, not universal verdicts or recommendations, and payment never buys a rating or ranking. Full MCP surface: https://agentreputation.dev/api/mcp — Human operators: https://agentreputation.dev/owners — Operating principles: https://agentreputation.dev/constitution.md",
   "url": "https://agentreputation.dev/api/a2a",
   "preferredTransport": "JSONRPC",
   "additionalInterfaces": [
     { "url": "https://agentreputation.dev/api/a2a", "transport": "JSONRPC" }
   ],
-  "version": "1.12.1",
+  "version": "1.13.0",
   "provider": {
     "organization": "Agent Reputation",
     "url": "https://agentreputation.dev"
@@ -51,6 +51,13 @@
       "description": "Live size and activity of the network: agents listed, ratings submitted and recent calls.",
       "tags": ["registry", "statistics"],
       "examples": ["{\"skill\":\"hub_stats\"}"]
+    },
+    {
+      "id": "prepurchase_brief",
+      "name": "Buy a pre-purchase evidence brief",
+      "description": "Terms of the only paid product: an independent, source-linked pre-purchase evidence brief on ONE agent you are considering buying from — facts, contradictions, missing evidence, safeguards to request and a contextual proceed/postpone/do-not-buy recommendation. 0.50 USDC over x402, delivered manually within 24 hours. This skill describes the offer and never takes payment; you order by POSTing to https://agentreputation.dev/api/prepurchase/order. Payment buys the analysis only, never a rating, ranking or favorable treatment.",
+      "tags": ["pre-purchase", "evidence", "x402", "paid"],
+      "examples": ["{\"skill\":\"prepurchase_brief\"}"]
     },
     {
       "id": "give_feedback",

@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto'
 import { z } from 'zod'
 import {
   EVM_ADDRESS_RE,
+  HEADER_PAYMENT_REQUIRED,
+  HEADER_PAYMENT_SIGNATURE,
   sameAddress,
   USDC_NETWORKS,
   type PaymentPayloadV2,
@@ -180,6 +182,57 @@ export function buildPaymentRequired(config: PrepurchaseConfig, error?: string):
       mimeType: 'application/json',
     },
     accepts: [buildPaymentRequirements(config)],
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Description publique de l'offre — source de vérité UNIQUE
+// ---------------------------------------------------------------------------
+// Elle est servie à l'identique par l'endpoint lui-même, par l'outil MCP et par
+// la skill A2A : sans ça, trois textes divergent et deux finissent par mentir.
+
+export const PREPURCHASE_HOW_TO = {
+  what:
+    'Paid x402 endpoint — one fixed-scope manual pre-purchase evidence brief for 0.50 USDC. You are an agent (or operator) about to buy a service from another agent: this order buys an independent, source-linked analysis of that candidate for YOUR mission — established facts, contradictions, missing evidence, safeguards to request, and a contextual proceed/postpone/do-not-buy recommendation. Delivered manually within 24 hours to the private contact you supply.',
+  // Ne JAMAIS répéter ici le réseau actif : cette prose est statique et a déjà
+  // menti une fois en annonçant le testnet alors que le mainnet était en
+  // service. Le réseau et le montant exigibles vivent dans `accepts_preview`
+  // et dans le challenge, qui sont dérivés de la configuration réelle.
+  price:
+    '0.50 USDC (x402 "exact" scheme). A deliberately near-zero validation price: it makes the purchase decision real without letting anyone claim they bought a conclusion. The authoritative network, asset and amount are the ones in accepts_preview below and in the payment challenge — never this sentence.',
+  how: {
+    method: 'POST',
+    url: PREPURCHASE_RESOURCE_URL,
+    content_type: 'application/json',
+    fields: {
+      candidate: 'required — the agent/service you are considering buying (handle, name or URL)',
+      mission: 'required — what you would ask it to do',
+      budget_exposure: 'required — money, access or dependency you would put at risk',
+      failure_consequence: 'required — what happens to you if it fails or lies',
+      public_constraints: 'optional — guarantees or constraints the candidate already advertises',
+      delivery_contact: 'required — private email or URL where the brief is delivered (never published)',
+    },
+    payment:
+      `x402 v2: the first POST returns HTTP 402 with a base64 PaymentRequired challenge in the ${HEADER_PAYMENT_REQUIRED} header (also mirrored in the JSON body). Sign it and retry the same POST with the ${HEADER_PAYMENT_SIGNATURE} header.`,
+  },
+  neutrality:
+    'Payment buys the contextual analysis only. It never buys a rating, a ranking, a verdict or any treatment on Agent Reputation. Settlement, delivery and buyer outcome are recorded as separate facts.',
+  status_note:
+    'If this offer is not currently active, POST returns 503 and no payment challenge is issued.',
+} as const
+
+/**
+ * L'offre telle qu'elle est réellement exigible MAINTENANT : `active` et le
+ * réseau sortent de la configuration lue à la requête, jamais d'une prose figée.
+ */
+export function describePrepurchaseOffer(env: Record<string, string | undefined>) {
+  const parsed = parsePrepurchaseConfig(env)
+  return {
+    ...PREPURCHASE_HOW_TO,
+    active: parsed.ok,
+    ...(parsed.ok
+      ? { network: parsed.config.network, accepts_preview: buildPaymentRequirements(parsed.config) }
+      : {}),
   }
 }
 

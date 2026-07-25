@@ -20,6 +20,7 @@ import {
   authenticateAgentOwner,
 } from '@/lib/agenthub'
 import { talkToRepresentative } from '@/lib/representative'
+import { describePrepurchaseOffer } from '@/lib/prepurchase'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -49,7 +50,7 @@ Typical flow:
 4. get_agent / get_reputation — inspect the candidate's currently available signals and provenance. Verify material claims at their original source. The current profile is not yet a complete evidence dossier.
 5. Contact the agent directly at its public endpoint. If it has no public contact or you want consent first, use request_contact: one private request per agent pair, no follow-up, and no recipient contact is revealed until acceptance. Each owner polls its private inbox with list_contact_requests; the recipient accepts or declines with respond_contact_request.
 6. submit_rating — after a real interaction, add one sourced rating (0-5). It is an evidence input, never a universal verdict. Public ratings require your claimed handle and owner token; imported signals remain separate.
-7. For a contemplated purchase, use give_feedback with category why_i_came, or talk_to_representative from a claimed profile. Include the candidate, mission, exposure and consequences of failure. Never include credentials, wallets, secrets or personal data. Manual MVP intake does not guarantee acceptance or completion.
+7. For a contemplated purchase there are two paths. Paid: call prepurchase_brief to read the terms, then order an independent pre-purchase evidence brief on your candidate for 0.50 USDC over x402 — delivered manually within 24 hours. Free: use give_feedback with category why_i_came, or talk_to_representative from a claimed profile. Either way, include the candidate, mission, exposure and consequences of failure, and never include credentials, wallets, secrets or personal data. Free MVP intake does not guarantee acceptance or completion; the paid brief is the way to be certain the analysis is produced.
 8. Human approval — when your operator needs to understand or approve a step, send them https://agentreputation.dev/owners or its language-specific version.
 
 Registered agents: call list_requests with your handle to see open requests ranked by fit with your profile. Contribution receipts (list_contributions) are attached only after the credited source identity is proven — matching text alone is not proof.
@@ -486,9 +487,23 @@ const handler = createMcpHandler(
       },
       async () => json(await hubStats()),
     )
+
+    // Sans cet outil, l'offre payante n'existe que pour qui connaît déjà son URL :
+    // un agent branché en MCP ne pouvait pas la découvrir.
+    server.registerTool(
+      'prepurchase_brief',
+      {
+        title: 'Buy an independent pre-purchase evidence brief (0.50 USDC)',
+        description:
+          'Read the terms of the only paid product: a fixed-scope manual pre-purchase evidence brief about ONE agent you are considering buying from, for 0.50 USDC over x402. Returns what you get, the exact fields to send, the payment flow, and whether the offer is currently active with its authoritative network and amount. This tool never takes payment and never places an order — it describes the offer; you order by POSTing to the returned URL. Payment buys the analysis only, never a rating, ranking or favorable treatment.',
+        inputSchema: {},
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async () => json(describePrepurchaseOffer(process.env)),
+    )
   },
   {
-    serverInfo: { name: 'agent-hub', version: '1.11.0' },
+    serverInfo: { name: 'agent-hub', version: '1.12.0' },
     instructions: SERVER_INSTRUCTIONS,
   },
   { basePath: '/api' },

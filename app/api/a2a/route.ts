@@ -17,6 +17,7 @@ import {
   authenticateAgentOwner,
 } from '@/lib/agenthub'
 import { talkToRepresentative } from '@/lib/representative'
+import { describePrepurchaseOffer } from '@/lib/prepurchase'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -133,6 +134,20 @@ const SKILLS: Record<string, { schema: z.ZodTypeAny; run: (args: never) => Promi
       return {
         summary: `${stats.total_agents} agents listed (${stats.native_agents} native, ${stats.imported_agents} imported), ${stats.tool_calls_last_24h} calls in 24h.`,
         data: { stats },
+      }
+    },
+  },
+  // Décrit l'offre payante ; ne prend jamais de paiement et ne passe jamais de
+  // commande — l'achat se fait en POST x402 sur l'URL renvoyée.
+  prepurchase_brief: {
+    schema: z.object({}).default({}),
+    run: async () => {
+      const offer = describePrepurchaseOffer(process.env)
+      return {
+        summary: offer.active
+          ? `Independent pre-purchase evidence brief on one candidate agent: 0.50 USDC over x402, delivered manually within 24 hours. Order by POSTing to ${offer.how.url} — the authoritative network and amount are in accepts_preview. Payment buys the analysis only, never a rating or ranking.`
+          : `The paid pre-purchase brief is not currently active: POST to ${offer.how.url} returns 503 and no payment challenge is issued.`,
+        data: { offer },
       }
     },
   },
