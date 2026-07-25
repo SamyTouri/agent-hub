@@ -1,5 +1,11 @@
 import { getSql } from '@/lib/db'
 import { submitIndexNow, HOST } from '@/lib/indexnow'
+import {
+  isProbeableEndpoint,
+  nextCheck,
+  probeEndpoint,
+  type EndpointCheck,
+} from '@/lib/endpoint-probe'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -41,5 +47,72 @@ export async function GET(req: Request) {
     /* table pas encore créée : non bloquant */
   }
 
-  return Response.json({ ok: true, agents: total, changed_urls: changed.length, indexnow, purged })
+  const endpoints = await probeStaleEndpoints(sql)
+
+  return Response.json({
+    ok: true,
+    agents: total,
+    changed_urls: changed.length,
+    indexnow,
+    purged,
+    endpoints,
+  })
+}
+
+// Sonde de fraîcheur des endpoints — promesse publique du premier dossier (2026-07-25) :
+// ne plus publier une adresse sans dire si elle répond, ni même si on a regardé.
+// Rotation : les fiches jamais vérifiées d'abord, puis les vérifications les plus vieilles.
+// 8 649 fiches portent un endpoint http, donc un cycle complet dure environ trois semaines.
+const PROBE_BATCH = 400
+const PROBE_CONCURRENCY = 40
+const PROBE_TIME_BUDGET_MS = 32_000
+
+async function probeStaleEndpoints(sql: ReturnType<typeof getSql>) {
+  const startedAt = Date.now()
+  try {
+    const candidates = await sql`
+      select id, endpoint, metadata->'endpoint_check' as endpoint_check
+      from agents
+      where endpoint ilike 'http%'
+      order by (metadata->'endpoint_check'->>'checked_at') asc nulls first
+      limit ${PROBE_BATCH}
+    `
+    const targets = candidates.filter((row) => isProbeableEndpoint(row.endpoint as string))
+    const now = new Date().toISOString()
+    const results: { id: string; check: EndpointCheck }[] = []
+
+    for (let i = 0; i < targets.length; i += PROBE_CONCURRENCY) {
+      if (Date.now() - startedAt > PROBE_TIME_BUDGET_MS) break
+      const wave = targets.slice(i, i + PROBE_CONCURRENCY)
+      // Réseau en parallèle (de l'attente, pas du CPU) ; les écritures DB restent
+      // séquentielles et groupées, conformément à la règle du pooler.
+      const outcomes = await Promise.all(
+        wave.map((row) => probeEndpoint(row.endpoint as string)),
+      )
+      wave.forEach((row, j) => {
+        results.push({
+          id: row.id as string,
+          check: nextCheck(row.endpoint_check as EndpointCheck | null, outcomes[j], now),
+        })
+      })
+    }
+
+    if (results.length > 0) {
+      await sql`
+        update agents a
+        set metadata = a.metadata || jsonb_build_object('endpoint_check', v.check::jsonb)
+        from (
+          select unnest(${results.map((r) => r.id)}::uuid[]) as id,
+                 unnest(${results.map((r) => JSON.stringify(r.check))}::text[]) as check
+        ) v
+        where a.id = v.id
+      `
+    }
+
+    const unreachable = results.filter((r) => !r.check.responded).length
+    return { probed: results.length, unreachable, elapsed_ms: Date.now() - startedAt }
+  } catch (e) {
+    // Une sonde qui casse ne doit jamais casser le keep-alive ni l'indexation.
+    return { error: e instanceof Error ? e.message : 'probe failed' }
+  }
 }

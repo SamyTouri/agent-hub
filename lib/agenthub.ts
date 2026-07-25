@@ -3,6 +3,7 @@ import { revalidateTag } from 'next/cache'
 import { invalidateByTag } from '@vercel/functions'
 import { agentProfileCacheTag } from './cache-tags'
 import { getSql } from './db'
+import { describeStatus, readStatus, type EndpointCheck } from './endpoint-probe'
 import { embed } from './embeddings'
 import { requestOrigin } from './request-context'
 import {
@@ -466,6 +467,7 @@ export async function getAgent(input: { handle: string }) {
       a.metadata->>'repo' as source_repo,
       (a.metadata->>'github_stars')::int as github_stars,
       a.metadata->>'github_stars_at' as github_stars_at,
+      a.metadata->'endpoint_check' as endpoint_check,
       a.metadata->'attestations' as attestations,
       r.total_ratings::int  as total_ratings,
       r.native_ratings::int as native_ratings,
@@ -521,7 +523,7 @@ export async function getAgent(input: { handle: string }) {
   // Signaux dérivés de métadonnées de dépôt : des FAITS datés, jamais des notes, jamais
   // agrégés (décision produit du 2026-07-25, /decisions). Le score dérivé qui vivait dans
   // la colonne des notes a été supprimé ; l'observation brute survit ici.
-  const { github_stars: githubStars, github_stars_at: githubStarsAt, ...agentNoStars } = agent
+  const { github_stars: githubStars, github_stars_at: githubStarsAt, ...agentNoStars } = agent as Record<string, unknown>
   const repositorySignals =
     githubStars == null
       ? {}
@@ -535,10 +537,23 @@ export async function getAgent(input: { handle: string }) {
           repository_signals_note:
             'Repository popularity facts, reported by GitHub. NOT a rating: never counted in total_ratings, never averaged, never blended. Popularity is not reliability.',
         }
-  const { attestations: _raw, id: _id, ...agentRest } = agentNoStars
+  // Fraîcheur de l'endpoint annoncé : on dit ce qu'on a observé, y compris qu'on n'a rien
+  // observé. Promesse publique du premier dossier (2026-07-25) — un endpoint mort restait
+  // affiché comme s'il répondait.
+  const { endpoint_check: endpointCheck, ...agentNoProbe } = agentNoStars
+  const endpointStatus = readStatus(endpointCheck as EndpointCheck | null)
+  const endpointFreshness = agent.endpoint
+    ? {
+        endpoint_status: endpointStatus.kind,
+        endpoint_status_note: describeStatus(endpointStatus),
+        ...(endpointCheck ? { endpoint_last_checked: (endpointCheck as EndpointCheck).checked_at } : {}),
+      }
+    : {}
+  const { attestations: _raw, id: _id, ...agentRest } = agentNoProbe
   return {
     found: true,
     ...agentRest,
+    ...endpointFreshness,
     ...repositorySignals,
     status_note:
       'listed = imported/unclaimed · claimed = namespace continuity locked (self-asserted by capability token, or identity linked by a proven channel; see claim_method). A contributor label, where present as historical recognition, creates no membership, governance or financial right.',

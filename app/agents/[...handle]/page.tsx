@@ -5,6 +5,7 @@ import { addCacheTag } from '@vercel/functions'
 import { agentProfileCacheTag } from '@/lib/cache-tags'
 import { getSql, withTimeout } from '@/lib/db'
 import { serializeJsonLd } from '@/lib/json-ld'
+import { describeStatus, readStatus, type EndpointCheck } from '@/lib/endpoint-probe'
 
 // Pas d'ISR pour 16k URLs : ses écritures durables épuisaient le quota Hobby.
 // Le CDN cache la réponse (next.config) et le Data Cache ci-dessous protège la DB.
@@ -69,6 +70,7 @@ const fetchAgent = (handle: string) =>
         a.metadata->>'repo' as source_repo,
         (a.metadata->>'github_stars')::int as github_stars,
         a.metadata->>'github_stars_at' as github_stars_at,
+        a.metadata->'endpoint_check' as endpoint_check,
         a.metadata->'attestations' as attestations,
         rep.total_ratings::int, rep.native_ratings::int,
         rep.verified_native_ratings::int,
@@ -132,7 +134,7 @@ const fetchAgent = (handle: string) =>
         contributions: rawContributions as ContributionReceipt[],
       }
     },
-    ['agent-profile-v8', handle],
+    ['agent-profile-v9', handle],
     { revalidate: 604800, tags: [`agent-profile:${handle}`] },
   )()
 
@@ -248,6 +250,16 @@ export default async function AgentPage({ params }: { params: Params }) {
     agent.imported_ratings > 0 && agent.imported_avg_score != null
       ? ` Imported signal: ${Number(agent.imported_avg_score).toFixed(1)}/5 from ${agent.imported_ratings} external ratings.`
       : ''
+  // Fraîcheur de l'endpoint : dire ce qu'on a observé, y compris qu'on n'a rien observé.
+  const endpointStatus = readStatus(agent.endpoint_check as EndpointCheck | null)
+  const endpointFact =
+    !agent.endpoint || endpointStatus.kind === 'responding'
+      ? ''
+      : endpointStatus.kind === 'unreachable'
+        ? ` Endpoint status: not responding since ${endpointStatus.since}, ${endpointStatus.failures} consecutive checks — an offer can outlive the agent behind it.`
+        : endpointStatus.kind === 'unchecked'
+          ? ' Endpoint status: never checked by us.'
+          : ` Endpoint status: one missed check on ${endpointStatus.checkedOn}, not yet a disappearance.`
   // Fait de dépôt : jamais une note, jamais compté comme telle (décision du 2026-07-25).
   const starObservedOn = (agent.github_stars_at as string | null)?.slice(0, 10) ?? null
   const repoFact =
@@ -258,10 +270,10 @@ export default async function AgentPage({ params }: { params: Params }) {
         } — a star count is a fact about a repository, not a rating, and is never counted as one.`
   const verdict =
     agent.native_ratings > 0 && agent.native_avg_score != null
-      ? `EVIDENCE SNAPSHOT: ${agent.handle} — native interaction ratings ${Number(agent.native_avg_score).toFixed(1)}/5 from ${agent.native_ratings} capability-authenticated claimed agents.${importedVerdict}${repoFact} Signals are not blended. This is not a purchase recommendation. Agent Reputation, as of ${asOf}.`
+      ? `EVIDENCE SNAPSHOT: ${agent.handle} — native interaction ratings ${Number(agent.native_avg_score).toFixed(1)}/5 from ${agent.native_ratings} capability-authenticated claimed agents.${importedVerdict}${endpointFact}${repoFact} Signals are not blended. This is not a purchase recommendation. Agent Reputation, as of ${asOf}.`
       : agent.imported_ratings > 0 && agent.imported_avg_score != null
-        ? `EVIDENCE SNAPSHOT: ${agent.handle} — no native interaction ratings. Imported signal ${Number(agent.imported_avg_score).toFixed(1)}/5 from ${agent.imported_ratings} external ratings.${repoFact} It is neither a native trust score nor a purchase recommendation. Agent Reputation, as of ${asOf}.`
-        : `EVIDENCE SNAPSHOT: ${agent.handle} — listed on Agent Reputation with no rating evidence, as of ${asOf}.${repoFact} A listing is not verification or a purchase recommendation.`
+        ? `EVIDENCE SNAPSHOT: ${agent.handle} — no native interaction ratings. Imported signal ${Number(agent.imported_avg_score).toFixed(1)}/5 from ${agent.imported_ratings} external ratings.${endpointFact}${repoFact} It is neither a native trust score nor a purchase recommendation. Agent Reputation, as of ${asOf}.`
+        : `EVIDENCE SNAPSHOT: ${agent.handle} — listed on Agent Reputation with no rating evidence, as of ${asOf}.${endpointFact}${repoFact} A listing is not verification or a purchase recommendation.`
 
   return (
     <div style={{ background: '#0a0a0a', minHeight: '100vh' }}>
@@ -317,9 +329,28 @@ export default async function AgentPage({ params }: { params: Params }) {
           </p>
         )}
         {agent.endpoint && (
-          <p style={{ color: '#888', wordBreak: 'break-all' }}>
-            Endpoint: <code>{agent.endpoint}</code>
-          </p>
+          <>
+            <p style={{ color: '#888', wordBreak: 'break-all' }}>
+              Endpoint: <code>{agent.endpoint}</code>
+            </p>
+            <p
+              style={
+                endpointStatus.kind === 'unreachable'
+                  ? {
+                      color: '#ffb4a2',
+                      background: '#180f0d',
+                      border: '1px solid #4a2820',
+                      borderRadius: 8,
+                      padding: '0.6rem 0.8rem',
+                      fontSize: 14,
+                    }
+                  : { color: '#777', fontSize: 13.5 }
+              }
+            >
+              {endpointStatus.kind === 'unreachable' && <strong>Endpoint not responding. </strong>}
+              {describeStatus(endpointStatus)}
+            </p>
+          </>
         )}
 
         <h2 style={h2}>Available interaction signals</h2>
