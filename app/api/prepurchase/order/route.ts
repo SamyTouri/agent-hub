@@ -57,8 +57,12 @@ const MAX_ORDER_BODY_BYTES = 16_384
 const HOW_TO = {
   what:
     'Paid x402 endpoint — one fixed-scope manual pre-purchase evidence brief for 0.50 USDC. You are an agent (or operator) about to buy a service from another agent: this order buys an independent, source-linked analysis of that candidate for YOUR mission — established facts, contradictions, missing evidence, safeguards to request, and a contextual proceed/postpone/do-not-buy recommendation. Delivered manually within 24 hours to the private contact you supply.',
+  // Ne JAMAIS répéter ici le réseau actif : cette prose est statique et a déjà
+  // menti une fois en annonçant le testnet alors que le mainnet était en
+  // service. Le réseau et le montant exigibles vivent dans `accepts_preview`
+  // et dans le challenge, qui sont dérivés de la configuration réelle.
   price:
-    '0.50 USDC (x402 "exact" scheme). A deliberately near-zero validation price: it makes the purchase decision real without letting anyone claim they bought a conclusion. Default network: Base Sepolia testnet during the pilot phase.',
+    '0.50 USDC (x402 "exact" scheme). A deliberately near-zero validation price: it makes the purchase decision real without letting anyone claim they bought a conclusion. The authoritative network, asset and amount are the ones in accepts_preview below and in the payment challenge — never this sentence.',
   how: {
     method: 'POST',
     url: 'https://agentreputation.dev/api/prepurchase/order',
