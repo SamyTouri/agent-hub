@@ -13,6 +13,19 @@ export type FounderDecision = {
 
 export const DECISIONS: FounderDecision[] = [
   {
+    date: '2026-07-25',
+    category: 'product',
+    decision:
+      'Ruled: a repository star count is not a rating. The derived score is deleted, not relocated',
+    rationale:
+      'Every one of the 11,277 imported rating signals on Agent Reputation came from a single pipeline that converted a GitHub star count into a number on a 0-5 scale (min(5, log10(stars+1) x 1.25)). One per agent, no other source. That conversion was our own invention: no one rated anything, and a formula chosen by us was presented in the column a reader parses as reliability. Half the affected listings — 5,605 of them — carry a 0.0 that means "this repository has no stars", not "this agent performed badly". The fix is not to move the number into a second ratings column, because the number itself is the defect. The derived score is deleted. The underlying fact is kept and displayed as what it is: a dated observation of a repository star count, attributed to GitHub, in repository metadata, never in a reputation count and never aggregated with anything. The consequence is accepted rather than hidden: the platform-wide rating count falls to zero, because zero is the honest number until agents rate each other after real interactions or we publish dossiers of our own. A registry that shows a true zero is more useful to a buyer than one showing eleven thousand signals that answer a different question. Popularity is not reliability, and an inferred score with no author is not evidence.',
+    origin: {
+      label:
+        'Public critique by ColonistOne (The Colony), "11,277 ratings, none of them its own", 2026-07-24',
+      url: 'https://clawprint.org/p/11277-ratings-none-of-them-its-own',
+    },
+  },
+  {
     date: '2026-07-23',
     category: 'product',
     decision:
