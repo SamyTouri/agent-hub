@@ -50,6 +50,14 @@ import {
   validatePrepurchaseTestnetPaymentPayload,
 } from '../lib/prepurchase-testnet.ts'
 import {
+  buildPrepurchaseMainnetSpendControls,
+  evaluatePrepurchaseMainnetChallenge,
+  PREPURCHASE_MAINNET,
+  PREPURCHASE_MAINNET_EXECUTION_SENTINEL,
+  prepurchaseMainnetExecutionErrors,
+  resolvePrepurchaseMainnetEndpoint,
+} from '../lib/prepurchase-mainnet.ts'
+import {
   decodeBase64Json,
   encodeBase64Json,
   evaluateOffers,
@@ -99,6 +107,8 @@ const orderInput: OrderInput = {
   mission: 'Draft three homepage hero options for our public site.',
   budget_exposure: '1 USDC, no credentials',
   failure_consequence: 'Lost 1 USDC and a wasted day of iteration.',
+  // Ce libellé décrit l'exposition de l'ACHETEUR chez le vendeur candidat, pas
+  // notre prix : il reste à 1 USDC volontairement.
   delivery_contact: 'buyer@example.invalid',
 }
 
@@ -209,13 +219,13 @@ test('mainnet is never inferred from a production environment', () => {
 // Challenge et intake
 // ---------------------------------------------------------------------------
 
-test('the challenge advertises exactly 1 USDC, exact scheme and eip3009 metadata', () => {
+test('the challenge advertises exactly 0.50 USDC, exact scheme and eip3009 metadata', () => {
   const required = buildPaymentRequired(testnetConfig())
   assert.equal(required.x402Version, 2)
   assert.equal(required.accepts.length, 1)
   const offer = required.accepts[0]
   assert.equal(offer.scheme, 'exact')
-  assert.equal(offer.amount, '1000000')
+  assert.equal(offer.amount, '500000')
   assert.equal(offer.network, 'eip155:84532')
   assert.equal(offer.payTo, PAY_TO)
   assert.equal(offer.extra?.assetTransferMethod, 'eip3009')
@@ -410,7 +420,7 @@ test('the public receipt never contains the private delivery contact', async () 
   const receipt = orderReceipt(result.order, result.settlement)
   assert.ok(!JSON.stringify(receipt).includes(orderInput.delivery_contact))
   assert.equal(receipt.order_id, result.order.id)
-  assert.equal(receipt.payment.amount_atomic, '1000000')
+  assert.equal(receipt.payment.amount_atomic, '500000')
   assert.ok(receipt.delivery.deadline > receipt.evidence_cutoff)
 })
 
@@ -643,6 +653,14 @@ test('testnet wallet preparation is a separate non-payment gate', () => {
   )
 })
 
+test('the funded harness price cannot silently diverge from the real offer price', () => {
+  // Le banc de test achète NOTRE offre : s'il épingle un autre montant, il
+  // valide un challenge que la production n'émet plus. Case-001 achète chez un
+  // tiers et doit au contraire rester indépendant de notre prix.
+  assert.equal(PREPURCHASE_TESTNET.amountAtomic, PREPURCHASE_PRICE_ATOMIC)
+  assert.notEqual(CASE001_PAYMENT.amountAtomic, undefined)
+})
+
 test('testnet challenge, spend controls and signed payload stay fixed to Base Sepolia', () => {
   const challenge = {
     x402Version: 2,
@@ -674,8 +692,8 @@ test('testnet challenge, spend controls and signed payload stay fixed to Base Se
   )
 
   const controls = buildPrepurchaseTestnetSpendControls(PAY_TO)
-  assert.equal(controls.maxAmountPerPayment.atomic, 1_000_000n)
-  assert.equal(controls.maxCumulativeSpend.atomic, 1_000_000n)
+  assert.equal(controls.maxAmountPerPayment.atomic, 500_000n)
+  assert.equal(controls.maxCumulativeSpend.atomic, 500_000n)
   assert.deepEqual(controls.allowedNetworks, ['eip155:84532'])
   assert.deepEqual(controls.allowedAssets, [PREPURCHASE_TESTNET.asset])
   assert.deepEqual(controls.allowedPayees, [PAY_TO])
@@ -743,5 +761,123 @@ test('the funded test only accepts the local route or our own production route',
     'not-a-url',
   ]) {
     assert.throws(() => resolvePrepurchaseTestnetEndpoint(rejected), undefined, rejected)
+  }
+})
+
+// ---------------------------------------------------------------------------
+// Acceptance mainnet : argent réel, chemin volontairement séparé du testnet
+// ---------------------------------------------------------------------------
+
+test('the mainnet acceptance can only target our own deployed HTTPS route', () => {
+  assert.equal(
+    resolvePrepurchaseMainnetEndpoint(PREPURCHASE_MAINNET.endpoint),
+    'https://agentreputation.dev/api/prepurchase/order',
+  )
+  for (const rejected of [
+    // Un endpoint local ne prouverait pas que la production encaisse.
+    'http://127.0.0.1:3000/api/prepurchase/order',
+    'http://localhost:3000/api/prepurchase/order',
+    'https://agentreputation.dev.evil.example/api/prepurchase/order',
+    'http://agentreputation.dev/api/prepurchase/order',
+    'https://staging.agentreputation.dev/api/prepurchase/order',
+    'https://agentreputation.dev/api/prepurchase/order?network=eip155:8453',
+    'https://agentreputation.dev/api/other',
+    'https://user:pass@agentreputation.dev/api/prepurchase/order',
+    'https://payanagent.com/api/prepurchase/order',
+    'not-a-url',
+  ]) {
+    assert.throws(() => resolvePrepurchaseMainnetEndpoint(rejected), undefined, rejected)
+  }
+})
+
+test('a testnet authorization can never authorize a real-money payment', () => {
+  assert.notEqual(PREPURCHASE_MAINNET_EXECUTION_SENTINEL, PREPURCHASE_TESTNET_EXECUTION_SENTINEL)
+  const env = {
+    PREPURCHASE_MAINNET_EXECUTE: PREPURCHASE_TESTNET_EXECUTION_SENTINEL,
+    PREPURCHASE_MAINNET_PAY_TO: PAY_TO,
+    CDP_API_KEY_ID: 'id',
+    CDP_API_KEY_SECRET: 'secret',
+    CDP_WALLET_SECRET: 'wallet',
+  }
+  assert.equal(prepurchaseMainnetExecutionErrors({ execute: true, env }).length, 1)
+  assert.deepEqual(
+    prepurchaseMainnetExecutionErrors({
+      execute: true,
+      env: { ...env, PREPURCHASE_MAINNET_EXECUTE: PREPURCHASE_MAINNET_EXECUTION_SENTINEL },
+    }),
+    [],
+  )
+})
+
+test('the mainnet acceptance refuses --execute, a bad receiver or missing credentials', () => {
+  const complete = {
+    PREPURCHASE_MAINNET_EXECUTE: PREPURCHASE_MAINNET_EXECUTION_SENTINEL,
+    PREPURCHASE_MAINNET_PAY_TO: PAY_TO,
+    CDP_API_KEY_ID: 'id',
+    CDP_API_KEY_SECRET: 'secret',
+    CDP_WALLET_SECRET: 'wallet',
+  }
+  assert.deepEqual(prepurchaseMainnetExecutionErrors({ execute: false, env: complete }), [
+    'missing --execute',
+  ])
+  assert.equal(
+    prepurchaseMainnetExecutionErrors({
+      execute: true,
+      env: { ...complete, PREPURCHASE_MAINNET_PAY_TO: 'not-an-address' },
+    }).length,
+    1,
+  )
+  assert.equal(
+    prepurchaseMainnetExecutionErrors({
+      execute: true,
+      env: { ...complete, CDP_WALLET_SECRET: undefined },
+    }).length,
+    1,
+  )
+  assert.equal(prepurchaseMainnetExecutionErrors({ execute: true, env: {} }).length, 5)
+})
+
+test('the mainnet acceptance price follows the published offer price', () => {
+  // Si le prix de vente change, le banc de validation doit suivre tout seul :
+  // il ne doit jamais rester capable de payer un montant qu'on n'exige plus.
+  assert.equal(PREPURCHASE_MAINNET.amountAtomic, PREPURCHASE_PRICE_ATOMIC)
+  const controls = buildPrepurchaseMainnetSpendControls(PAY_TO)
+  assert.equal(controls.maxAmountPerPayment.atomic, BigInt(PREPURCHASE_PRICE_ATOMIC))
+  assert.equal(controls.maxCumulativeSpend.atomic, BigInt(PREPURCHASE_PRICE_ATOMIC))
+  assert.deepEqual(controls.allowedNetworks, ['eip155:8453'])
+  assert.deepEqual(controls.allowedPayees, [PAY_TO])
+  assert.throws(() => buildPrepurchaseMainnetSpendControls('nope'))
+})
+
+test('the mainnet challenge is refused unless every spendable dimension matches', () => {
+  const good = {
+    x402Version: 2,
+    resource: { url: PREPURCHASE_MAINNET.endpoint },
+    accepts: [
+      {
+        scheme: 'exact',
+        network: PREPURCHASE_MAINNET.network,
+        amount: PREPURCHASE_MAINNET.amountAtomic,
+        asset: PREPURCHASE_MAINNET.asset,
+        payTo: PAY_TO,
+        maxTimeoutSeconds: 300,
+      },
+    ],
+  }
+  assert.equal(evaluatePrepurchaseMainnetChallenge(encodeBase64Json(good), PAY_TO).ok, true)
+
+  const variants = [
+    { network: 'eip155:84532' },
+    { asset: '0x036CbD53842c5426634e7929541eC2318f3dCF7e' },
+    { amount: '1000000' },
+    { payTo: '0x3333333333333333333333333333333333333333' },
+    { scheme: 'upto' },
+  ]
+  for (const override of variants) {
+    const result = evaluatePrepurchaseMainnetChallenge(
+      encodeBase64Json({ ...good, accepts: [{ ...good.accepts[0], ...override }] }),
+      PAY_TO,
+    )
+    assert.equal(result.ok, false, JSON.stringify(override))
   }
 })

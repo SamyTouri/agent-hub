@@ -153,7 +153,9 @@ export function validateCase001PaymentPayload(payload: unknown) {
   }
   const check = checkPaymentAgainstRequirements(
     parsed.data as PaymentPayloadV2,
-    buildPaymentRequirements(config),
+    // Le prix attendu est celui du VENDEUR Case-001, jamais celui de notre
+    // propre offre : les deux ont divergé le 2026-07-25.
+    buildPaymentRequirements(config, CASE001_PAYMENT.amountAtomic),
   )
   if (!check.ok) return { ok: false as const, reason: check.reason }
   return {

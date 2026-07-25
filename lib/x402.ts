@@ -35,7 +35,11 @@ export const USDC_NETWORKS = {
     label: 'Base (mainnet)',
     // USDC natif Circle sur Base.
     usdc: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-    // À revérifier on-chain avant toute activation mainnet (name() du contrat).
+    // Vérifié on-chain le 2026-07-25 : name()="USD Coin", version()="2", et le
+    // DOMAIN_SEPARATOR() du contrat
+    // (0x02fa7265e7c5d81118673727957699e4d68f74cd74b7db77da710fe8a2c7834f)
+    // est reproduit exactement par ces valeurs. Ne pas modifier sans refaire
+    // la comparaison : une divergence casse toutes les signatures EIP-3009.
     eip712: { name: 'USD Coin', version: '2' },
     mainnet: true,
     v1Name: 'base',

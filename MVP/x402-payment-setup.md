@@ -1,6 +1,7 @@
 # x402 payment capability — setup and operations (testnet-first)
 
-Status: **implemented and validated end to end on Base Sepolia; mainnet remains inactive**.
+Status: **implemented and validated end to end on Base Sepolia; the mainnet path is built and
+gated but has never been executed**. Price moved from 1 USDC to **0.50 USDC** on 2026-07-25.
 The paid endpoint still fails closed (HTTP 503, no payment challenge) unless its private runtime
 environment explicitly activates it. The Supabase ledger migration is applied. Dedicated CDP
 test wallets exist, but their secrets remain only in Bitwarden/DPAPI and no test configuration
@@ -17,7 +18,8 @@ can exceed 100 EUR/USDC in gross receipts.
 | Piece | Where | Role |
 | --- | --- | --- |
 | Paid endpoint | `app/api/prepurchase/order/route.ts` | `POST /api/prepurchase/order` — x402 v2 challenge (402), verify + settle via facilitator, idempotent order record, stable receipt. `GET` returns machine-readable usage. |
-| Domain rules | `lib/prepurchase.ts` | Fail-closed config, strict intake schema, 1 USDC fixed price, 100 USDC stop, idempotency, receipt (never echoes the private contact). |
+| Domain rules | `lib/prepurchase.ts` | Fail-closed config, strict intake schema, 0.50 USDC fixed price, 100 USDC stop, idempotency, receipt (never echoes the private contact). |
+| Mainnet acceptance | `lib/prepurchase-mainnet.ts`, `scripts/prepurchase-mainnet-wallets.mts`, `scripts/prepurchase-mainnet-e2e.mts`, `scripts/Invoke-PrepurchaseMainnet.ps1` | Real-money twin of the testnet harness: separate constants, sentinels, CDP accounts and scripts. Production route only, no faucet. Never executed. |
 | Protocol primitives | `lib/x402.ts` | Strict x402 v2 header/payload validation, USDC network constants, buyer-side challenge normalization (v1+v2) and offer evaluation. |
 | Private ledger SQL | `db/migration-prepurchase-orders.sql` + `db/schema.sql` | Applied to Supabase on 2026-07-23. RLS enabled, no `anon`/`authenticated` access. Payment, delivery and buyer outcome are separate fact groups. |
 | Buyer preflight tool | `scripts/case-001-preflight.mts` | Read-only Case-001 offer verification. Cannot spend by design. |
@@ -79,11 +81,20 @@ ledger semantics, not a real delivery or buyer satisfaction. No Case-001 seller 
 | `PREPURCHASE_FACILITATOR_URL` | no | Defaults to `https://x402.org/facilitator` on testnet and the authenticated CDP URL on mainnet. Mainnet refuses any non-CDP facilitator. |
 | `PREPURCHASE_MAINNET_ACK` | mainnet only | Must be exactly `I-UNDERSTAND-THIS-ACCEPTS-REAL-USDC-ON-BASE-MAINNET`. |
 | `CDP_API_KEY_ID` / `CDP_API_KEY_SECRET` | CDP wallet/test client; CDP mainnet facilitator | Server-side CDP credentials. Never committed or logged. |
-| `CDP_WALLET_SECRET` | CDP wallet writes/signing | Authenticates non-custodial wallet operations. Never committed or logged. |
+| `CDP_WALLET_SECRET` | CDP wallet writes/signing | Authenticates non-custodial wallet operations. **Buyer side only** — the deployed seller never needs it. Never committed or logged. |
 
-Fixed in code, deliberately not configurable: price **1 USDC** (`1000000` atomic), gross-revenue
+The execution sentinel for the testnet harness changed with the price and is now
+`I-AUTHORIZE-EXACTLY-0.50-TEST-USDC-ON-BASE-SEPOLIA`; the mainnet one is
+`I-AUTHORIZE-EXACTLY-0.50-REAL-USDC-ON-BASE-MAINNET`. They are deliberately different strings.
+
+Fixed in code, deliberately not configurable: price **0.50 USDC** (`500000` atomic), gross-revenue
 stop **100 USDC**, delivery deadline **24 h**, scheme `exact`/EIP-3009, USDC contract per network
 (Circle official addresses).
+
+The 100 USDC stop is also the founder's operating threshold for the Belgian invoicing/VAT
+question (decision 2026-07-25): below it, the pilot runs as engineering; reaching it is the
+trigger to settle invoicing with SMART/the accountant before accepting more. At 0.50 USDC that
+boundary is 200 orders.
 
 ## Reproducible testnet sequence (Base Sepolia)
 
@@ -111,10 +122,11 @@ The acceptance performs:
   - `GET http://localhost:3000/api/prepurchase/order` → `active: true`, `accepts_preview` on
     `eip155:84532`;
   - `POST` with a valid JSON body and no payment header → HTTP 402, `PAYMENT-REQUIRED` header
-    present, `amount` = `1000000`, `asset` =
+    present, `amount` = `500000`, `asset` =
     `0x036CbD53842c5426634e7929541eC2318f3dCF7e`;
 - CDP official x402 client signing with an EOA restricted to the fixed Base Sepolia network,
-  Circle test USDC contract, one-USDC cumulative maximum and the dedicated receiver;
+  Circle test USDC contract, a cumulative maximum equal to one order price and the dedicated
+  receiver;
 - first POST → 402; signed retry → 200 with `order_id`, payment transaction, evidence cutoff,
   delivery deadline and `PAYMENT-RESPONSE`;
 - exact signed-payload replay → same `order_id` and same transaction;
@@ -135,10 +147,46 @@ Mainnet activation requires **all** of:
    mainnet is never inferred from `NODE_ENV`/`VERCEL_ENV`/deployment environment (tested).
 3. CDP credentials in server-only environment variables. The route uses the official
    authenticated CDP facilitator client and refuses any other mainnet facilitator.
-4. Re-verify on-chain the USDC EIP-712 domain (`name`/`version`) used in `extra` before the first
-   mainnet challenge (`lib/x402.ts`, `USDC_NETWORKS`).
-5. The funded Base Sepolia seller test is complete. Any minimal mainnet transaction still needs
+   Note the asymmetry: the **seller** side needs `CDP_API_KEY_ID`/`CDP_API_KEY_SECRET` only, to
+   authenticate against the facilitator. It never needs `CDP_WALLET_SECRET`, because it does not
+   sign anything. Wallet-signing credentials stay on the buyer side, in Bitwarden/DPAPI.
+4. ~~Re-verify on-chain the USDC EIP-712 domain.~~ **Done 2026-07-25.** Base mainnet USDC
+   `0x8335…2913` returns `name()="USD Coin"`, `version()="2"`, `decimals()=6`, and its
+   `DOMAIN_SEPARATOR()` (`0x02fa7265…7834f`) is reproduced exactly by the hard-coded values in
+   `lib/x402.ts`. Base Sepolia (`name()="USDC"`) matches too. Re-run the comparison before
+   changing those constants: a divergence breaks every EIP-3009 signature.
+5. The funded Base Sepolia seller test is complete. Any real mainnet transaction still needs
    a new, separate authorization.
+
+## Mainnet acceptance (real money, never executed yet)
+
+The mainnet path is a deliberate **twin** of the testnet harness, not a parameter on it. Separate
+module, separate sentinels, separate CDP accounts, separate scripts and a separate wrapper. A
+testnet authorization string cannot authorize a real payment (asserted in the test suite), and the
+mainnet buyer refuses any endpoint other than the deployed `https://agentreputation.dev` route —
+a local acceptance would not prove that production can take money.
+
+Human steps, in order:
+
+1. **Provision** the two dedicated mainnet accounts (no funds move):
+   `pwsh -File scripts\Invoke-PrepurchaseMainnet.ps1 -Action Provision`.
+2. **Fund the buyer** with at least `500000` atomic units (0.50 USDC) of native Circle USDC on
+   Base, sent to the printed buyer address. No ETH is required: the buyer's EIP-3009 signature is
+   gasless. Acquiring and sending that USDC is a human action; no agent performs it.
+3. **Set the server variables on Vercel** (`PREPURCHASE_NETWORK=eip155:8453`, the exact
+   `PREPURCHASE_MAINNET_ACK` sentence, `PREPURCHASE_PAY_TO` = the mainnet receiver,
+   `CDP_API_KEY_ID`, `CDP_API_KEY_SECRET`) and redeploy. Until then the route answers 503.
+4. **Check** the buyer balance and both addresses without spending:
+   `pwsh -File scripts\Invoke-PrepurchaseMainnet.ps1 -Action Inspect`.
+5. **Pay for real** — this spends 0.50 USDC of actual value:
+   `pwsh -File scripts\Invoke-PrepurchaseMainnet.ps1 -Action Accept`.
+   If the HTTP response is lost after signing, resume the SAME authorization with
+   `-Action ResumeAccept`; never re-run `Accept`, which refuses to overwrite a pending signature.
+
+The acceptance verifies a 402 challenge pinned on scheme, network, asset, exact price and
+recipient; re-validates the payload after the CDP client signs it; confirms the signing address
+matches the wallet; submits; then replays the identical payload and requires the same order id and
+the same transaction. `delivered_at` and `buyer_outcome` stay empty on purpose.
 
 The pilot keeps complete payment records and stops at 100 USDC. Belgian tax/accounting
 work is therefore treated as a follow-up trigger at that boundary, not as a blocker for

@@ -20,8 +20,15 @@ import {
 // résultat côté acheteur sont trois faits distincts, jamais fusionnés. Payer
 // n'achète JAMAIS une note, un classement ou un verdict favorable.
 
-/** Prix fixe de l'offre pilote : 1 USDC (6 décimales). Constante, non modifiable via l'env. */
-export const PREPURCHASE_PRICE_ATOMIC = '1000000'
+/**
+ * Prix fixe de l'offre pilote : 0,50 USDC (6 décimales). Constante, non
+ * modifiable via l'env.
+ *
+ * Prix de validation, pas de valorisation : assez élevé pour que la décision
+ * d'achat soit réelle, assez bas pour qu'on ne puisse pas nous soupçonner de
+ * vendre une conclusion.
+ */
+export const PREPURCHASE_PRICE_ATOMIC = '500000'
 /** Borne expérimentale de revenu brut : 100 USDC, ensuite l'offre se ferme. */
 export const PREPURCHASE_REVENUE_CAP_ATOMIC = 100_000_000n
 /** Délai de livraison promis (analyse manuelle). */
@@ -140,12 +147,21 @@ export type OrderInput = z.infer<typeof OrderInputSchema>
 // Challenge x402
 // ---------------------------------------------------------------------------
 
-export function buildPaymentRequirements(config: PrepurchaseConfig): PaymentRequirementsV2 {
+/**
+ * `amountAtomic` sert UNIQUEMENT aux outils acheteurs, qui revalident un
+ * paiement contre le prix exigé par un vendeur tiers. Notre propre vente passe
+ * toujours par le défaut : le prix de l'offre est une constante, jamais un
+ * paramètre d'appel.
+ */
+export function buildPaymentRequirements(
+  config: PrepurchaseConfig,
+  amountAtomic: string = PREPURCHASE_PRICE_ATOMIC,
+): PaymentRequirementsV2 {
   const net = USDC_NETWORKS[config.network]
   return {
     scheme: 'exact',
     network: config.network,
-    amount: PREPURCHASE_PRICE_ATOMIC,
+    amount: amountAtomic,
     asset: config.asset,
     payTo: config.payTo,
     maxTimeoutSeconds: PREPURCHASE_MAX_TIMEOUT_SECONDS,

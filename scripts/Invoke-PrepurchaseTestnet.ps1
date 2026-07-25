@@ -95,7 +95,7 @@ try {
                 $env:PREPURCHASE_NETWORK = 'eip155:84532'
                 $env:PREPURCHASE_PAY_TO = $walletState.receiver.address
                 $env:PREPURCHASE_TESTNET_PAY_TO = $walletState.receiver.address
-                $env:PREPURCHASE_TESTNET_EXECUTE = 'I-AUTHORIZE-EXACTLY-1-TEST-USDC-ON-BASE-SEPOLIA'
+                $env:PREPURCHASE_TESTNET_EXECUTE = 'I-AUTHORIZE-EXACTLY-0.50-TEST-USDC-ON-BASE-SEPOLIA'
 
                 $logDir = Join-Path $RepoRoot '.exchange\codex'
                 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
@@ -146,7 +146,7 @@ try {
 
                 $env:PREPURCHASE_TESTNET_ENDPOINT = 'https://agentreputation.dev/api/prepurchase/order'
                 $env:PREPURCHASE_TESTNET_PAY_TO = $walletState.receiver.address
-                $env:PREPURCHASE_TESTNET_EXECUTE = 'I-AUTHORIZE-EXACTLY-1-TEST-USDC-ON-BASE-SEPOLIA'
+                $env:PREPURCHASE_TESTNET_EXECUTE = 'I-AUTHORIZE-EXACTLY-0.50-TEST-USDC-ON-BASE-SEPOLIA'
                 Invoke-TypeScript @('scripts/prepurchase-testnet-e2e.mts', '--execute')
             }
         }

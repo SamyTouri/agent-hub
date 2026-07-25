@@ -23,7 +23,7 @@ export const PREPURCHASE_TESTNET = {
   endpoint: 'http://127.0.0.1:3000/api/prepurchase/order',
   network: 'eip155:84532',
   asset: USDC_NETWORKS['eip155:84532'].usdc,
-  amountAtomic: '1000000',
+  amountAtomic: '500000',
   buyerWalletAccountName: 'aghub-prepurchase-test-buyer',
   receiverWalletAccountName: 'aghub-prepurchase-test-receiver',
 } as const
@@ -84,7 +84,7 @@ export function prepurchaseTestnetFaucetKey(previousGrants: number): string {
 }
 
 export const PREPURCHASE_TESTNET_EXECUTION_SENTINEL =
-  'I-AUTHORIZE-EXACTLY-1-TEST-USDC-ON-BASE-SEPOLIA'
+  'I-AUTHORIZE-EXACTLY-0.50-TEST-USDC-ON-BASE-SEPOLIA'
 
 export const PREPURCHASE_TESTNET_WALLET_PREPARATION_SENTINEL =
   'I-AUTHORIZE-CDP-TESTNET-WALLET-PROVISIONING'
@@ -95,7 +95,8 @@ export function buildPrepurchaseTestnetOrder(): OrderInput {
   return {
     candidate: 'agent-reputation-testnet-fixture',
     mission: 'Validate the Agent Reputation x402 pre-purchase order flow end to end on Base Sepolia.',
-    budget_exposure: 'Exactly 1 test USDC; no asset with monetary value and no mainnet authorization.',
+    budget_exposure:
+      'Exactly 0.50 test USDC; no asset with monetary value and no mainnet authorization.',
     failure_consequence:
       'The test is inconclusive and must be diagnosed before any mainnet or seller-facing action.',
     public_constraints:
@@ -161,7 +162,7 @@ export function evaluatePrepurchaseTestnetChallenge(
       reason:
         evaluation.decision !== 'GO'
           ? 'the x402 challenge does not match the fixed Base Sepolia test'
-          : 'the price is below the ceiling but is not exactly 1 test USDC',
+          : 'the price is below the ceiling but is not exactly 0.50 test USDC',
     }
   }
   return { ok: true as const, evaluation, offer: evaluation.selected }

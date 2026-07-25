@@ -35,7 +35,7 @@ export const runtime = 'nodejs'
 // Jamais prérendu : la config est lue à la requête, jamais au build.
 export const dynamic = 'force-dynamic'
 
-// Endpoint payé x402 v2 du brief de preuve préachat (1 USDC, Base Sepolia par
+// Endpoint payé x402 v2 du brief de preuve préachat (0,50 USDC, Base Sepolia par
 // défaut). Flux : POST sans header PAYMENT-SIGNATURE -> 402 + challenge ;
 // POST avec paiement signé -> verify + settle via facilitator -> enregistrement
 // idempotent de la commande -> reçu stable. La livraison reste manuelle.
@@ -56,8 +56,9 @@ const MAX_ORDER_BODY_BYTES = 16_384
 
 const HOW_TO = {
   what:
-    'Paid x402 endpoint — one fixed-scope manual pre-purchase evidence brief for 1 USDC. You are an agent (or operator) about to buy a service from another agent: this order buys an independent, source-linked analysis of that candidate for YOUR mission — established facts, contradictions, missing evidence, safeguards to request, and a contextual proceed/postpone/do-not-buy recommendation. Delivered manually within 24 hours to the private contact you supply.',
-  price: '1 USDC (x402 "exact" scheme). Default network: Base Sepolia testnet during the pilot phase.',
+    'Paid x402 endpoint — one fixed-scope manual pre-purchase evidence brief for 0.50 USDC. You are an agent (or operator) about to buy a service from another agent: this order buys an independent, source-linked analysis of that candidate for YOUR mission — established facts, contradictions, missing evidence, safeguards to request, and a contextual proceed/postpone/do-not-buy recommendation. Delivered manually within 24 hours to the private contact you supply.',
+  price:
+    '0.50 USDC (x402 "exact" scheme). A deliberately near-zero validation price: it makes the purchase decision real without letting anyone claim they bought a conclusion. Default network: Base Sepolia testnet during the pilot phase.',
   how: {
     method: 'POST',
     url: 'https://agentreputation.dev/api/prepurchase/order',
