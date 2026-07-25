@@ -1,6 +1,7 @@
 import { getSql } from '@/lib/db'
 import { submitIndexNow, HOST } from '@/lib/indexnow'
 import {
+  UNREACHABLE_AFTER,
   isProbeableEndpoint,
   nextCheck,
   probeWithSecondChance,
@@ -72,11 +73,21 @@ const PROBE_TIME_BUDGET_MS = 45_000
 async function probeStaleEndpoints(sql: ReturnType<typeof getSql>) {
   const startedAt = Date.now()
   try {
+    // Priorité aux échecs pas encore confirmés : c'est là que l'information est chaude, et
+    // un agent silencieux ne doit pas attendre un cycle complet pour être confirmé ou
+    // réhabilité. Ensuite les fiches jamais vérifiées, puis la rotation par ancienneté.
     const candidates = await sql`
       select id, endpoint, metadata->'endpoint_check' as endpoint_check
       from agents
       where endpoint ilike 'http%'
-      order by (metadata->'endpoint_check'->>'checked_at') asc nulls first
+      order by
+        case
+          when metadata->'endpoint_check'->>'responded' = 'false'
+           and coalesce((metadata->'endpoint_check'->>'consecutive_failures')::int, 0) < ${UNREACHABLE_AFTER} then 0
+          when metadata->'endpoint_check' is null then 1
+          else 2
+        end,
+        (metadata->'endpoint_check'->>'checked_at') asc nulls first
       limit ${PROBE_BATCH}
     `
     const targets = candidates.filter((row) => isProbeableEndpoint(row.endpoint as string))
