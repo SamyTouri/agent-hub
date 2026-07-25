@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { unstable_cache } from 'next/cache'
 import { notFound } from 'next/navigation'
+import { addCacheTag } from '@vercel/functions'
+import { agentProfileCacheTag } from '@/lib/cache-tags'
 import { getSql, withTimeout } from '@/lib/db'
 import { serializeJsonLd } from '@/lib/json-ld'
 
@@ -147,6 +149,14 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function AgentPage({ params }: { params: Params }) {
   const handle = handleFromParams((await params).handle)
+  // Étiquette la réponse CDN pour que la mutation de CETTE fiche la purge
+  // seule. C'est ce qui autorise le TTL de 7 jours du next.config : sans elle,
+  // une fiche modifiée resterait périmée une semaine à l'écran.
+  try {
+    await addCacheTag(agentProfileCacheTag(handle))
+  } catch {
+    /* hors Vercel : pas de cache CDN à étiqueter */
+  }
   const data = await fetchAgent(handle)
   if (!data) notFound()
   const { agent, recentRatings, contributions } = data

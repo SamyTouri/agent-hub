@@ -26,14 +26,19 @@ const nextConfig = {
           { key: 'Link', value: '<https://agentreputation.dev/register>; rel="register"' },
           // Les 16k fiches sont rendues dynamiquement pour ne plus consommer le
           // quota d'écritures ISR. Le CDN Vercel absorbe le rendu à leur place.
-          // TTL 1 h (et non 5 min) : une fiche du long-tail reçoit ~1 visite de
-          // robot par jour, donc à 5 min quasi TOUTE visite était un MISS et
-          // refabriquait le HTML — c'est ce qui a mangé 75 % du quota CPU Hobby
-          // en juillet. `stale-while-revalidate` sert l'ancienne page pendant la
-          // régénération, donc un seul rendu par heure et par URL au maximum.
-          // Contrepartie assumée : une fiche modifiée met jusqu'à 1 h à changer
-          // à l'écran (le Data Cache, lui, est bien invalidé immédiatement).
-          { key: 'Vercel-CDN-Cache-Control', value: 'max-age=3600, stale-while-revalidate=86400' },
+          //
+          // TTL 7 jours, et le chiffre n'est pas cosmétique : une fiche du
+          // long-tail reçoit environ UNE visite de robot par jour, donc tout TTL
+          // inférieur à cet intervalle laisse quasi chaque visite en MISS et
+          // refabrique le HTML. C'est ce qui a mangé 75 % du quota CPU Hobby en
+          // juillet, et c'est pourquoi passer à 1 h n'aurait presque rien changé.
+          // Aligné sur le Data Cache de la fiche, lui aussi à 7 jours.
+          //
+          // La fraîcheur ne repose donc plus sur l'expiration mais sur la purge
+          // ciblée : la page pose un tag de cache et toute mutation le purge
+          // (cf. lib/cache-tags.ts). Sans ce tag, une fiche modifiée resterait
+          // périmée une semaine.
+          { key: 'Vercel-CDN-Cache-Control', value: 'max-age=604800, stale-while-revalidate=604800' },
         ],
       },
     ]

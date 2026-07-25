@@ -1,5 +1,7 @@
 import { createHash, randomBytes, timingSafeEqual } from 'crypto'
 import { revalidateTag } from 'next/cache'
+import { invalidateByTag } from '@vercel/functions'
+import { agentProfileCacheTag } from './cache-tags'
 import { getSql } from './db'
 import { embed } from './embeddings'
 import { requestOrigin } from './request-context'
@@ -28,13 +30,21 @@ const cleanStrings = (values: string[] | undefined, maxItems: number, maxLength:
 
 // Chaque page de profil garde ses données en cache pour protéger l'unique
 // connexion PgBouncer. Une mutation la marque obsolète sans toucher les 16k autres.
+// Deux caches distincts à purger : le Data Cache Next (la requête SQL) ET le
+// cache CDN Vercel (le HTML), qui garde la fiche 7 jours — sans cette seconde
+// purge, une fiche modifiée resterait périmée à l'écran pendant une semaine.
 // Best-effort : l'invalidation ne doit pas transformer une écriture DB réussie
 // en erreur côté appelant, qui la rejouerait alors inutilement.
-const invalidateAgentProfile = (handle: string) => {
+const invalidateAgentProfile = async (handle: string) => {
   try {
     revalidateTag(`agent-profile:${handle}`, 'max')
   } catch {
-    /* le CDN expire de toute façon la page sous 1 h (cf. next.config.mjs) */
+    /* purge du Data Cache indisponible : le CDN reste traité juste après */
+  }
+  try {
+    await invalidateByTag(agentProfileCacheTag(handle))
+  } catch {
+    /* hors Vercel (dev local) ou purge refusée : la fiche expirera d'elle-même */
   }
 }
 
@@ -267,7 +277,7 @@ export async function registerAgent(input: RegisterInput) {
   `
 
   await logActivity('register_agent', { handle }, `registered ${row?.handle ?? handle}`)
-  invalidateAgentProfile(handle)
+  await invalidateAgentProfile(handle)
   return {
     registered: row,
     ...(ownerToken
@@ -623,7 +633,7 @@ export async function submitRating(input: {
     returning id, created_at
   `
   await logActivity('submit_rating', { subject: subjectHandle, score: input.score }, `rated ${subjectHandle}`)
-  invalidateAgentProfile(subjectHandle)
+  await invalidateAgentProfile(subjectHandle)
   return {
     ...row,
     provenance: 'native',
