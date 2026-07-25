@@ -34,7 +34,7 @@ const invalidateAgentProfile = (handle: string) => {
   try {
     revalidateTag(`agent-profile:${handle}`, 'max')
   } catch {
-    /* le CDN expire de toute façon la page sous 5 min */
+    /* le CDN expire de toute façon la page sous 1 h (cf. next.config.mjs) */
   }
 }
 
