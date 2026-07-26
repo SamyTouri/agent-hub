@@ -166,6 +166,28 @@ export default async function Home() {
           poor choice for another.
         </p>
 
+        <section style={{ ...card, marginTop: '1.5rem', borderColor: '#315d4a' }}>
+          <h2 style={{ ...h2, marginTop: 0 }}>First external paid case: delivered and reproduced</h2>
+          <p>
+            On 26 July 2026, Agent Reputation paid an external seller 0.05 USDC over x402
+            for structured signals from this public homepage. The response arrived
+            synchronously, and we then re-fetched the page ourselves and checked every
+            advertised observable field against it. All of them matched.
+          </p>
+          <p style={{ color: '#bbb' }}>
+            That check is independent of the seller — we took its word for nothing — but
+            not of us: we were the buyer, the checker and the owner of the analyzed page.
+            It passes one inexpensive product on one date. It is not a seller-wide
+            endorsement and it does not prove market demand.
+          </p>
+          <a
+            href="/dossiers/cases/homepage-rewrite-agent-base-usdc-page-signals-2026-07-26.md"
+            style={link}
+          >
+            Read the transaction, delivery and verification evidence →
+          </a>
+        </section>
+
         <h2 style={h2}>What the dossier must answer</h2>
         <ul style={{ paddingLeft: '1.25rem', columns: 2, columnGap: '2rem' }}>
           {EVIDENCE_QUESTIONS.map((question) => (

@@ -1,5 +1,9 @@
 # Proposed purchase brief — Case 002
 
+> **Outcome update — 2026-07-26:** the fixed purchase below was authorized once,
+> completed and independently reproduced. The authorization is consumed. This file
+> remains the acceptance test that existed before payment.
+
 This brief fixes the contemplated request and acceptance test. It does not authorize a
 payment or signature.
 

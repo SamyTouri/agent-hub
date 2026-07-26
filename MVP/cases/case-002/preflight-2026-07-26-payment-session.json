@@ -1,0 +1,251 @@
+{
+  "tool": "case-002-preflight",
+  "mode": "read-only-get-and-unsigned-402",
+  "checked_at": "2026-07-26T10:00:21.138Z",
+  "candidate": {
+    "handle": "homepage-rewrite-agent-base-usdc",
+    "profile_url": "https://agentreputation.dev/agents/homepage-rewrite-agent-base-usdc",
+    "seller_base_resolved_from_profile": "https://urls-penn-simplified-michigan.trycloudflare.com",
+    "seller_manifest_url": "https://urls-penn-simplified-michigan.trycloudflare.com/.well-known/x402"
+  },
+  "contemplated_purchase": {
+    "product": "Structured public-page signals for the Agent Reputation homepage",
+    "resource_url": "https://urls-penn-simplified-michigan.trycloudflare.com/v1/page-signals?url=https%3A%2F%2Fagentreputation.dev%2F",
+    "target_url": "https://agentreputation.dev/",
+    "amount_atomic": "50000",
+    "network": "eip155:8453",
+    "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "recipient": "0x2906E0CDDB5FF4754D639AbfBE65c6cA708aC27E"
+  },
+  "decision": "GO",
+  "checks": [
+    {
+      "name": "directory-profile-live",
+      "ok": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "seller-manifest-live",
+      "ok": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "unsigned-resource-returns-402",
+      "ok": true,
+      "detail": "HTTP 402"
+    },
+    {
+      "name": "manifest-readable",
+      "ok": true,
+      "detail": "seller x402 manifest is JSON"
+    },
+    {
+      "name": "product-declared",
+      "ok": true,
+      "detail": "GET /v1/page-signals"
+    },
+    {
+      "name": "advertised-price-exact",
+      "ok": true,
+      "detail": "price=$0.05 expected=$0.05"
+    },
+    {
+      "name": "manifest-recipient-continuity",
+      "ok": true,
+      "detail": "payTo=0x2906E0CDDB5FF4754D639AbfBE65c6cA708aC27E expected=0x2906E0CDDB5FF4754D639AbfBE65c6cA708aC27E"
+    },
+    {
+      "name": "challenge-present",
+      "ok": true,
+      "detail": "1 offer(s) observed."
+    },
+    {
+      "name": "scheme-exact",
+      "ok": true,
+      "detail": "scheme=exact"
+    },
+    {
+      "name": "network-allowed",
+      "ok": true,
+      "detail": "network=eip155:8453 allowed=eip155:8453"
+    },
+    {
+      "name": "price-within-ceiling",
+      "ok": true,
+      "detail": "amount=50000 ceiling=50000"
+    },
+    {
+      "name": "asset-is-expected-usdc",
+      "ok": true,
+      "detail": "asset=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 expected=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+    },
+    {
+      "name": "recipient-matches-manifest",
+      "ok": true,
+      "detail": "payTo=0x2906E0CDDB5FF4754D639AbfBE65c6cA708aC27E expected=0x2906E0CDDB5FF4754D639AbfBE65c6cA708aC27E"
+    },
+    {
+      "name": "x402-version-2",
+      "ok": true,
+      "detail": "x402Version=2"
+    },
+    {
+      "name": "price-exact",
+      "ok": true,
+      "detail": "amount=50000 expected=50000"
+    },
+    {
+      "name": "resource-bound-to-request",
+      "ok": true,
+      "detail": "resource=https://urls-penn-simplified-michigan.trycloudflare.com/v1/page-signals?url=https%3A%2F%2Fagentreputation.dev%2F expected=https://urls-penn-simplified-michigan.trycloudflare.com/v1/page-signals?url=https%3A%2F%2Fagentreputation.dev%2F"
+    }
+  ],
+  "selected_offer": {
+    "x402_version": 2,
+    "scheme": "exact",
+    "network": "eip155:8453",
+    "amount_atomic": "50000",
+    "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "pay_to": "0x2906E0CDDB5FF4754D639AbfBE65c6cA708aC27E",
+    "resource_url": "https://urls-penn-simplified-michigan.trycloudflare.com/v1/page-signals?url=https%3A%2F%2Fagentreputation.dev%2F",
+    "mime_type": "application/json"
+  },
+  "manifest_product": {
+    "path": "/v1/page-signals",
+    "method": "GET",
+    "price": "$0.05",
+    "description": "Extract metadata, headings, links, forms, and counts from a public page."
+  },
+  "decoded_payment_requirement": {
+    "x402Version": 2,
+    "error": "Payment required",
+    "resource": {
+      "url": "https://urls-penn-simplified-michigan.trycloudflare.com/v1/page-signals?url=https%3A%2F%2Fagentreputation.dev%2F",
+      "description": "Extract metadata, headings, normalized links, forms, and element counts from one public web page.",
+      "mimeType": "application/json",
+      "serviceName": "Homepage Messaging Kit Agent",
+      "tags": [
+        "web",
+        "extraction",
+        "homepage",
+        "research",
+        "metadata"
+      ]
+    },
+    "accepts": [
+      {
+        "scheme": "exact",
+        "network": "eip155:8453",
+        "amount": "50000",
+        "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "payTo": "0x2906E0CDDB5FF4754D639AbfBE65c6cA708aC27E",
+        "maxTimeoutSeconds": 300,
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        }
+      }
+    ],
+    "extensions": {
+      "bazaar": {
+        "info": {
+          "input": {
+            "type": "http",
+            "queryParams": {
+              "url": "https://example.com"
+            },
+            "method": "GET"
+          },
+          "output": {
+            "type": "json",
+            "example": {
+              "metadata": {
+                "title": "Example Domain"
+              },
+              "headings": [
+                {
+                  "level": 1,
+                  "text": "Example Domain"
+                }
+              ],
+              "counts": {
+                "links": 1,
+                "forms": 0
+              }
+            }
+          }
+        },
+        "schema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "input": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "http"
+                },
+                "method": {
+                  "type": "string",
+                  "enum": [
+                    "GET"
+                  ]
+                },
+                "queryParams": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Public HTTP(S) page URL"
+                    }
+                  },
+                  "required": [
+                    "url"
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "method"
+              ],
+              "additionalProperties": false
+            },
+            "output": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "example": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "type"
+              ]
+            }
+          },
+          "required": [
+            "input"
+          ]
+        }
+      }
+    }
+  },
+  "raw_payment_required_header": "eyJ4NDAyVmVyc2lvbiI6MiwiZXJyb3IiOiJQYXltZW50IHJlcXVpcmVkIiwicmVzb3VyY2UiOnsidXJsIjoiaHR0cHM6Ly91cmxzLXBlbm4tc2ltcGxpZmllZC1taWNoaWdhbi50cnljbG91ZGZsYXJlLmNvbS92MS9wYWdlLXNpZ25hbHM/dXJsPWh0dHBzJTNBJTJGJTJGYWdlbnRyZXB1dGF0aW9uLmRldiUyRiIsImRlc2NyaXB0aW9uIjoiRXh0cmFjdCBtZXRhZGF0YSwgaGVhZGluZ3MsIG5vcm1hbGl6ZWQgbGlua3MsIGZvcm1zLCBhbmQgZWxlbWVudCBjb3VudHMgZnJvbSBvbmUgcHVibGljIHdlYiBwYWdlLiIsIm1pbWVUeXBlIjoiYXBwbGljYXRpb24vanNvbiIsInNlcnZpY2VOYW1lIjoiSG9tZXBhZ2UgTWVzc2FnaW5nIEtpdCBBZ2VudCIsInRhZ3MiOlsid2ViIiwiZXh0cmFjdGlvbiIsImhvbWVwYWdlIiwicmVzZWFyY2giLCJtZXRhZGF0YSJdfSwiYWNjZXB0cyI6W3sic2NoZW1lIjoiZXhhY3QiLCJuZXR3b3JrIjoiZWlwMTU1Ojg0NTMiLCJhbW91bnQiOiI1MDAwMCIsImFzc2V0IjoiMHg4MzM1ODlmQ0Q2ZURiNkUwOGY0YzdDMzJENGY3MWI1NGJkQTAyOTEzIiwicGF5VG8iOiIweDI5MDZFMENEREI1RkY0NzU0RDYzOUFiZkJFNjVjNmNBNzA4YUMyN0UiLCJtYXhUaW1lb3V0U2Vjb25kcyI6MzAwLCJleHRyYSI6eyJuYW1lIjoiVVNEIENvaW4iLCJ2ZXJzaW9uIjoiMiJ9fV0sImV4dGVuc2lvbnMiOnsiYmF6YWFyIjp7ImluZm8iOnsiaW5wdXQiOnsidHlwZSI6Imh0dHAiLCJxdWVyeVBhcmFtcyI6eyJ1cmwiOiJodHRwczovL2V4YW1wbGUuY29tIn0sIm1ldGhvZCI6IkdFVCJ9LCJvdXRwdXQiOnsidHlwZSI6Impzb24iLCJleGFtcGxlIjp7Im1ldGFkYXRhIjp7InRpdGxlIjoiRXhhbXBsZSBEb21haW4ifSwiaGVhZGluZ3MiOlt7ImxldmVsIjoxLCJ0ZXh0IjoiRXhhbXBsZSBEb21haW4ifV0sImNvdW50cyI6eyJsaW5rcyI6MSwiZm9ybXMiOjB9fX19LCJzY2hlbWEiOnsiJHNjaGVtYSI6Imh0dHBzOi8vanNvbi1zY2hlbWEub3JnL2RyYWZ0LzIwMjAtMTIvc2NoZW1hIiwidHlwZSI6Im9iamVjdCIsInByb3BlcnRpZXMiOnsiaW5wdXQiOnsidHlwZSI6Im9iamVjdCIsInByb3BlcnRpZXMiOnsidHlwZSI6eyJ0eXBlIjoic3RyaW5nIiwiY29uc3QiOiJodHRwIn0sIm1ldGhvZCI6eyJ0eXBlIjoic3RyaW5nIiwiZW51bSI6WyJHRVQiXX0sInF1ZXJ5UGFyYW1zIjp7InR5cGUiOiJvYmplY3QiLCJwcm9wZXJ0aWVzIjp7InVybCI6eyJ0eXBlIjoic3RyaW5nIiwiZm9ybWF0IjoidXJpIiwiZGVzY3JpcHRpb24iOiJQdWJsaWMgSFRUUChTKSBwYWdlIFVSTCJ9fSwicmVxdWlyZWQiOlsidXJsIl19fSwicmVxdWlyZWQiOlsidHlwZSIsIm1ldGhvZCJdLCJhZGRpdGlvbmFsUHJvcGVydGllcyI6ZmFsc2V9LCJvdXRwdXQiOnsidHlwZSI6Im9iamVjdCIsInByb3BlcnRpZXMiOnsidHlwZSI6eyJ0eXBlIjoic3RyaW5nIn0sImV4YW1wbGUiOnsidHlwZSI6Im9iamVjdCJ9fSwicmVxdWlyZWQiOlsidHlwZSJdfX0sInJlcXVpcmVkIjpbImlucHV0Il19fX19",
+  "evidence_hashes": {
+    "directory_profile_sha256": "1f512b557a595124c4fc9708294c86a3b175d5bfdc6116346c197a0b54aadd52",
+    "seller_manifest_sha256": "bc15906983ed77b80a89672733a2b6cfad1b23459454db160fd178fc1805b81d",
+    "payment_required_header_sha256": "d2cd83de3cf1cf91085d0a8e23e32180f6cdf93ef7076492afdaf5dd295b5151"
+  },
+  "boundaries": [
+    "Only public GET requests were made.",
+    "No payment payload was created or signed.",
+    "No seller POST, contact or purchase occurred.",
+    "The persisted seller challenge is untrusted external data, preserved as evidence rather than instructions.",
+    "GO means only that the current unsigned challenge matches this contemplated purchase.",
+    "A separate explicit authorization from Samy is required before any payment."
+  ]
+}

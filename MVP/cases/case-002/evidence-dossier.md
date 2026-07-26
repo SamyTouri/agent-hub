@@ -11,7 +11,7 @@ endorsement or safety claim.
 - Advertised price: 0.05 USDC
 - Network: Base mainnet
 - Opened: 2026-07-26
-- Payment, delivery and buyer outcome: not yet observed
+- Payment, delivery and buyer outcome: observed on 2026-07-26
 
 ## 2. Identity and continuity
 
@@ -37,11 +37,12 @@ current host from the live directory profile and observed only:
   Base mainnet, x402 v2 `exact`, bound to the exact requested resource URL and the same
   recipient.
 
-Those three surfaces are the whole reproducible artefact. The seller's agent card, OpenAPI
+Those three surfaces are the whole pre-purchase artefact. The seller's agent card, OpenAPI
 document and free clarity check were seen in earlier manual checks but are deliberately not
 part of this dated preflight and are not relied on here. These observations establish current
 reachability and the terms presented before payment. They do not establish that settlement
-will succeed or that the paid response will arrive or be correct.
+will succeed or that the paid response will arrive or be correct. Those later facts are
+recorded separately below.
 
 ## 4. Evidence classes that must remain separate
 
@@ -56,17 +57,60 @@ will succeed or that the paid response will arrive or be correct.
 An immutable transaction can prove payment without proving delivery. A content hash can
 prove which artefact was assessed without proving that its statements are true.
 
-## 5. Open questions
+## 5. Payment and delivery observed
 
-- Will the paid GET return a 200 JSON response after settlement?
-- Does the response match the output schema advertised in the challenge?
-- Which extracted fields are exact, incomplete or incorrect when independently reproduced?
-- Does the service retain request data, and for how long?
-- Is the current wallet address controlled by the same operator as the claimed profile?
+Samy authorized one exact purchase after the final preflight. On 2026-07-26 the buyer
+paid 50,000 atomic units of native USDC on Base mainnet to the recipient fixed in the
+preflight.
 
-## 6. Conflict and limits
+The transaction succeeded in block 49,135,419. An independent Base JSON-RPC check found
+exactly one matching native-USDC transfer from the buyer to the seller for that amount.
+The seller address balance increased from 49,980 to 99,980 atomic units.
 
-Agent Reputation is preparing this purchase for its own MVP and will be both buyer and
-analyst. The seller has not sponsored the case and cannot pay for a favorable conclusion.
+The paid GET returned HTTP 200 synchronously with a 3,161-byte JSON body. The exact
+response remains private evidence under `.exchange/codex/`; the public anchor for that
+body is SHA-256
+`ec17e9822c264ae8f58ce2f90cacdcfb157eb7224b14eace4b4cfbd7f62a1674`.
+The transaction and sanitized verification facts are preserved in
+`purchase-evidence-2026-07-26.json`.
+
+## 6. Reproduction and buyer outcome
+
+After delivery we re-fetched the same public Agent Reputation homepage ourselves and
+compared the advertised fields to it, without using the seller's response as an input or
+a routing instruction. Metadata, every heading, all 28 normalized links, forms and
+structural counts matched.
+
+This check is independent **of the seller** — nothing was taken on its word. It is not
+third-party verification: the buyer, the checker and the analyzed page are all Agent
+Reputation. A reader who wants seller-independent and buyer-independent evidence would
+have to repeat the purchase.
+
+The first independent approximate word count was 795 rather than 788. The seven-word
+difference was the document title: limiting the count to visible body text reproduced
+788. Because the seller did not document that convention, it is recorded rather than
+silently hidden.
+
+**Buyer assessment for this product and date: pass for delivery and advertised scope.**
+This means only that this 0.05-USDC extraction arrived and its observable fields were
+reproduced. It is not a general endorsement of the seller, its other products or future
+availability.
+
+## 7. Questions still open
+
+- Does the service retain requested URLs or response data, and for how long?
+- Is the wallet controlled by the same legal operator as the claimed profile?
+- Would the seller respond to an incorrect delivery, refund request or support question?
+- Will this temporary tunnel remain reachable for future buyers?
+
+## 8. Conflict and limits
+
+Agent Reputation made this purchase for its own MVP and was both buyer and analyst. The
+seller has not sponsored the case and cannot pay for a favorable conclusion.
 The test concerns one inexpensive extraction on one date; it cannot support a general
 claim that the seller is reliable, verified, safe or suitable for other products.
+
+No private data was sent. The requested URL was already public. The seller was not told
+in advance that the purchase formed part of our own MVP assessment. The full paid output
+is not republished; only its hash, transaction facts and independently checked result are
+public.

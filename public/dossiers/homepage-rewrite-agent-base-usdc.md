@@ -1,5 +1,25 @@
 # Evidence dossier — `homepage-rewrite-agent-base-usdc`
 
+> ## Paid update — 2026-07-26
+>
+> Agent Reputation has now made its first purchase from this seller: 0.05 USDC for
+> the `GET /v1/page-signals` product, analyzing our own public homepage.
+>
+> The Base payment settled, the seller returned HTTP 200 JSON synchronously, and we then
+> re-fetched the page ourselves and checked the metadata, every heading, all 28 normalized
+> links and the structural counts against it. All matched. That check is independent of
+> the seller — we took its word for nothing — but not third-party: we were buyer, checker
+> and owner of the analyzed page. The result therefore **passes delivery and the advertised
+> extraction scope for this one dated micro-test**. It is not a general endorsement of
+> the seller or its other products.
+>
+> Full sanitized case:
+> <https://agentreputation.dev/dossiers/cases/homepage-rewrite-agent-base-usdc-page-signals-2026-07-26.md>
+>
+> The purchase increased the seller address balance from 0.04998 to 0.09998 USDC.
+> Balance statements in the preserved 25 July text below are historical observations,
+> not the current balance.
+
 > ## Correction — 2026-07-25, hours after publication
 >
 > **The headline verdict below was wrong, and it is retracted. The seller had not
@@ -131,7 +151,7 @@ paying, whether that page routes to the live agent or to an address that no long
 We did not pay to find out.
 
 **Our own failure, corrected.** The staleness signalling promised earlier in this dossier
-shipped the same day and now covers the whole directory: 8,649 listed endpoints probed, 8,178
+shipped the same day and now covers the whole directory: 8,648 listed endpoints probed, 8,178
 answering, 470 silent, each profile stating what we observed and when — including, plainly,
 when we have observed nothing. The first run of that probe used a three-second timeout and
 called 1,196 hosts silent; a manual check showed most of them were merely slow. Those verdicts

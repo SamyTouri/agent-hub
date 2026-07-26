@@ -1,5 +1,10 @@
 # Pre-purchase decision memo — Case 002
 
+> **Outcome update — 2026-07-26:** Samy later authorized the exact purchase described
+> here. It settled, delivered HTTP 200 JSON and passed independent field-by-field
+> reproduction. This memo remains the pre-purchase reasoning, not the outcome record;
+> see `purchase-evidence-2026-07-26.json`.
+
 ## Decision
 
 **Proceed with safeguards, subject to a new explicit payment authorization from Samy.**

@@ -91,7 +91,9 @@ is a responsibility, not a rank.
 memory of all agents working on this project**, Codex included.
 
 - **Start of session**: read `MEMORY.md` (the index), then the files relevant to your
-  task — `agent-hub-deploiement.md` holds the full operational history and gotchas.
+  task. `agent-hub-deploiement.md` is the short current operational state; open
+  `agent-hub-pieges-techniques.md`, `agent-hub-presence-externe.md` or an archive
+  only when the task touches that history or zone.
 - **End of session**: append a dated entry to `codex-journal.md` (what you analyzed,
   changed, proposed, decided — a few lines, in French). This is how Claude Code and
   Samy know what you did; it is read at the start of their sessions.
@@ -100,6 +102,8 @@ memory of all agents working on this project**, Codex included.
   existing files (`name`, `description`, `metadata.type`), plus one pointer line added
   to `MEMORY.md`. Follow the existing format exactly; keep facts, not narration.
 - Never delete or rewrite existing memories wholesale — append or correct precisely.
+  Exception: the dedicated current-state/archive migration required by
+  `memory-structure.md`, after a verified verbatim archive exists.
 
 ## Delegation protocol (orchestrator ↔ delegate)
 
@@ -174,27 +178,31 @@ Samy to relay. Codex → Claude Code is the canonical direction today:
 ## The project in 30 seconds
 
 **Agent Reputation** (public identity) / **Agent Hub** (technical name) —
-https://agentreputation.dev — is a discovery + reputation layer FOR autonomous AI
-agents: semantic search over 16,200+ agents/MCP servers, 0–5 ratings with native
-(real interactions) vs imported (e.g. github-stars) provenance never blended, zero
-accounts, zero human in the loop. Exposed as an MCP server (Streamable HTTP,
-`/api/mcp`, 15 tools) + A2A agent card. Long game: a self-governed agent community
-chartered by a written constitution — reputation = voting power, first 1,000 validated
-agents become founding voters, every founder decision published with justification.
-Solo founder (Samy Touri, Belgium), free-tier infra, radical transparency as brand.
+https://agentreputation.dev — is an independent evidence and pre-purchase analysis
+layer for agents and humans choosing whether to buy an AI-agent service. It combines
+what a candidate claims, observed work, source provenance, payment and delivery facts,
+contradictions and missing information into an evidence dossier and a contextual
+decision memo. The existing cross-registry catalogue and separated raw signals are
+inputs, never a universal reliability score. The service is not a marketplace and a
+provider cannot buy a favorable verdict. It is exposed through the website, a
+Streamable HTTP MCP server at `/api/mcp`, and an A2A agent card. Counts and the current
+tool set must be read from the live product, not copied into this file. The company is
+founder-led and independent; agent voting governance was abandoned. Solo founder:
+Samy Touri, Belgium. Free-tier infrastructure and radical transparency remain part of
+the operating model.
 
 ## Map — where everything lives
 
 | What | Where |
 |---|---|
 | App code | `app/` (Next.js App Router), `lib/` (DB + domain logic) |
-| MCP server (15 tools + instructions) | `app/api/[transport]/route.ts` |
-| Domain logic, reputation, founding seats | `lib/agenthub.ts` |
+| MCP server (current tools + instructions) | `app/api/[transport]/route.ts` |
+| Domain logic, profiles, claims, evidence inputs, requests and receipts | `lib/agenthub.ts` |
 | DB schema (Supabase pgvector) | `db/schema.sql` |
 | Outreach routine doctrine (Moltbook PR bot) | `OUTREACH-ROUTINE.md` |
 | Routine daily action logs (what the bot saw/did) | `.outreach/log/*.md` (local only) |
 | Routine idempotence state + API gotchas | `.outreach/state.json` |
-| **Shared persistent memory (Claude + Codex)** | `.context/memory/*.md` (junction — index: `MEMORY.md`; richest file: `agent-hub-deploiement.md`; your journal: `codex-journal.md`) |
+| **Shared persistent memory (Claude + Codex)** | `.context/memory/*.md` (junction — start at `MEMORY.md`; current operations, technical gotchas and external presence are separate pages; your journal is `codex-journal.md`) |
 | **Live DB snapshot** (feedbacks, registrations, tool activity) | `.context/live-snapshot.json` (refreshed hourly by the routine) |
 | Founder decision log (public) | `lib/decisions.ts` → https://agentreputation.dev/decisions |
 | Contribution receipts registry (FC-xxxx) | `contributions` table → /contributions + list_contributions tool |
@@ -219,7 +227,8 @@ Live surfaces worth checking: `/dashboard` (activity), `/top` (leaderboard),
   one-time owner_token on first claim (sha256 hash stored, token never logged);
   updating a claimed handle requires it (or the same proven channel, e.g.
   `moltbook:<author>` via the authenticated outreach POST). Never weaken this back
-  to an open upsert. `contributor`/`validated_voter` are founder-granted only.
+  to an open upsert. `contributor`/`validated_voter` remain founder-granted database
+  statuses only; they do not recreate the abandoned voting-governance promise.
 - **No fake scarcity, no referral bonuses** — rejected as violations of the
   constitution (integrity; reputation earned only through services rendered).
 - Public promises (features, governance mechanisms) require the founder's explicit
@@ -232,12 +241,13 @@ Live surfaces worth checking: `/dashboard` (activity), `/top` (leaderboard),
 1. Read the **latest** `.outreach/log/*.md` — it is the project's living journal
    (what shipped, what agents said on Moltbook, open escalations, roadmap candidates).
 2. Read `.context/live-snapshot.json` for fresh usage numbers.
-3. Read `.context/memory/agent-hub-deploiement.md` for the full operational history.
+3. Read `.context/memory/agent-hub-deploiement.md` for current operations. Open
+   `agent-hub-pieges-techniques.md`, `agent-hub-presence-externe.md` or the deployment
+   archive only when relevant.
 4. `git log --oneline -30` for the build cadence.
 
-Key open problem (as of 2026-07-20): distribution is proven (129k crawler hits/week,
-MCP/A2A calls, Agentverse + ClawHub listings) but real market signal is still near
-zero — 1 external claimed profile (emem), 2 outbound contacts sent, 0 replies. The
-bottleneck is the review→send loop and genuinely personalized contacts, not more
-surfaces. Work that produces a first real conversation or native rating is the most
-valuable thing you can propose.
+Key open problem (updated 2026-07-26): the first external x402 purchase has now been
+paid, delivered and independently reproduced. The next bottleneck is to turn that one
+bounded result into a credible public proof asset and then into real conversations,
+buyer requests and native post-service evidence — without generalizing one successful
+micro-test into a seller-wide endorsement.

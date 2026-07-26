@@ -1,0 +1,58 @@
+{
+  "case": "case-002",
+  "status": "paid_delivered_and_independently_reproduced",
+  "observed_at": "2026-07-26T10:03:05.000Z",
+  "purchase": {
+    "product": "GET /v1/page-signals",
+    "target_url": "https://agentreputation.dev/",
+    "network": "eip155:8453",
+    "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "amount_atomic": "50000",
+    "amount_display": "0.05 USDC",
+    "payer": "0x5F3C44C54585fC96aA8E636BA4cF2bc438934c63",
+    "recipient": "0x2906E0CDDB5FF4754D639AbfBE65c6cA708aC27E"
+  },
+  "onchain_verification": {
+    "transaction": "0xf4b1dbea423094606a7860bdc2111e54448750a0ed2297004665c792c14c9089",
+    "receipt_status": 1,
+    "block_number": 49135419,
+    "block_hash": "0x95960b763d462a6f87c619d52582bfd4d06c662a69b23d1d40351a0ec16a6eec",
+    "matching_native_usdc_transfer_logs": 1,
+    "recipient_balance_before_atomic": "49980",
+    "recipient_balance_after_atomic": "99980",
+    "buyer_balance_after_atomic": "1723244",
+    "source": "Base mainnet JSON-RPC"
+  },
+  "delivery": {
+    "http_status": 200,
+    "content_type": "application/json; charset=utf-8",
+    "body_bytes": 3161,
+    "body_sha256": "ec17e9822c264ae8f58ce2f90cacdcfb157eb7224b14eace4b4cfbd7f62a1674",
+    "advertised_shape_present": true
+  },
+  "independent_reproduction": {
+    "checked_at": "2026-07-26T10:06:21.479515Z",
+    "live_http_status": 200,
+    "metadata_match": true,
+    "headings_match": true,
+    "links_match": true,
+    "forms_match": true,
+    "counts_match": true,
+    "method_note": "The initial independent word count was seven words higher because it included the document title. Restricting the approximate word count to visible body text reproduced the seller's 788-word result. The seller had not documented that counting convention.",
+    "boundary": "This checks observable extraction fields only. It does not evaluate conversion quality, security, legal identity or future reliability."
+  },
+  "private_evidence_anchors": {
+    "paid_response_file_sha256_before_assessment": "01b23bc8633fadaf39e9969f5a429fde5571613c85de8a1d3666c9fe780dc982",
+    "independent_reproduction_file_sha256": "d15815b8f8a78518abcd9bafab667387301087f58983d103a4a04c0f58558533",
+    "location": ".exchange/codex/",
+    "published_verbatim": false
+  },
+  "buyer_assessment": {
+    "delivery": "pass",
+    "advertised_scope": "pass",
+    "general_seller_reliability": "not_assessed",
+    "other_products": "not_assessed",
+    "remedy_or_support": "not_tested",
+    "summary": "This specific 0.05-USDC extraction was paid, delivered synchronously and reproduced field by field. It is one successful dated micro-test, not a general endorsement."
+  }
+}

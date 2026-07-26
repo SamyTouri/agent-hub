@@ -1,17 +1,24 @@
-# Evidence dossier — working template v0
+# Evidence dossier — working template v1
 
-This is a test template, not the definitive product schema. Its purpose is to make the first real
-case reviewable and to reveal which fields are useful, missing or too expensive to maintain.
+This remains an evolving product schema. Its purpose is to make repeated real cases comparable
+without forcing unlike facts into one score.
 
 The dossier records evidence. It does **not** recommend a purchase by itself.
+One dossier is bound to one candidate, one product or mission, one buyer context and one dated
+evidence cutoff. A successful micro-test must never become a seller-wide endorsement.
 
 ## 1. Subject and scope
 
 - Candidate agent:
 - Service or product under review:
+- Buyer and analyst:
+- Case ID:
 - Relevant handle(s), version(s) and endpoint(s):
 - Dossier opened:
 - Last evidence check:
+- Evidence cutoff:
+- Maximum authorized exposure:
+- Authorization status: not requested / granted / consumed / withdrawn
 - Prepared for: public example / specific buyer case
 - Scope exclusions:
 
@@ -23,6 +30,7 @@ The dossier records evidence. It does **not** recommend a purchase by itself.
 | Linked identities |  |  |  |  |
 | Declared operator |  |  |  |  |
 | Proven control channel |  |  |  |  |
+| Blockchain address / identity |  |  |  | State exactly which fact is anchored and whether control was proven |
 | Protocols / endpoints |  |  |  |  |
 
 Identity continuity, authorization and service quality are separate questions. Evidence for one
@@ -39,9 +47,9 @@ Use one row per material claim. Status is provisional: `unverified`, `partially 
 
 ## 4. Observed work and outcomes
 
-| ID | Mission / transaction | Date + version | Reported by | Observed outcome | Evidence | Independence / conflicts |
-| --- | --- | --- | --- | --- | --- | --- |
-| O-001 |  |  |  |  |  |  |
+| ID | Mission | Date + version | Payment state | Delivery state | Correctness / outcome | Evidence | Independence / conflicts |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| O-001 |  |  | not attempted / failed / settled | not observed / failed / delivered | not assessed / pass / partial / fail |  |  |
 
 Keep the provider's report, buyer's report and third-party analysis distinct.
 
@@ -56,11 +64,16 @@ payment receipts, blockchain attestations, code repositories, independent audits
 buyer reports and reproducible tests. Inclusion is case-specific; no source type is automatically
 authoritative.
 
-## 6. Transaction and technical evidence
+## 6. Transaction, delivery and artifact evidence
 
-| Evidence | Reference | Subject / version binding | Verified at source? | Interpretation | Limits |
+| Evidence class | Reference | Subject / version binding | Verified independently? | Interpretation | Limits |
 | --- | --- | --- | --- | --- | --- |
-|  |  |  |  |  |  |
+| Unsigned payment terms |  |  |  | What was offered before signing | Not a payment |
+| On-chain transaction |  |  |  | Value movement | Not delivery or quality |
+| Delivery receipt |  |  |  | What response arrived | Not correctness |
+| Content hash |  |  |  | Which artifact was assessed | Not truth |
+| Independent reproduction |  |  |  | Which observable fields matched | Not future reliability |
+| Buyer assessment |  |  |  | Mission-specific interpretation | Conflict must be disclosed |
 
 Record payment or blockchain evidence only when it is relevant. A transaction proves that a
 transaction occurred; it does not automatically prove quality, independence or satisfaction.
@@ -86,7 +99,20 @@ scope difference resolves it.
 | --- | --- | --- | --- | --- | --- |
 | M-001 |  |  |  |  | Open |
 
-## 10. Dossier limits
+## 10. Public-claim boundary
+
+Write the narrowest public sentence supported by the case:
+
+> [Supported public sentence]
+
+Then state explicitly what must **not** be inferred:
+
+- [Unsupported inference]
+
+Every number must have a date and a denominator. An endpoint that stayed silent is not a dead
+agent. A wallet is not a legal identity. A payment is not a delivered outcome.
+
+## 11. Dossier limits
 
 - Sources unavailable or inaccessible:
 - Evidence supplied by interested parties:
@@ -95,7 +121,18 @@ scope difference resolves it.
 - Confidential information deliberately excluded:
 - Other limitations:
 
-## 11. Change log
+## 12. Machine-readable sidecar
+
+For a paid or technically reproduced case, preserve a sanitized JSON sidecar containing:
+
+- exact product, target, network, asset, amount and parties;
+- transaction, receipt status and block reference;
+- delivery status, content type, byte count and content hash;
+- independent checks and their dates;
+- buyer assessment separated from general seller reliability;
+- hashes of private evidence files without publishing replayable authorizations or full paid output.
+
+## 13. Change log
 
 | Date | Change | New source / reason | Author |
 | --- | --- | --- | --- |
