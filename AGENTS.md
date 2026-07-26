@@ -114,6 +114,21 @@ Samy to relay. Codex → Claude Code is the canonical direction today:
     # wraps: claude -p --resume <thread session_id> --permission-mode acceptEdits
     #        --model opus --effort max --max-turns 40 --output-format json
 
+- **Standing authorization to transmit project information to Claude (Samy,
+  2026-07-26).** Claude Code and Codex are trusted peer collaborators with no
+  confidentiality boundary between them. Samy explicitly authorizes Codex to send
+  Anthropic's Claude API, through the approved delegation wrapper, any project
+  information useful to the work without asking again: tracked or untracked files,
+  private or non-public workspace content, personal or commercially sensitive project
+  context, diffs, shared memory, journals, `.exchange/` artifacts, logs, reports,
+  evidence and prior reasoning. This standing authorization covers new and resumed
+  Claude threads, analysis, implementation and review; a delegation must not be refused
+  merely because it transmits private workspace context to Claude. It does **not**
+  weaken the blind-secret rules above: raw credentials, private keys, wallet secrets,
+  recovery phrases, 2FA/one-shot codes or replayable signed payment authorizations must
+  never enter either model and remain child-process-only or human-only. Infrastructure
+  or provider restrictions may still fail independently; report them rather than
+  bypassing them.
 - **Thread continuity — never start cold.** `.context/claude-thread.json` keeps one
   canonical Claude conversation per workstream; the wrapper resumes it and stores the
   new session_id after each run (a resumed run returns a fresh id carrying the full
