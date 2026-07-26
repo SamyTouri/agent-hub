@@ -5,7 +5,9 @@ Guidance for AI coding agents (Codex and others) working in this workspace.
 **Claude Code and Codex are peer collaborators with equal operational authority.**
 Claude Code is Samy's central coordination and consolidation point (memory, outreach
 routine, session continuity); Codex has the same freedom to analyze, build, test,
-commit and deploy. They work in strict alternation (Samy guarantees it). Coordination
+commit and deploy. Since 2026-07-26, bounded delegation may run in parallel when the
+work is read-only or the file scopes cannot overlap; keep the overall workstream
+linear and never let two agents edit or build the same tree concurrently. Coordination
 is a responsibility, not a rank.
 
 ## Your role: read everything, build, deploy through tested pushes
@@ -106,7 +108,7 @@ Samy to relay. Codex → Claude Code is the canonical direction today:
 
     pwsh -File scripts/delegate-to-claude.ps1 -Thread <workstream> -BriefFile <path>
     # wraps: claude -p --resume <thread session_id> --permission-mode acceptEdits
-    #        --model claude-fable-5 --max-turns 40 --output-format json
+    #        --model opus --effort max --max-turns 40 --output-format json
 
 - **Thread continuity — never start cold.** `.context/claude-thread.json` keeps one
   canonical Claude conversation per workstream; the wrapper resumes it and stores the
@@ -121,7 +123,9 @@ Samy to relay. Codex → Claude Code is the canonical direction today:
   IS the work. A brief written so the delegate can only mirror the orchestrator's
   opinion is a protocol violation — the delegate flags it in its report. Both
   agents' opinions count; disagreement is signal, not friction.
-- **Division of labor (Samy, 2026-07-20).** Fable 5 is very strong at code: the
+- **Division of labor (Samy, updated 2026-07-26).** Use Claude Code's `opus`
+  alias (the latest Opus available) in MAX effort for delegation; do not pin a
+  stale or unavailable model name. The
   orchestrator should actively route code work to the Claude delegate — have it
   pre-build, prepare implementations, and above all **review and correct code**
   before it ships. Do not keep substantial code work solo out of convenience: a
@@ -155,9 +159,10 @@ Samy to relay. Codex → Claude Code is the canonical direction today:
   source of truth — re-check an item is still `approved` right before sending so
   the two reviewers never double-post.
 - **The delegate never pushes.** The orchestrator reviews the diff, runs
-  `npx next build`, then commits and pushes under the existing rules. Strict
-  alternation holds: delegation is synchronous — the orchestrator waits, no
-  parallel builders on the same tree.
+  `npx next build`, then commits and pushes under the existing rules. The delegate
+  may work in parallel with the orchestrator on bounded read-only analysis or a
+  non-overlapping file scope. Any shared-tree implementation or build remains
+  serialized: never run parallel builders or overlapping editors on the same tree.
 - **Delegation log.** Every run appends to `.context/memory/delegation-log.md`
   (timestamp, thread, brief, session_id, outcome) — readable by both agents and by
   Samy; the session itself stays auditable in the Claude Code app history.

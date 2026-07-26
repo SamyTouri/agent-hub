@@ -21,7 +21,9 @@ param(
     [string]$BriefFile,
     [string]$Thread = 'main',
     [int]$MaxTurns = 40,
-    [string]$Model = 'claude-fable-5',
+    [string]$Model = 'opus',
+    [ValidateSet('low', 'medium', 'high', 'xhigh', 'max')]
+    [string]$Effort = 'max',
     [string]$ClaudePath,
     [ValidateSet('acceptEdits', 'bypassPermissions', 'default')]
     [string]$PermissionMode = 'acceptEdits'
@@ -93,7 +95,7 @@ if (Test-Path $threadFile) {
 $resumeId = $threads[$Thread].session_id
 
 $baseCliArgs = @('-p', $Brief, '--permission-mode', $PermissionMode, '--model', $Model,
-                 '--max-turns', $MaxTurns, '--output-format', 'json')
+                 '--effort', $Effort, '--max-turns', $MaxTurns, '--output-format', 'json')
 $cliArgs = if ($resumeId) { @('--resume', $resumeId) + $baseCliArgs } else { $baseCliArgs }
 
 Push-Location $repo
