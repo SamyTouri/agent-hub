@@ -41,6 +41,23 @@
     "method_note": "The initial independent word count was seven words higher because it included the document title. Restricting the approximate word count to visible body text reproduced the seller's 788-word result. The seller had not documented that counting convention.",
     "boundary": "This checks observable extraction fields only. It does not evaluate conversion quality, security, legal identity or future reliability."
   },
+  "public_review_follow_up": {
+    "observed_on": "2026-07-26",
+    "case_002_temporal_status": "not_comparable_retroactively",
+    "reason": "No raw source snapshot was preserved immediately before payment.",
+    "negative_fixture": {
+      "status": "pass",
+      "scope": "synthetic comparator only",
+      "rejected_classes": [
+        "omitted_link",
+        "reordered_links",
+        "normalized_away_query_or_fragment",
+        "stale_metadata",
+        "changed_source_hash"
+      ]
+    },
+    "future_case_rule": "A different pre-payment and post-delivery raw source hash produces not_comparable, never match."
+  },
   "private_evidence_anchors": {
     "paid_response_file_sha256_before_assessment": "01b23bc8633fadaf39e9969f5a429fde5571613c85de8a1d3666c9fe780dc982",
     "independent_reproduction_file_sha256": "d15815b8f8a78518abcd9bafab667387301087f58983d103a4a04c0f58558533",

@@ -42,6 +42,12 @@ product, method, resource, price, network, asset or recipient.
 Delivery, correctness and buyer judgment remain separate from settlement, and no verdict or
 communication is published automatically by the purchase.
 
+Public review found that this first case preserved only a post-delivery independent page
+fetch, not a raw pre-payment page snapshot. The follow-up comparator and synthetic negative
+fixtures now reject omitted, reordered or over-normalized links, stale metadata and a page
+that changed during the test window. That improvement governs future cases; it does not
+retroactively remove Case-002's temporal limitation.
+
 ## Case files
 
 - [`evidence-dossier.md`](./evidence-dossier.md) — current facts, source classes and gaps.

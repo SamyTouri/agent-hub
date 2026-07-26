@@ -72,6 +72,8 @@ authoritative.
 | On-chain transaction |  |  |  | Value movement | Not delivery or quality |
 | Delivery receipt |  |  |  | What response arrived | Not correctness |
 | Content hash |  |  |  | Which artifact was assessed | Not truth |
+| Pre-payment source snapshot |  |  |  | Raw source state before payment | Does not prove the provider saw that state |
+| Post-delivery source snapshot |  |  |  | Whether the raw source changed during the test window | If hashes differ, the result is not safely comparable |
 | Independent reproduction |  |  |  | Which observable fields matched | Not future reliability |
 | Buyer assessment |  |  |  | Mission-specific interpretation | Conflict must be disclosed |
 
@@ -128,7 +130,11 @@ For a paid or technically reproduced case, preserve a sanitized JSON sidecar con
 - exact product, target, network, asset, amount and parties;
 - transaction, receipt status and block reference;
 - delivery status, content type, byte count and content hash;
+- raw source hashes and capture times immediately before payment and after delivery when
+  the purchased result depends on mutable public data;
 - independent checks and their dates;
+- a machine-readable comparison status (`match`, `mismatch` or `not_comparable`) and the
+  exact negative fixture classes exercised by the comparator;
 - buyer assessment separated from general seller reliability;
 - hashes of private evidence files without publishing replayable authorizations or full paid output.
 

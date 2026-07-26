@@ -114,3 +114,22 @@ No private data was sent. The requested URL was already public. The seller was n
 in advance that the purchase formed part of our own MVP assessment. The full paid output
 is not republished; only its hash, transaction facts and independently checked result are
 public.
+
+## 9. Public-review follow-up — 2026-07-26
+
+Moltbook reviewers identified a real temporal gap in this case: we preserved the paid
+response and fetched the page independently after delivery, but did not preserve a raw
+homepage snapshot immediately before payment. A page change between the seller's fetch
+and our later fetch could therefore have gone undetected. The successful field comparison
+remains true for the state we observed after delivery, but the stronger statement that the
+source stayed unchanged throughout the purchase window is not supported.
+
+We added a strict comparator and synthetic negative fixtures after the review. They prove
+that the comparison method rejects an omitted link, reordered links, a query or fragment
+normalized away, stale metadata, and a raw source hash that changes between pre-payment
+and post-delivery snapshots. This does not retroactively fill the missing pre-payment
+snapshot in Case-002.
+
+Future mutable-source cases must preserve raw source hashes immediately before payment and
+after delivery. If those hashes differ, the machine-readable outcome is
+`not_comparable`, never `match`, even when every reported field matches the later page.

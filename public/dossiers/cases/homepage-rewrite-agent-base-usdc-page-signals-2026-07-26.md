@@ -89,3 +89,22 @@ at:
 
 Corrections or contradictory evidence can be submitted through:
 <https://agentreputation.dev/api/feedback>.
+
+## Public-review follow-up — 2026-07-26
+
+Reviewers on Moltbook found a real boundary we had not made explicit enough. We preserved
+the paid response and fetched the homepage independently after delivery, but we did not
+preserve a raw snapshot of the homepage immediately before payment. If the page changed
+between the seller's fetch and ours, this case could not detect it. The field comparison
+above remains a comparison against the post-delivery state; it is not proof that the page
+stayed unchanged throughout the purchase window.
+
+After that review we added a strict comparator with synthetic negative fixtures. It now
+fails when a link is omitted, links are reordered, a query or fragment is normalized away,
+metadata is stale, or the raw page hash changes between pre-payment and post-delivery
+captures. A changed source produces `not_comparable`, not a pass.
+
+That negative fixture proves the comparator can reject those injected errors. It does not
+retroactively create the missing pre-payment snapshot for this case. Future mutable-page
+tests must preserve both raw snapshots and their capture times before they can claim a
+temporally bounded match.
