@@ -6,14 +6,18 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import {
+  AVAILABILITY_BASELINE_COLLECTOR,
+  AVAILABILITY_TRANSITION_COLLECTOR,
   CYCLE_CHECK_SCHEMA,
   IMPORT_COLLECTORS,
   buildCycleReport,
+  isExpectedAvailabilityHandoff,
   resolveWindow,
   type Check,
   type CycleFacts,
   type CycleWindow,
 } from '../lib/evidence-cycle-report.ts'
+import { BASELINE_COLLECTOR } from '../lib/evidence-store.ts'
 
 const NOW = '2026-07-28T06:00:00.000Z'
 
@@ -43,6 +47,7 @@ function facts(overrides: Partial<CycleFacts> = {}): CycleFacts {
       backdated: 0,
     },
     multiCollectorChains: [],
+    multiCollectorTruncated: false,
     unknownSources: [],
     storage: { observations_total_bytes: 65536 },
     ...overrides,
@@ -223,10 +228,113 @@ test('a multi-author chain is reported by subject id and source, not by handle',
   )
   const check = checkById(report, 'ledger-integrity')
   assert.equal(check.verdict, 'failed')
-  const [example] = check.evidence.multi_collector_examples as Array<Record<string, unknown>>
+  const [example] = check.evidence.multi_collector_anomaly_examples as Array<Record<string, unknown>>
   assert.equal(example.subject_agent_id, '11111111-1111-4111-8111-111111111111')
   assert.equal(example.source, 'mcp-registry')
   assert.equal(example.subject_key, undefined)
+})
+
+// ---------------------------------------------------------------------------
+// The designed availability handoff is not corruption
+// ---------------------------------------------------------------------------
+
+const HANDOFF = {
+  subjectAgentId: '33333333-3333-4333-8333-333333333333',
+  source: 'endpoint-probe',
+  collectors: `${AVAILABILITY_TRANSITION_COLLECTOR},${AVAILABILITY_BASELINE_COLLECTOR}`,
+}
+
+test('the baseline-to-cron handoff on an availability chain is not an integrity failure', () => {
+  // Without this the first genuine availability transition — the very event the whole
+  // pilot is waiting for — would have been reported as a corrupt ledger.
+  const report = buildCycleReport(facts({ multiCollectorChains: [HANDOFF] }), NOW)
+  const check = checkById(report, 'ledger-integrity')
+  assert.equal(check.verdict, 'passed')
+  assert.equal(check.evidence.multi_collector_anomalies, 0)
+})
+
+test('the exception is named in the output, not applied in silence', () => {
+  const check = checkById(buildCycleReport(facts({ multiCollectorChains: [HANDOFF] }), NOW), 'ledger-integrity')
+  assert.equal(check.evidence.expected_availability_handoffs, 1)
+  assert.deepEqual(check.evidence.expected_availability_handoff_examples, [
+    { subject_agent_id: HANDOFF.subjectAgentId, source: 'endpoint-probe', collectors: HANDOFF.collectors },
+  ])
+  assert.match(String(check.evidence.expected_handoff_rule), /only the exact pair/)
+  assert.match(check.finding, /designed baseline-to-cron handoff/)
+})
+
+test('collector order in the SQL aggregate does not decide the verdict', () => {
+  for (const collectors of [
+    `${AVAILABILITY_BASELINE_COLLECTOR},${AVAILABILITY_TRANSITION_COLLECTOR}`,
+    `${AVAILABILITY_TRANSITION_COLLECTOR},${AVAILABILITY_BASELINE_COLLECTOR}`,
+    ` ${AVAILABILITY_TRANSITION_COLLECTOR} , ${AVAILABILITY_BASELINE_COLLECTOR} `,
+  ]) {
+    assert.equal(isExpectedAvailabilityHandoff({ source: 'endpoint-probe', collectors }), true, collectors)
+  }
+})
+
+test('a third collector on an availability chain is still an anomaly', () => {
+  const rogue = {
+    subjectAgentId: HANDOFF.subjectAgentId,
+    source: 'endpoint-probe',
+    collectors: `${AVAILABILITY_BASELINE_COLLECTOR},${AVAILABILITY_TRANSITION_COLLECTOR},cron:registry`,
+  }
+  assert.equal(isExpectedAvailabilityHandoff(rogue), false)
+  const check = checkById(buildCycleReport(facts({ multiCollectorChains: [rogue] }), NOW), 'ledger-integrity')
+  assert.equal(check.verdict, 'failed')
+  assert.equal(check.evidence.multi_collector_anomalies, 1)
+})
+
+test('the exception never leaks onto a profile chain', () => {
+  for (const source of ['mcp-registry', 'concordium-cis8004', 'moltbook', 'native']) {
+    const row = { subjectAgentId: HANDOFF.subjectAgentId, source, collectors: HANDOFF.collectors }
+    assert.equal(isExpectedAvailabilityHandoff(row), false, source)
+    assert.equal(checkById(buildCycleReport(facts({ multiCollectorChains: [row] }), NOW), 'ledger-integrity').verdict, 'failed')
+  }
+})
+
+test('an availability chain written by two unrelated collectors is still an anomaly', () => {
+  const row = { subjectAgentId: HANDOFF.subjectAgentId, source: 'endpoint-probe', collectors: 'cron:daily,cron:registry' }
+  assert.equal(isExpectedAvailabilityHandoff(row), false)
+  assert.equal(checkById(buildCycleReport(facts({ multiCollectorChains: [row] }), NOW), 'ledger-integrity').verdict, 'failed')
+})
+
+test('a real anomaly alongside legitimate handoffs still fails the check', () => {
+  const report = buildCycleReport(
+    facts({
+      multiCollectorChains: [
+        HANDOFF,
+        { subjectAgentId: '44444444-4444-4444-8444-444444444444', source: 'mcp-registry', collectors: 'cron:registry,script:evidence-cohort' },
+      ],
+    }),
+    NOW,
+  )
+  const check = checkById(report, 'ledger-integrity')
+  assert.equal(check.verdict, 'failed')
+  assert.equal(check.evidence.multi_collector_anomalies, 1)
+  assert.equal(check.evidence.expected_availability_handoffs, 1)
+})
+
+test('the exception cannot drift away from the collector that actually writes the baseline', () => {
+  // If the baseline collector is renamed, this fails rather than silently reverting to a
+  // false alarm on every availability chain.
+  assert.equal(AVAILABILITY_BASELINE_COLLECTOR, BASELINE_COLLECTOR)
+})
+
+test('a truncated multi-collector sample cannot be read as "no anomaly"', () => {
+  const report = buildCycleReport(facts({ multiCollectorChains: [HANDOFF], multiCollectorTruncated: true }), NOW)
+  const check = checkById(report, 'ledger-integrity')
+  assert.equal(check.verdict, 'inconclusive')
+  assert.match(String(check.cannot_prove), /truncated sample/)
+  assert.equal(report.overall, 'inconclusive')
+})
+
+test('a truncated sample does not soften a defect that was already found', () => {
+  const report = buildCycleReport(
+    facts({ multiCollectorTruncated: true, integrity: { ...facts().integrity, forks: 1 } }),
+    NOW,
+  )
+  assert.equal(checkById(report, 'ledger-integrity').verdict, 'failed')
 })
 
 test('an unknown source is an attribution anomaly', () => {

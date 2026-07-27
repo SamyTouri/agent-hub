@@ -23,6 +23,37 @@ export const KNOWN_SOURCES: readonly string[] = [
   'github-repository',
 ]
 
+/**
+ * La SEULE chaîne à deux auteurs que la conception prévoit.
+ *
+ * Pour un profil, l'auteur unique est la règle : deux collecteurs sur la même chaîne
+ * signifient deux lectures concurrentes du même sujet, et l'une d'elles fabrique des
+ * changements. Pour la disponibilité, non : le socle enregistre la DERNIÈRE mesure de la
+ * sonde, pas une vue concurrente d'elle, et le cron quotidien reprend la chaîne à partir
+ * de là. Les deux lignes sortent de la même sonde à travers le même réducteur.
+ *
+ * L'exception est donc étroite et nommée. Elle ne s'applique qu'à `endpoint-probe`, et
+ * qu'à cette paire exacte : un troisième collecteur, ou l'un de ces deux sur une chaîne
+ * de profil, reste une anomalie.
+ */
+export const AVAILABILITY_BASELINE_COLLECTOR = 'script:evidence-cohort'
+export const AVAILABILITY_TRANSITION_COLLECTOR = 'cron:daily'
+export const EXPECTED_HANDOFF_SOURCE = 'endpoint-probe'
+
+/** Vrai uniquement pour la relève socle → cron sur une chaîne de disponibilité. */
+export function isExpectedAvailabilityHandoff(row: { source: string; collectors: string }): boolean {
+  if (row.source !== EXPECTED_HANDOFF_SOURCE) return false
+  // Comparé comme un ensemble : ni l'ordre ni le formatage de l'agrégat SQL ne doivent
+  // pouvoir faire passer une anomalie pour la relève attendue, ni l'inverse.
+  const seen = new Set(
+    row.collectors
+      .split(',')
+      .map((collector) => collector.trim())
+      .filter(Boolean),
+  )
+  return seen.size === 2 && seen.has(AVAILABILITY_BASELINE_COLLECTOR) && seen.has(AVAILABILITY_TRANSITION_COLLECTOR)
+}
+
 export type Verdict = 'passed' | 'failed' | 'inconclusive'
 
 export type Check = {
@@ -96,8 +127,12 @@ export type CycleFacts = {
     identicalConsecutive: number
     backdated: number
   }
-  /** Groupé sur la clé de chaîne réelle (sujet, source), jamais sur le handle. */
+  /** Groupé sur la clé de chaîne réelle (sujet, source), jamais sur le handle. Brut : la
+   *  classification entre relève attendue et anomalie se fait ici, en un seul endroit. */
   multiCollectorChains: ReadonlyArray<{ subjectAgentId: string; source: string; collectors: string }>
+  /** La requête a atteint sa limite : la liste ci-dessus est un échantillon. Une anomalie
+   *  peut alors se cacher hors échantillon, et le contrôle ne doit pas conclure. */
+  multiCollectorTruncated: boolean
   unknownSources: ReadonlyArray<{ source: string; rows: number }>
   storage: Record<string, unknown>
 }
@@ -226,6 +261,11 @@ export function buildCycleReport(facts: CycleFacts, generatedAt: string): CycleR
   // -------------------------------------------------------------------------
   // 5. Intégrité et attribution
   // -------------------------------------------------------------------------
+  // La relève socle → cron sur une chaîne de disponibilité est prévue par la conception.
+  // Tout le reste — un troisième collecteur, ou deux auteurs sur une chaîne de profil —
+  // reste une anomalie. L'exception est nommée dans la sortie, pas appliquée en silence.
+  const handoffs = facts.multiCollectorChains.filter(isExpectedAvailabilityHandoff)
+  const attributionAnomalies = facts.multiCollectorChains.filter((row) => !isExpectedAvailabilityHandoff(row))
   const defects = {
     dangling_parents: facts.integrity.danglingParents,
     forks: facts.integrity.forks,
@@ -233,27 +273,51 @@ export function buildCycleReport(facts: CycleFacts, generatedAt: string): CycleR
     cross_chain_parents: facts.integrity.crossChainParents,
     identical_consecutive: facts.integrity.identicalConsecutive,
     backdated: facts.integrity.backdated,
-    multi_collector_chains: facts.multiCollectorChains.length,
+    multi_collector_anomalies: attributionAnomalies.length,
     unknown_sources: facts.unknownSources.length,
   }
   const defectTotal = Object.values(defects).reduce((total, value) => total + value, 0)
+  const named = Object.entries(defects)
+    .filter(([, value]) => value > 0)
+    .map(([key]) => key)
+  // Une liste tronquée ne peut pas fonder un « aucune anomalie » : l'anomalie peut être
+  // hors échantillon. On le dit plutôt que de conclure.
+  const truncatedBlindSpot = facts.multiCollectorTruncated && defectTotal === 0
   checks.push({
     id: 'ledger-integrity',
     question: 'Are there broken chains, forks, duplicate successors or attribution anomalies?',
-    verdict: defectTotal === 0 ? 'passed' : 'failed',
+    verdict: defectTotal > 0 ? 'failed' : truncatedBlindSpot ? 'inconclusive' : 'passed',
     finding:
-      defectTotal === 0
-        ? 'No broken chain, fork, duplicate baseline, cross-chain parent, backdated row, multi-author chain or unknown source.'
-        : `${defectTotal} integrity finding(s) across ${Object.entries(defects).filter(([, value]) => value > 0).map(([key]) => key).join(', ')}.`,
+      defectTotal > 0
+        ? `${defectTotal} integrity finding(s) across ${named.join(', ')}.`
+        : truncatedBlindSpot
+          ? 'No integrity finding in the rows examined, but the multi-collector list hit its limit, so an anomaly could sit outside the sample.'
+          : `No broken chain, fork, duplicate baseline, cross-chain parent, backdated row, unexpected multi-author chain or unknown source.${
+              handoffs.length > 0
+                ? ` ${handoffs.length} availability chain(s) carry the designed baseline-to-cron handoff, which is not an anomaly.`
+                : ''
+            }`,
     evidence: {
       ...defects,
-      multi_collector_examples: facts.multiCollectorChains.map((row) => ({
+      multi_collector_anomaly_examples: attributionAnomalies.map((row) => ({
         subject_agent_id: row.subjectAgentId,
         source: row.source,
         collectors: row.collectors,
       })),
+      // Preuve brute conservée : la relève attendue est montrée, pas effacée.
+      expected_availability_handoffs: handoffs.length,
+      expected_availability_handoff_examples: handoffs.map((row) => ({
+        subject_agent_id: row.subjectAgentId,
+        source: row.source,
+        collectors: row.collectors,
+      })),
+      expected_handoff_rule: `on ${EXPECTED_HANDOFF_SOURCE} only, and only the exact pair ${AVAILABILITY_BASELINE_COLLECTOR} + ${AVAILABILITY_TRANSITION_COLLECTOR}: the baseline records the probe's own last measurement and the cron continues that chain through the same reducer. Any third collector, or either of these on a profile chain, is still an anomaly.`,
+      multi_collector_sample_truncated: facts.multiCollectorTruncated,
       unknown_source_rows: facts.unknownSources.map((row) => ({ source: row.source, rows: row.rows })),
     },
+    ...(truncatedBlindSpot
+      ? { cannot_prove: 'That no attribution anomaly exists: the multi-collector query returned a truncated sample.' }
+      : {}),
   })
 
   // -------------------------------------------------------------------------

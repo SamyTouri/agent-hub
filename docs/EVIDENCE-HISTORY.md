@@ -198,6 +198,21 @@ cross-chain parents, identical consecutive states, backdated rows), attribution 
 (a chain with more than one collector, an unknown source), and the approximate table and
 index size.
 
+**One multi-collector chain is designed, not defective.** An availability chain starts
+with the manual baseline (`script:evidence-cohort`) and continues with the daily cron
+(`cron:daily`), because the baseline records the probe's own last measurement rather than
+a competing reading of it — the section above says why. So that exact pair, on
+`endpoint-probe` only, is reported as an expected handoff and does not fail integrity.
+Everything else still does: a third collector on an availability chain, either of those
+two on a profile chain where single authorship is the rule, or any other combination.
+Without the exception the first genuine availability transition — the event the pilot is
+waiting for — would have been reported as a corrupt ledger.
+
+The exception is named in the output rather than applied silently, and the handoffs are
+listed alongside the anomalies. If the multi-collector query ever returns a full sample,
+the check reports `inconclusive` instead of `passed`: an anomaly could sit outside a
+truncated list, and a truncated list must not read as a clean bill of health.
+
 ## Turning a chronology into a decision
 
 ```

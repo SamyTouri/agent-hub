@@ -38,6 +38,10 @@ if (!process.env.DATABASE_URL) {
   process.exit(1)
 }
 
+/** Échantillon des chaînes à plusieurs collecteurs. Atteindre cette limite est signalé au
+ *  rapport, qui refuse alors de conclure « aucune anomalie » sur un échantillon tronqué. */
+const MULTI_COLLECTOR_SAMPLE = 200
+
 const sql = postgres(process.env.DATABASE_URL, { prepare: false, ssl: 'require', max: 1 })
 const num = (value: unknown) => Number(value ?? 0)
 const iso = (value: unknown) => (value instanceof Date ? value.toISOString() : value === null || value === undefined ? null : String(value))
@@ -156,13 +160,18 @@ try {
 
   // Groupé sur la clé de chaîne RÉELLE. subject_key est le handle du jour de
   // l'observation : il change, et deux sujets peuvent en partager un.
+  //
+  // La classification entre relève attendue et anomalie se fait dans le module de
+  // rapport, pas ici : une règle écrite à deux endroits finit par diverger. La limite est
+  // donc large — la cohorte produit légitimement une relève par sujet sondé, et une
+  // limite courte pousserait une vraie anomalie hors de l'échantillon.
   const attribution = await sql`
     select subject_agent_id, source, string_agg(distinct collector, ',' order by collector) as names
     from evidence_observations
     group by subject_agent_id, source
     having count(distinct collector) > 1
     order by subject_agent_id, source
-    limit 20
+    limit ${MULTI_COLLECTOR_SAMPLE}
   `
 
   const unknownSources = await sql`
@@ -239,6 +248,7 @@ try {
       source: String(row.source),
       collectors: String(row.names),
     })),
+    multiCollectorTruncated: attribution.length >= MULTI_COLLECTOR_SAMPLE,
     unknownSources: unknownSources.map((row) => ({ source: String(row.source), rows: num(row.rows) })),
     storage,
   }
