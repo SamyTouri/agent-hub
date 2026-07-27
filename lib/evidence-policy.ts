@@ -769,7 +769,7 @@ export function evaluatePolicy(input: {
         .filter((criterion) => criterion.unknown_reason !== undefined)
         .map((criterion) => `${criterion.id}: ${criterion.unknown_reason}`),
       ...(undated.length > 0
-        ? [`${undated.length} observation(s) were excluded: their observation date is not a usable timestamp`]
+        ? [`dossier: unusable_observation_dates=${undated.length}`]
         : []),
     ],
     limitations: [

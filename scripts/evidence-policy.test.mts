@@ -509,7 +509,7 @@ test('an observation with an unusable date is excluded, not treated as current',
   })
   assert.equal(evaluation.criteria[0].result, 'unknown')
   assert.equal(evaluation.decision, 'insufficient_evidence')
-  assert.ok(evaluation.unknowns.some((entry) => /not a usable timestamp/.test(entry)))
+  assert.ok(evaluation.unknowns.includes('dossier: unusable_observation_dates=1'))
   assert.ok(evaluation.limitations.some((entry) => /unusable date/.test(entry)))
 })
 

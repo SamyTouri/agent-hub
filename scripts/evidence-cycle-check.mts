@@ -89,7 +89,9 @@ try {
       count(*) filter (where checked_at is not null
                          and checked_at >= ${window.since}::timestamptz
                          and checked_at <= ${window.until}::timestamptz)::int as fresh_checks,
-      max(checked_at) filter (where checked_at is not null) as newest_check,
+      max(checked_at) filter (where checked_at is not null
+                                and checked_at >= ${window.since}::timestamptz
+                                and checked_at <= ${window.until}::timestamptz) as newest_check,
       count(*) filter (where raw is not null and checked_at is null)::int as malformed
     from (
       select metadata->'endpoint_check'->>'checked_at' as raw,
