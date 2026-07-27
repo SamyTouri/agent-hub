@@ -160,6 +160,80 @@ head of the wave, so it is covered every day even when the budget cuts the run s
 wave is only started if enough time remains to absorb a patient second chance — previously
 a wave could start at 44 s and be killed at 60 s with the probes done but never written.
 
+## Checking a collection cycle
+
+```
+node --experimental-strip-types scripts/evidence-cycle-check.mts
+node --experimental-strip-types scripts/evidence-cycle-check.mts --since <iso> --until <iso>
+```
+
+Read-only, sequential, `SELECT` only. It triggers no cron and writes nothing. The window
+defaults to the last 24 hours.
+
+**Zero new observations is a successful cycle.** The ledger only writes on change, so an
+empty window proves nothing on its own, and the report never treats stable row counts as
+proof that a job ran. Each check returns `passed`, `failed` or `inconclusive`, and the ones
+that cannot be settled say what they cannot settle.
+
+What the database genuinely can prove, and how:
+
+| Signal | Why it is evidence |
+|---|---|
+| A catalogue row written in the window **without** a fresh endpoint check | Only the registry/Concordium import writes that way, so the import ran. |
+| A catalogue row carrying a check dated inside the window | The probe writes the current-state check on every pass, changed or not — so a fresh check is proof the probe ran, even when the ledger stayed empty. |
+| No fresh check at all | The probe step left no trace. That is a real finding, but the database cannot tell "never invoked" from "invoked and failed before writing". |
+| No import write at all | Inconclusive, never a failure: an empty upstream delta produces no write. |
+
+**The database cannot prove a Vercel invocation.** The report says so explicitly and names
+the separate check to run: the cron logs for `/api/cron/registry` and `/api/cron/daily`
+over the same window. No telemetry is invented to fill that gap.
+
+The report also counts chain defects (dangling parents, forks, duplicate baselines,
+cross-chain parents, identical consecutive states, backdated rows), attribution anomalies
+(a chain with more than one collector, an unknown source), and the approximate table and
+index size.
+
+## Turning a chronology into a decision
+
+```
+node --experimental-strip-types scripts/evidence-policy.mts --demo
+node --experimental-strip-types scripts/evidence-policy.mts <handle> --example strict
+node --experimental-strip-types scripts/evidence-policy.mts <handle> --policy <file.json>
+```
+
+`--demo` touches no database: it replays the **synthetic** scenarios so the shape of the
+result can be shown without inventing a history for a real supplier. Any other invocation
+reads the database read-only.
+
+The output is a decision relative to the supplied criteria — `criteria_satisfied`,
+`conditional_activation`, `insufficient_evidence` or `criteria_not_satisfied` — and it
+means nothing outside that policy. It is never a score, a ranking or a certification, and
+**policy fit is not a public surface**: it sits with full histories behind the paid level.
+
+Three properties are load-bearing and are tested as such:
+
+- **Absence of evidence is never failure.** A source we never observed returns `unknown`
+  and pushes the whole evaluation towards `insufficient_evidence`. Observed absence — the
+  source was read and declares no repository — is a different thing and may fail.
+- **The evaluator has no discretion.** `conditional_activation` only ever comes from a
+  criterion the policy itself declared conditional, together with a safeguard its author
+  wrote. A conditional criterion without a safeguard is rejected as an invalid policy.
+- **Sources are never merged.** A contradiction names both values and both observation
+  ids; nothing arbitrates between them.
+
+The vocabulary is closed and versioned — six kinds, no expressions, no user-supplied code,
+no weights: `source_present`, `field_present`, `field_in`, `no_change_since`,
+`checked_since`, `no_contradiction`. A policy declares the vocabulary version it was
+written against and is refused rather than reinterpreted if that version is unknown.
+
+One subtlety worth keeping in mind when writing a policy: `checked_since` reads the
+current-state record, never the ledger. Asking the ledger how fresh our evidence is would
+report a perfectly stable supplier as stale, because a stable supplier produces no rows.
+When the caller cannot supply a last-check date, the criterion is `unknown` and says why.
+Likewise `no_change_since` returns `unknown` when our own history is younger than the
+window the policy asks about — claiming ninety calm days after two days of tracking would
+be true and misleading.
+
 ## Correcting a mistake
 
 Observations cannot be updated or deleted, including by the production role: a trigger
