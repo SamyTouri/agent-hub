@@ -179,10 +179,15 @@ What the database genuinely can prove, and how:
 
 | Signal | Why it is evidence |
 |---|---|
-| A catalogue row written in the window **without** a fresh endpoint check | Only the registry/Concordium import writes that way, so the import ran. |
-| A catalogue row carrying a check dated inside the window | The probe writes the current-state check on every pass, changed or not — so a fresh check is proof the probe ran, even when the ledger stayed empty. |
+| A ledger row signed by `cron:registry` or `cron:registry/concordium` inside the window | Direct attribution: only those collectors write under those names, so that import ran and wrote. |
+| A catalogue row carrying a check dated inside the window | The probe writes the current-state check on every pass, changed or not — so a fresh check proves a probe ran, even when the ledger stayed empty. It does not prove it was the cron: the offline catch-up script writes the same field. |
 | No fresh check at all | The probe step left no trace. That is a real finding, but the database cannot tell "never invoked" from "invoked and failed before writing". |
-| No import write at all | Inconclusive, never a failure: an empty upstream delta produces no write. |
+| No import-signed row at all | Inconclusive, never a failure: an empty upstream delta produces no write. |
+| A catalogue row touched without a fresh check | **Context only, never proof.** `agents.updated_at` is refreshed by a generic trigger on any write to the row — registration, claim and maintenance scripts included — so it can never attribute a write to an import and can never produce `passed`. |
+
+The report deliberately does **not** state how many identical states were suppressed. The
+window can span several cycles, and a check that produced no row leaves nothing to count;
+a confident number there would be a comfortable fiction.
 
 **The database cannot prove a Vercel invocation.** The report says so explicitly and names
 the separate check to run: the cron logs for `/api/cron/registry` and `/api/cron/daily`

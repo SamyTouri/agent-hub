@@ -17,7 +17,12 @@ import { readFileSync } from 'node:fs'
 import postgres from 'postgres'
 import { loadSubjectObservations, provenanceSource } from '../lib/evidence-store.ts'
 import { COHORT_ID } from '../lib/evidence-cohort.ts'
-import { evaluatePolicy, validatePolicy, type ActivationPolicy } from '../lib/evidence-policy.ts'
+import {
+  currentStateFreshness,
+  evaluatePolicy,
+  parsePolicyDocument,
+  type ActivationPolicy,
+} from '../lib/evidence-policy.ts'
 import {
   DEMO_CUTOFF,
   EXAMPLE_POLICIES,
@@ -71,12 +76,9 @@ if (!handle) {
   process.exit(1)
 }
 
+// La politique est validée AVANT toute lecture de base : un document mal formé ne doit
+// même pas coûter une connexion, et surtout jamais franchir la validation par un cast.
 const policy = loadPolicy()
-const problems = validatePolicy(policy)
-if (problems.length > 0) {
-  for (const problem of problems) console.error(`policy problem — ${problem.code}: ${problem.detail}`)
-  process.exit(1)
-}
 
 // Présence seulement : la valeur n'est ni lue, ni journalisée, ni affichée.
 if (!process.env.DATABASE_URL) {
@@ -91,7 +93,8 @@ try {
   const [row] = await sql`
     select a.id, a.handle, a.display_name, a.external_source,
            a.metadata->'endpoint_check'->>'checked_at' as endpoint_checked_at,
-           a.updated_at,
+           -- Pas de a.updated_at : ce n'est pas une date de contrôle par source, et la
+           -- laisser à portée de main invite à la recâbler. Voir currentStateFreshness.
            c.stratum, c.selection_rule, c.selection_reason, c.subject_kind
     from agents a
     left join evidence_cohort c on c.agent_id = a.id and c.active and c.cohort = ${COHORT_ID}
@@ -125,11 +128,13 @@ try {
   }
 
   // « Quand a-t-on regardé » ne vient JAMAIS du journal — il n'enregistre que les
-  // changements. Ces dates viennent de l'état courant, seul endroit qui les porte.
-  const lastCheckedAt: Record<string, string | null> = {
-    [subject.provenance]: row.updated_at instanceof Date ? row.updated_at.toISOString() : (row.updated_at as string | null),
-    'endpoint-probe': (row.endpoint_checked_at as string | null) ?? null,
-  }
+  // changements. Et surtout, pas de agents.updated_at : un trigger générique rafraîchit
+  // cette colonne à la moindre écriture sur la ligne, sonde comprise, donc elle
+  // certifierait une relecture du registre qui n'a jamais eu lieu. La fraîcheur registre
+  // reste inconnue tant qu'un collecteur n'écrit pas sa propre trace de contrôle.
+  const lastCheckedAt = currentStateFreshness({
+    endpointCheckedAt: (row.endpoint_checked_at as string | null) ?? null,
+  })
 
   const cutoff = CUTOFF ?? new Date().toISOString()
   const evaluation = evaluatePolicy({ dossier: { subject, observations, lastCheckedAt }, policy, cutoff })
@@ -149,10 +154,20 @@ function loadPolicy(): ActivationPolicy {
     console.error('supply a policy with --policy <file.json> or --example strict|pragmatic')
     process.exit(1)
   }
+  let document: unknown
   try {
-    return JSON.parse(readFileSync(POLICY_FILE, 'utf8')) as ActivationPolicy
+    document = JSON.parse(readFileSync(POLICY_FILE, 'utf8')) as unknown
   } catch (error) {
     console.error(`cannot read policy file: ${error instanceof Error ? error.message : 'unreadable'}`)
     process.exit(1)
   }
+  // Fail-closed : rien n'est supposé, tout est reconnu. Un `requirement: "Required"` mal
+  // capitalisé ne doit pas disparaître silencieusement de l'ensemble décisionnel et
+  // ressortir en « critères satisfaits ».
+  const parsed = parsePolicyDocument(document)
+  if (!parsed.ok) {
+    for (const problem of parsed.problems) console.error(`policy problem — ${problem.code}: ${problem.detail}`)
+    process.exit(1)
+  }
+  return parsed.policy
 }

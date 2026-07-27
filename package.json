@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test scripts/representative-outbound.test.mts scripts/prepurchase.test.mts scripts/case-002-preflight.test.mts scripts/case-002-payment.test.mts scripts/page-signals-comparator.test.mts scripts/cache-tags.test.mts scripts/endpoint-probe.test.mts scripts/evidence-history.test.mts scripts/evidence-cohort.test.mts scripts/evidence-store.test.mts scripts/evidence-policy.test.mts"
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test scripts/representative-outbound.test.mts scripts/prepurchase.test.mts scripts/case-002-preflight.test.mts scripts/case-002-payment.test.mts scripts/page-signals-comparator.test.mts scripts/cache-tags.test.mts scripts/endpoint-probe.test.mts scripts/evidence-history.test.mts scripts/evidence-cohort.test.mts scripts/evidence-store.test.mts scripts/evidence-policy.test.mts scripts/evidence-cycle-report.test.mts"
   },
   "dependencies": {
     "@coinbase/cdp-sdk": "1.54.0",
