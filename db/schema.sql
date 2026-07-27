@@ -559,3 +559,185 @@ create index if not exists prepurchase_orders_created_idx
 alter table prepurchase_orders enable row level security;
 revoke all on table public.prepurchase_orders from anon, authenticated;
 grant select, insert, update on table public.prepurchase_orders to service_role;
+
+-- 21. Journal de preuves append-only + cohorte pilote suivie (2026-07-27).
+--
+-- Tout le reste du schéma conserve l'état PRÉSENT : l'import registre écrase la
+-- description et l'endpoint, la sonde écrase la disponibilité, l'import dépôt écrase le
+-- compteur. Ce journal garde ce que les autres tables écrasent — la seule chose qu'un
+-- concurrent futur ne pourra pas reconstituer.
+--
+-- Économie du modèle : une observation n'est écrite que si l'empreinte NORMALISÉE change,
+-- et les horodatages/compteurs sont exclus de cette empreinte. Une sonde identique
+-- n'écrit donc rien. « Quand a-t-on regardé » reste répondu par l'état courant
+-- (agents.metadata.endpoint_check) ; « qu'est-ce qui a changé », par ce journal. Une
+-- photographie quotidienne des 17 000 fiches est exclue par construction.
+--
+-- Détail commenté et procédure : db/migration-evidence-history.sql, docs/EVIDENCE-HISTORY.md.
+
+create table if not exists evidence_cohort (
+  agent_id         uuid primary key references agents(id) on delete cascade,
+  cohort           text not null default 'pilot-2026-07',
+  stratum          text not null check (stratum in (
+                     'business_system_connector',
+                     'multi_source_identity',
+                     'availability_watch',
+                     'non_mcp_provenance'
+                   )),
+  selection_rule   text not null check (selection_rule ~ '/v[0-9]+$'),
+  selection_family text,
+  -- La raison de sélection vit AVEC le sujet : « pourquoi ceux-là ? » doit obtenir une
+  -- règle versionnée, pas une justification reconstruite après coup.
+  selection_reason text not null check (char_length(selection_reason) between 20 and 1000),
+  subject_kind     text not null default 'mcp_server'
+                     check (subject_kind in ('agent', 'mcp_server', 'service')),
+  active           boolean not null default true,
+  added_at         timestamptz not null default now(),
+  deactivated_at   timestamptz,
+  check ((active and deactivated_at is null) or (not active and deactivated_at is not null))
+);
+create index if not exists evidence_cohort_active_idx
+  on evidence_cohort (cohort, stratum) where active;
+
+-- Pas de clé étrangère vers agents : délibéré. L'histoire d'un sujet doit survivre à la
+-- suppression de sa fiche courante. subject_key garde l'identifiant tel qu'il était au
+-- moment de l'observation, ce qui rend auditable un changement de handle.
+create table if not exists evidence_observations (
+  id                      uuid primary key default gen_random_uuid(),
+  seq                     bigint generated always as identity,
+  subject_kind            text not null check (subject_kind in ('agent', 'mcp_server', 'service')),
+  subject_agent_id        uuid not null,
+  subject_key             text not null check (char_length(subject_key) between 1 and 400),
+  source                  text not null check (char_length(source) between 1 and 80),
+  source_url              text check (source_url is null or char_length(source_url) <= 2000),
+  observed_at             timestamptz not null default now(),
+  effective_at            timestamptz,
+  schema_version          int not null check (schema_version >= 1),
+  content_hash            text not null check (content_hash ~ '^[a-f0-9]{64}$'),
+  facts                   jsonb not null,
+  previous_observation_id uuid references evidence_observations(id),
+  change_summary          jsonb not null default '[]'::jsonb,
+  visibility              text not null default 'paid'
+                            check (visibility in ('public_summary', 'paid', 'private')),
+  collector               text not null check (char_length(collector) between 1 and 120),
+  created_at              timestamptz not null default now(),
+  check (jsonb_typeof(facts) = 'object'),
+  check (jsonb_typeof(change_summary) = 'array'),
+  check (previous_observation_id is not null or change_summary = '[]'::jsonb)
+);
+
+-- Garantie réelle contre la double écriture concurrente : le trigger porte la sémantique,
+-- mais deux transactions simultanées le franchiraient toutes les deux — pas ces index.
+create unique index if not exists evidence_observations_baseline_unique
+  on evidence_observations (subject_agent_id, source)
+  where previous_observation_id is null;
+create unique index if not exists evidence_observations_successor_unique
+  on evidence_observations (previous_observation_id)
+  where previous_observation_id is not null;
+create index if not exists evidence_observations_head_idx
+  on evidence_observations (subject_agent_id, source, seq desc);
+create index if not exists evidence_observations_observed_idx
+  on evidence_observations (observed_at desc);
+create index if not exists evidence_observations_source_idx
+  on evidence_observations (source, observed_at desc);
+
+-- Immuabilité refusée par le moteur, pas par convention. Une erreur se rétracte par une
+-- nouvelle observation datée (doctrine de correction publique du 2026-07-25).
+create or replace function evidence_observations_immutable()
+returns trigger language plpgsql
+set search_path = public, pg_temp
+as $$
+begin
+  raise exception 'evidence_observations is append-only: % refused', tg_op
+    using errcode = 'restrict_violation',
+          hint = 'Retract by appending a dated observation; never rewrite history in place.';
+end;
+$$;
+
+drop trigger if exists evidence_observations_no_mutation on evidence_observations;
+create trigger evidence_observations_no_mutation
+  before update or delete on evidence_observations
+  for each row execute function evidence_observations_immutable();
+
+drop trigger if exists evidence_observations_no_truncate on evidence_observations;
+create trigger evidence_observations_no_truncate
+  before truncate on evidence_observations
+  for each statement execute function evidence_observations_immutable();
+
+-- Volontairement PAS d'unicité globale sur (sujet, source, empreinte) : elle interdirait
+-- d'enregistrer un retour à un état antérieur, or un hôte qui retombe en panne après
+-- s'être rétabli est exactement ce qu'un acheteur veut voir. La déduplication porte sur
+-- la SUITE : deux observations consécutives identiques sont refusées.
+create or replace function evidence_observations_chain_guard()
+returns trigger language plpgsql
+set search_path = public, pg_temp
+as $$
+declare
+  head_id   uuid;
+  prev_hash text;
+  prev_time timestamptz;
+begin
+  select id into head_id
+  from evidence_observations
+  where subject_agent_id = new.subject_agent_id and source = new.source
+  order by seq desc
+  limit 1;
+
+  if new.previous_observation_id is null then
+    if head_id is not null then
+      raise exception 'a baseline already exists for subject % source %', new.subject_agent_id, new.source
+        using errcode = 'unique_violation';
+    end if;
+    return new;
+  end if;
+
+  select content_hash, observed_at
+    into prev_hash, prev_time
+  from evidence_observations
+  where id = new.previous_observation_id
+    and subject_agent_id = new.subject_agent_id
+    and source = new.source;
+
+  if not found then
+    raise exception 'previous observation % does not belong to subject % source %',
+      new.previous_observation_id, new.subject_agent_id, new.source
+      using errcode = 'check_violation';
+  end if;
+
+  if head_id is distinct from new.previous_observation_id then
+    raise exception 'observations must extend the current head, not fork it'
+      using errcode = 'check_violation';
+  end if;
+
+  if prev_hash = new.content_hash then
+    raise exception 'identical consecutive observation refused for subject % source %',
+      new.subject_agent_id, new.source
+      using errcode = 'unique_violation',
+            hint = 'Write an observation only when the normalized fingerprint changes.';
+  end if;
+
+  if new.observed_at < prev_time then
+    raise exception 'observed_at must not go backwards'
+      using errcode = 'check_violation';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists evidence_observations_chain on evidence_observations;
+create trigger evidence_observations_chain
+  before insert on evidence_observations
+  for each row execute function evidence_observations_chain_guard();
+
+-- Aucune Data API publique : la chronologie complète est le produit payant, elle ne doit
+-- pas fuir par l'API REST auto-générée de Supabase.
+alter table evidence_cohort       enable row level security;
+alter table evidence_observations enable row level security;
+revoke all on table public.evidence_cohort       from anon, authenticated;
+revoke all on table public.evidence_observations from anon, authenticated;
+revoke all on sequence public.evidence_observations_seq_seq from anon, authenticated;
+grant select, insert, update on table public.evidence_cohort to service_role;
+grant select, insert         on table public.evidence_observations to service_role;
+grant usage, select on sequence public.evidence_observations_seq_seq to service_role;
+revoke update, delete, truncate on table public.evidence_observations from public, service_role;

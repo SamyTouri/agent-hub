@@ -1,5 +1,7 @@
-import { getSql } from '@/lib/db'
+import { getSql, type Sql } from '@/lib/db'
 import { embedMany } from '@/lib/embeddings'
+import { EVIDENCE_SCHEMA_VERSION, profileFacts, type ObservationInput } from '@/lib/evidence-history'
+import { appendObservations, loadActiveCohort, type AppendOutcome } from '@/lib/evidence-store'
 
 const REGISTRY = 'https://registry.modelcontextprotocol.io/v0.1/servers'
 
@@ -27,10 +29,19 @@ const githubRepoUrl = (value: string | undefined) => {
 // Delta-import quotidien du registre MCP officiel (même mapping que
 // scripts/import-mcp-registry.mjs, mais filtré par updated_since et borné par
 // un budget temps : la route cron Vercel Hobby plafonne à 60 s au total).
-export async function syncRegistryDelta(sinceHours = 25, deadlineMs = 35_000, upsertBudgetMs = deadlineMs) {
+export async function syncRegistryDelta(
+  sinceHours = 25,
+  deadlineMs = 35_000,
+  upsertBudgetMs = deadlineMs,
+  observationBudgetMs = 15_000,
+) {
   const t0 = Date.now()
   const since = new Date(Date.now() - sinceHours * 3600 * 1000).toISOString()
   const byName = new Map<string, RegistryServer>()
+  // Quand la fiche a changé EN AMONT, d'après le registre lui-même. À ne pas confondre
+  // avec le moment où nous avons regardé : c'est la différence entre une date d'effet et
+  // une date de constat, et le journal de preuves conserve les deux séparément.
+  const effectiveByName = new Map<string, string>()
   let cursor: string | null = null
   let pages = 0
 
@@ -55,7 +66,10 @@ export async function syncRegistryDelta(sinceHours = 25, deadlineMs = 35_000, up
       const meta = item._meta?.['io.modelcontextprotocol.registry/official']
       if (meta?.isLatest === false) continue
       if (meta?.status && meta.status !== 'active') continue
-      if (s?.name && !byName.has(s.name)) byName.set(s.name, s)
+      if (s?.name && !byName.has(s.name)) {
+        byName.set(s.name, s)
+        if (typeof meta?.updatedAt === 'string') effectiveByName.set(s.name, meta.updatedAt)
+      }
     }
     cursor = data.metadata?.nextCursor ?? null
     pages++
@@ -97,5 +111,65 @@ export async function syncRegistryDelta(sinceHours = 25, deadlineMs = 35_000, up
       }
     }
   }
-  return { fetched: servers.length, upserted, pages }
+
+  const observations = await recordCohortProfiles(sql, byName, effectiveByName, observationBudgetMs)
+  return { fetched: servers.length, upserted, pages, observations }
+}
+
+/**
+ * Historisation bornée : uniquement les sujets de la cohorte suivie, uniquement ceux que
+ * ce delta vient de rapporter, et uniquement quand l'empreinte normalisée a changé.
+ *
+ * Aucun chemin d'écriture non borné n'est créé ici : la cohorte plafonne à 50 sujets, donc
+ * ce bloc coûte une lecture et, les jours ordinaires, zéro écriture. Toute erreur est
+ * absorbée — l'import du registre est le travail principal du cron et ne doit pas échouer
+ * parce que le journal de preuves a un souci, ni parce que sa migration n'est pas encore
+ * appliquée.
+ */
+async function recordCohortProfiles(
+  sql: Sql,
+  byName: Map<string, RegistryServer>,
+  effectiveByName: Map<string, string>,
+  budgetMs: number,
+): Promise<AppendOutcome | { ok: false; reason: string }> {
+  const startedAt = Date.now()
+  if (budgetMs <= 0) return { ok: false, reason: 'no_time_budget' }
+  try {
+    const cohort = await loadActiveCohort(sql)
+    if (cohort === null) return { ok: false, reason: 'not_migrated' }
+
+    const observedAt = new Date().toISOString()
+    const inputs: ObservationInput[] = []
+    for (const member of cohort) {
+      if (member.externalSource !== 'mcp-registry' || !member.externalId) continue
+      const server = byName.get(member.externalId)
+      if (!server) continue
+      inputs.push({
+        subjectKind: member.subjectKind,
+        subjectAgentId: member.agentId,
+        subjectKey: member.handle,
+        source: 'mcp-registry',
+        sourceUrl: REGISTRY,
+        observedAt,
+        effectiveAt: effectiveByName.get(member.externalId) ?? null,
+        facts: profileFacts({
+          displayName: server.title,
+          description: server.description,
+          endpoint: server.remotes?.[0]?.url,
+          protocols: ['mcp'],
+          repository: githubRepoUrl(server.repository?.url),
+        }),
+        // Le registre MCP officiel est public : le résumé normalisé peut être montré.
+        // Ce qui reste payant, c'est la chronologie complète, pas ce constat isolé.
+        visibility: 'public_summary',
+        collector: 'cron:registry',
+        schemaVersion: EVIDENCE_SCHEMA_VERSION,
+      })
+      if (Date.now() - startedAt > budgetMs) break
+    }
+    if (inputs.length === 0) return { ok: true, considered: 0, written: 0, unchanged: 0, refused: 0 }
+    return await appendObservations(sql, inputs)
+  } catch (error) {
+    return { ok: false, reason: error instanceof Error ? error.message.slice(0, 200) : 'observation failed' }
+  }
 }
