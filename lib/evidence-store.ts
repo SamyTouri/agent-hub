@@ -16,7 +16,10 @@
 import type { Sql } from './db.ts'
 import type { EndpointCheck } from './endpoint-probe.ts'
 import {
+  EVIDENCE_SCHEMA_VERSION,
+  availabilityFacts,
   planObservation,
+  profileFacts,
   type EvidenceFacts,
   type EvidenceSource,
   type FactChange,
@@ -25,7 +28,7 @@ import {
   type SubjectKind,
   type Visibility,
 } from './evidence-history.ts'
-import { COHORT_ID } from './evidence-cohort.ts'
+import { COHORT_ID, hasFieldCollector } from './evidence-cohort.ts'
 import type { StoredObservation } from './evidence-timeline.ts'
 
 /** Hard ceiling per call. The cohort is bounded by design; this is the backstop that keeps
@@ -109,6 +112,87 @@ export function provenanceSource(externalSource: string | null): EvidenceSource 
         `unknown provenance "${externalSource}": add it to EvidenceSource before observing this subject`,
       )
   }
+}
+
+/** Written on every row the operator baseline command produces. */
+export const BASELINE_COLLECTOR = 'script:evidence-cohort'
+
+export type BaselinePlan = {
+  /** Profile chains the manual baseline may start. */
+  profiles: ObservationInput[]
+  /** Availability chains the manual baseline may start. */
+  availability: ObservationInput[]
+  /** Subjects left to their own importer, counted by provenance. Reported, never silent. */
+  deferredProfiles: Record<string, number>
+}
+
+/**
+ * What a manual baseline is allowed to write — pure, so the rule is testable without a
+ * database and reviewable without running anything.
+ *
+ * A profile chain has exactly one author. Where an importer already appends profile
+ * observations, that importer is it: the baseline reads the stored catalogue row while the
+ * importer reads the fresh upstream payload, and for Concordium the row cannot even hold
+ * what the importer records (the on-chain anchors live nowhere in `agents`). Writing our
+ * poorer reading first would make the importer's first append diff against it and publish
+ * "anchors added" — a change that never happened at the vendor, permanent in an append-only
+ * ledger. So those subjects are deferred, and the deferral is counted rather than implied.
+ *
+ * Availability is the opposite case and stays: both readings come from the same probe
+ * through the same reducer, so the baseline is that collector's own last measurement rather
+ * than a competing view of it. Provenances with no importer keep their manual baseline too
+ * — for them the alternative is no history at all.
+ *
+ * Throws on an unrecognised provenance, through `provenanceSource`: refusing to attribute
+ * beats signing someone else's claim with our name.
+ */
+export function planBaselineObservations(
+  cohort: readonly CohortMember[],
+  observedAt: string,
+): BaselinePlan {
+  const plan: BaselinePlan = { profiles: [], availability: [], deferredProfiles: {} }
+
+  for (const member of cohort) {
+    const common = {
+      subjectKind: member.subjectKind,
+      subjectAgentId: member.agentId,
+      subjectKey: member.handle,
+      sourceUrl: member.endpoint,
+      observedAt,
+      effectiveAt: null,
+      visibility: 'public_summary' as const,
+      collector: BASELINE_COLLECTOR,
+      schemaVersion: EVIDENCE_SCHEMA_VERSION,
+    }
+
+    if (hasFieldCollector(member.externalSource)) {
+      const provenance = provenanceSource(member.externalSource)
+      plan.deferredProfiles[provenance] = (plan.deferredProfiles[provenance] ?? 0) + 1
+    } else {
+      plan.profiles.push({
+        ...common,
+        source: provenanceSource(member.externalSource),
+        facts: profileFacts({
+          displayName: member.displayName,
+          description: member.description,
+          endpoint: member.endpoint,
+          protocols: member.protocols,
+          repository: member.repository,
+        }),
+      })
+    }
+
+    // No probe has run yet: there is no measurement to record, and inventing one would be
+    // the same mistake in a different chain.
+    if (!member.endpointCheck?.checked_at) continue
+    plan.availability.push({
+      ...common,
+      source: 'endpoint-probe',
+      facts: availabilityFacts(member.endpointCheck),
+    })
+  }
+
+  return plan
 }
 
 /**

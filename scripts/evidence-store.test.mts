@@ -13,17 +13,22 @@ import test from 'node:test'
 
 import type { Sql } from '../lib/db.ts'
 import {
+  BASELINE_COLLECTOR,
   appendObservations,
+  planBaselineObservations,
   provenanceSource,
   type CohortMember,
 } from '../lib/evidence-store.ts'
 import {
   EVIDENCE_SCHEMA_VERSION,
   contentHash,
+  diffFacts,
   profileFacts,
   type EvidenceFacts,
   type ObservationInput,
 } from '../lib/evidence-history.ts'
+import { PROVENANCES_WITH_FIELD_COLLECTOR, hasFieldCollector } from '../lib/evidence-cohort.ts'
+import { nextCheck } from '../lib/endpoint-probe.ts'
 
 const SUBJECT = '11111111-1111-4111-8111-111111111111'
 const OTHER = '22222222-2222-4222-8222-222222222222'
@@ -246,7 +251,17 @@ test('an unknown registry refuses attribution instead of guessing', () => {
 })
 
 test('a cohort member keeps the provenance it was imported with', () => {
-  const member: CohortMember = {
+  assert.equal(provenanceSource(member().externalSource), 'concordium-cis8004')
+})
+
+// ---------------------------------------------------------------------------
+// One author per profile chain — the last pre-activation blocker
+// ---------------------------------------------------------------------------
+
+const PROBED = nextCheck(null, { responded: true, status: 200 }, T1)
+
+function member(overrides: Partial<CohortMember> = {}): CohortMember {
+  return {
     agentId: SUBJECT,
     handle: 'cis8004.ccd-7',
     displayName: 'Anchored agent',
@@ -261,6 +276,89 @@ test('a cohort member keeps the provenance it was imported with', () => {
     repository: null,
     protocols: ['a2a-card'],
     endpointCheck: null,
+    ...overrides,
   }
-  assert.equal(provenanceSource(member.externalSource), 'concordium-cis8004')
+}
+
+test('the manual baseline never authors a chain an importer already owns', () => {
+  const plan = planBaselineObservations(
+    [
+      member(),
+      member({ agentId: OTHER, handle: 'io.github.a/server', externalSource: 'mcp-registry', subjectKind: 'mcp_server' }),
+    ],
+    T2,
+  )
+  assert.deepEqual(plan.profiles, [], 'both provenances collect their own fields')
+  assert.deepEqual(plan.deferredProfiles, { 'concordium-cis8004': 1, 'mcp-registry': 1 })
+})
+
+test('the deferred subjects are the ones the cohort rule promises a collector for', () => {
+  for (const provenance of PROVENANCES_WITH_FIELD_COLLECTOR) {
+    const plan = planBaselineObservations([member({ externalSource: provenance })], T2)
+    assert.deepEqual(plan.profiles, [], `${provenance} must be left to its importer`)
+  }
+  assert.equal(hasFieldCollector('moltbook'), false)
+  assert.equal(hasFieldCollector(null), false, 'nothing collects our own native subjects')
+})
+
+test('the fabricated change the skip prevents', () => {
+  // Why this is not a style preference. The stored catalogue row cannot hold the on-chain
+  // anchors — nothing in `agents` has a column for them — so a manual baseline is a POORER
+  // reading of the same subject, not a stale one. Written first, the importer's very first
+  // append would diff against it and publish an anchoring event that never happened.
+  const fromStoredRow = profileFacts({
+    displayName: 'Anchored agent',
+    description: 'A CIS-8004 agent.',
+    endpoint: 'https://tippingservice.co.uk/agents/x/.well-known/agent-card.json',
+    protocols: ['a2a-card'],
+  })
+  const fromImporter = profileFacts({
+    displayName: 'Anchored agent',
+    description: 'A CIS-8004 agent.',
+    endpoint: 'https://tippingservice.co.uk/agents/x/.well-known/agent-card.json',
+    protocols: ['a2a-card'],
+    anchors: { token_address: '3xyz', metadata_hash: 'ab12' },
+  })
+  const invented = diffFacts(fromStoredRow, fromImporter)
+  assert.ok(
+    invented.some((change) => change.path.startsWith('anchors') && change.kind === 'added'),
+    'this is the immutable lie the baseline used to set up',
+  )
+  assert.deepEqual(planBaselineObservations([member()], T2).profiles, [], 'so it is never written')
+})
+
+test('a provenance with no collector keeps its manual baseline', () => {
+  const plan = planBaselineObservations(
+    [
+      member({ handle: 'moltbook-1', externalSource: 'moltbook' }),
+      member({ agentId: OTHER, handle: 'native-1', externalSource: null, externalId: null }),
+    ],
+    T2,
+  )
+  assert.deepEqual(
+    plan.profiles.map((entry) => entry.source),
+    ['moltbook', 'native'],
+    'for them the alternative is no history at all',
+  )
+  assert.deepEqual(plan.deferredProfiles, {})
+  assert.equal(plan.profiles[0].collector, BASELINE_COLLECTOR)
+})
+
+test('availability is still baselined, including for the deferred subjects', () => {
+  // Not the same situation: both readings come from the same probe through the same
+  // reducer, so the baseline is that collector's own last measurement, not a rival view.
+  const plan = planBaselineObservations([member({ endpointCheck: PROBED })], T2)
+  assert.deepEqual(plan.profiles, [])
+  assert.equal(plan.availability.length, 1)
+  assert.equal(plan.availability[0].source, 'endpoint-probe')
+})
+
+test('a subject never probed gets no invented availability row', () => {
+  const plan = planBaselineObservations([member({ externalSource: 'moltbook' })], T2)
+  assert.deepEqual(plan.availability, [])
+  assert.equal(plan.profiles.length, 1)
+})
+
+test('an unknown provenance still refuses attribution at baseline time', () => {
+  assert.throws(() => planBaselineObservations([member({ externalSource: 'some-new-registry' })], T2), /unknown provenance/)
 })

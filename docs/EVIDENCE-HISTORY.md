@@ -48,12 +48,12 @@ afterwards.
 
 Which sources actually accumulate:
 
-| Source | How it grows |
-|---|---|
-| `mcp-registry` | The registry cron appends a profile observation whenever the upstream delta reports a change. |
-| `concordium-cis8004` | The Concordium importer appends a profile observation, on-chain anchors included. |
-| `endpoint-probe` | The daily cron appends on every availability transition, for every cohort subject with a public endpoint. |
-| `moltbook`, `native` | **Baseline only.** No importer appends profile observations for them yet, so they contribute their initial reading plus endpoint availability, and nothing else until a collector exists. The stored selection reason says this explicitly. |
+| Source | How it grows | Manual baseline |
+|---|---|---|
+| `mcp-registry` | The registry cron appends a profile observation whenever the upstream delta reports a change. | No — the cron owns this chain. |
+| `concordium-cis8004` | The Concordium importer appends a profile observation, on-chain anchors included. | No — the importer owns this chain. |
+| `endpoint-probe` | The daily cron appends on every availability transition, for every cohort subject with a public endpoint. | Yes, from the last stored probe result. |
+| `moltbook`, `native` | **Baseline only.** No importer appends profile observations for them yet, so they contribute their initial reading plus endpoint availability, and nothing else until a collector exists. The stored selection reason says this explicitly. | Yes — otherwise they would have no history at all. |
 
 ## Cohort commands
 
@@ -72,14 +72,33 @@ provenance, an unversioned rule, an empty reason). Re-running `--apply` never re
 existing selection reason: the justification stays the one recorded the day the subject was
 picked, which is the whole point of storing it.
 
-**The baseline is initialization-only, and that is not a detail.** It reads the stored
-catalogue row, while the crons read the fresh upstream payload — two readings of the same
-reality that are never byte-identical. If the baseline were allowed to *extend* a chain,
-a rerun would append a "change" that never happened at the vendor, and the ledger being
-immutable, that false evidence would be permanent. So a subject and source that already
-has any observation is skipped outright, whatever its content. Rerunning is therefore safe
-and does nothing for subjects already being tracked; it only starts chains for subjects
-added since. The output counts them as `started` and `already-tracked`.
+**A profile chain has exactly one author.** Two guards enforce it, for the same reason: a
+false observation in an immutable ledger cannot be edited out.
+
+*The baseline is initialization-only.* It reads the stored catalogue row, while the crons
+read the fresh upstream payload — two readings of the same reality that are never
+byte-identical. If the baseline were allowed to *extend* a chain, a rerun would append a
+"change" that never happened at the vendor. So a subject and source that already has any
+observation is skipped outright, whatever its content. Rerunning is therefore safe and does
+nothing for subjects already being tracked; it only starts chains for subjects added since.
+The output counts them as `started` and `already-tracked`.
+
+*The baseline never writes a profile for a provenance that has its own collector.* Not even
+the first one. For Concordium the stored row cannot hold what the importer records — the
+on-chain anchors live nowhere in `agents` — so a manual baseline is a poorer reading of the
+same subject, not merely an older one. Written first, the importer's next run would diff
+against it and publish `anchors added`: an anchoring event that never happened. The command
+reports those subjects as *profile chain left to its own collector*. The cost is accepted
+deliberately: an MCP subject's profile chain starts at the first upstream delta that
+reports it, and a Concordium subject's at the next importer run, so the first stored row
+may be post-change rather than a snapshot of selection day. A late chain start can be
+repaired by a collector; a fabricated change cannot be repaired at all.
+
+Availability is the opposite case and is still baselined here, for every subject: both
+readings come from the same probe through the same reducer, so the baseline is that
+collector's own last measurement rather than a competing view of it. A subject that has
+never been probed gets no availability row — inventing one would be the same mistake in a
+different chain.
 
 Four strata, applied in this order, a subject taken only once:
 

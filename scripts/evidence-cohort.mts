@@ -21,8 +21,7 @@ import {
   type CandidateSubject,
   type CohortPick,
 } from '../lib/evidence-cohort.ts'
-import { EVIDENCE_SCHEMA_VERSION, availabilityFacts, profileFacts, type ObservationInput } from '../lib/evidence-history.ts'
-import { appendObservations, loadActiveCohort, provenanceSource } from '../lib/evidence-store.ts'
+import { appendObservations, loadActiveCohort, planBaselineObservations } from '../lib/evidence-store.ts'
 import type { EndpointCheck } from '../lib/endpoint-probe.ts'
 
 const args = new Set(process.argv.slice(2))
@@ -202,16 +201,23 @@ async function writeCohort(picks: readonly CohortPick[]) {
 /**
  * Socle historique : la PREMIÈRE observation de chaque sujet, et rien d'autre.
  *
- * Le socle lit la fiche déjà stockée en base ; les crons, eux, lisent la charge utile
- * fraîche du registre. Ce sont deux lectures de la même réalité, jamais strictement
- * identiques — un champ qu'un import n'a pas encore répercuté suffit. Si le socle avait le
- * droit de PROLONGER une chaîne, relancer la commande écrirait un « changement » qui n'a
- * jamais eu lieu chez le vendeur, et le journal étant immuable, cette fausse preuve serait
- * définitive. D'où `initializeOnly` : toute chaîne déjà commencée est sautée, quel que
- * soit son contenu.
+ * Deux garde-fous, pour la même raison — une chaîne de champs n'a qu'un auteur, et une
+ * écriture fautive dans un journal immuable ne se corrige pas.
  *
- * Relancer la commande est donc sûr et sans effet sur les sujets déjà amorcés ; elle ne
- * sert plus qu'à amorcer les sujets ajoutés depuis.
+ * 1. `initializeOnly` : une chaîne déjà commencée n'est jamais prolongée par le socle. Il
+ *    lit la fiche stockée, les crons lisent la charge utile fraîche du fournisseur ; deux
+ *    lectures de la même réalité, jamais strictement identiques.
+ * 2. Les provenances qui ont leur propre collecteur de champs sont laissées à ce
+ *    collecteur, socle compris. Pour Concordium la fiche stockée ne contient même pas ce
+ *    que l'importeur enregistre (les ancres on-chain ne vivent nulle part dans `agents`) :
+ *    poser notre lecture appauvrie en premier ferait publier « ancres ajoutées » au premier
+ *    passage de l'importeur, un changement qui n'a jamais eu lieu chez le vendeur.
+ *
+ * La disponibilité, elle, reste amorcée ici : les deux lectures viennent de la même sonde
+ * et du même réducteur, donc le socle n'est pas une représentation concurrente.
+ *
+ * Relancer la commande est sûr et sans effet sur les sujets déjà amorcés ; elle ne sert
+ * qu'à amorcer les sujets ajoutés depuis.
  */
 async function captureBaseline() {
   const cohort = await loadActiveCohort(sql)
@@ -221,52 +227,20 @@ async function captureBaseline() {
     return { skipped: 'not_migrated' }
   }
 
-  const observedAt = new Date().toISOString()
-  const profiles: ObservationInput[] = cohort.map((member) => ({
-    subjectKind: member.subjectKind,
-    subjectAgentId: member.agentId,
-    subjectKey: member.handle,
-    source: provenanceSource(member.externalSource),
-    sourceUrl: member.endpoint,
-    observedAt,
-    effectiveAt: null,
-    facts: profileFacts({
-      displayName: member.displayName,
-      description: member.description,
-      endpoint: member.endpoint,
-      protocols: member.protocols,
-      repository: member.repository,
-    }),
-    visibility: 'public_summary',
-    collector: 'script:evidence-cohort',
-    schemaVersion: EVIDENCE_SCHEMA_VERSION,
-  }))
+  const plan = planBaselineObservations(cohort, new Date().toISOString())
+  const profileOutcome = await appendObservations(sql, plan.profiles, { initializeOnly: true })
+  const availabilityOutcome = await appendObservations(sql, plan.availability, { initializeOnly: true })
 
-  const availability: ObservationInput[] = cohort
-    .filter((member) => member.endpointCheck?.checked_at)
-    .map((member) => ({
-      subjectKind: member.subjectKind,
-      subjectAgentId: member.agentId,
-      subjectKey: member.handle,
-      source: 'endpoint-probe',
-      sourceUrl: member.endpoint,
-      observedAt,
-      effectiveAt: null,
-      facts: availabilityFacts(member.endpointCheck),
-      visibility: 'public_summary',
-      collector: 'script:evidence-cohort',
-      schemaVersion: EVIDENCE_SCHEMA_VERSION,
-    }))
-
-  const profileOutcome = await appendObservations(sql, profiles, { initializeOnly: true })
-  const availabilityOutcome = await appendObservations(sql, availability, { initializeOnly: true })
   console.error(
     `baseline: profiles started=${profileOutcome.written} already-tracked=${profileOutcome.skipped}, ` +
       `availability started=${availabilityOutcome.written} already-tracked=${availabilityOutcome.skipped}`,
   )
+  for (const [provenance, count] of Object.entries(plan.deferredProfiles)) {
+    console.error(`  ${count} ${provenance} subject(s): profile chain left to its own collector`)
+  }
   if (!profileOutcome.ok || !availabilityOutcome.ok) {
     console.error(`baseline reported a problem: ${profileOutcome.error ?? availabilityOutcome.error ?? 'see output'}`)
     process.exitCode = 1
   }
-  return { profiles: profileOutcome, availability: availabilityOutcome }
+  return { profiles: profileOutcome, availability: availabilityOutcome, deferredProfiles: plan.deferredProfiles }
 }

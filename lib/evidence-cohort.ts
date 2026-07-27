@@ -164,8 +164,14 @@ export function businessFamilyOf(candidate: CandidateSubject): string | null {
   return null
 }
 
+/** Provenance label of a subject: its registry of origin, or `native` when it is ours. */
+function provenanceLabel(externalSource: string | null | undefined): string {
+  const trimmed = (externalSource ?? '').trim()
+  return trimmed.length === 0 ? 'native' : trimmed
+}
+
 function provenanceOf(candidate: CandidateSubject): string {
-  return candidate.externalSource ?? 'native'
+  return provenanceLabel(candidate.externalSource)
 }
 
 /**
@@ -178,6 +184,21 @@ export const PROVENANCES_WITH_FIELD_COLLECTOR: ReadonlySet<string> = new Set([
   'mcp-registry',
   'concordium-cis8004',
 ])
+
+/**
+ * Whether an importer already authors this provenance's profile chain.
+ *
+ * This is also the line the manual baseline must not cross. A collector reads the fresh
+ * upstream payload and can see fields the stored catalogue row does not carry at all — the
+ * Concordium importer records on-chain anchors, nothing in `agents` holds them. A manual
+ * baseline built from the stored row would therefore be a COMPETING representation of the
+ * same subject, and the collector's very first append would diff against it and record
+ * "anchors added" as if the vendor had re-anchored an identity. In an append-only ledger
+ * that lie cannot be edited out. So a provenance with a collector owns its chain alone.
+ */
+export function hasFieldCollector(externalSource: string | null | undefined): boolean {
+  return PROVENANCES_WITH_FIELD_COLLECTOR.has(provenanceLabel(externalSource))
+}
 
 function nonMcpReason(provenance: string): string {
   const head = `Provenance "${provenance}", outside the MCP registry. Tests that the history layer works on subjects whose identity, fields and update rhythm are not those of a single registry.`
