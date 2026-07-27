@@ -1,5 +1,7 @@
-import { getSql } from '@/lib/db'
+import { getSql, type Sql } from '@/lib/db'
 import { embedMany } from '@/lib/embeddings'
+import { EVIDENCE_SCHEMA_VERSION, profileFacts, type ObservationInput } from '@/lib/evidence-history'
+import { appendObservations, loadActiveCohort, type AppendOutcome } from '@/lib/evidence-store'
 
 const DIRECTORY_URL = 'https://dashboard.tippingservice.co.uk/api/agents'
 const CARD_ORIGIN = 'https://tippingservice.co.uk'
@@ -138,12 +140,7 @@ export async function syncConcordiumAgents(deadlineMs = 90_000) {
     existingRows.map((row) => [String(row.external_id), String(row.description)]),
   )
 
-  const enriched: Array<{
-    item: NonNullable<ReturnType<typeof parseDirectoryAgent>>
-    card: AgentCard | null
-    description: string
-    tags: string[]
-  }> = []
+  const enriched: EnrichedAgent[] = []
   const NETWORK_BATCH = 10
   for (let i = 0; i < directory.length && Date.now() - startedAt < deadlineMs; i += NETWORK_BATCH) {
     const chunk = directory.slice(i, i + NETWORK_BATCH)
@@ -244,11 +241,83 @@ export async function syncConcordiumAgents(deadlineMs = 90_000) {
     }
     upserted++
   }
+  const observations = await recordCohortProfiles(sql, enriched)
   return {
     fetched: directory.length,
     cards: enriched.filter((item) => item.card !== null).length,
     changed: changed.length,
     upserted,
     source: SOURCE,
+    observations,
+  }
+}
+
+type EnrichedAgent = {
+  item: NonNullable<ReturnType<typeof parseDirectoryAgent>>
+  card: AgentCard | null
+  description: string
+  tags: string[]
+}
+
+/**
+ * Bounded history for the tracked non-MCP subjects.
+ *
+ * Without this the non-MCP stratum would only ever hold a manual baseline plus endpoint
+ * availability, and the claim that the ledger works outside one registry would rest on
+ * nothing. The facts come from the fresh upstream payload — the same reading the upsert
+ * above uses — so the chain has a single author and cannot bounce between two views of
+ * the same subject.
+ *
+ * The on-chain anchors are included deliberately: a registry that silently re-anchors an
+ * identity has changed something a buyer needs to know, arguably more than a reworded
+ * description. A card that failed to load is skipped rather than recorded as an emptied
+ * profile — a transient fetch failure is not evidence of a change.
+ */
+async function recordCohortProfiles(
+  sql: Sql,
+  enriched: readonly EnrichedAgent[],
+): Promise<AppendOutcome | { ok: false; reason: string }> {
+  try {
+    const cohort = await loadActiveCohort(sql)
+    if (cohort === null) return { ok: false, reason: 'not_migrated' }
+
+    const byToken = new Map(enriched.map((entry) => [String(entry.item.tokenId), entry]))
+    const observedAt = new Date().toISOString()
+    const inputs: ObservationInput[] = []
+    for (const member of cohort) {
+      if (member.externalSource !== SOURCE || !member.externalId) continue
+      const entry = byToken.get(member.externalId)
+      if (!entry || entry.card === null) continue
+      inputs.push({
+        subjectKind: member.subjectKind,
+        subjectAgentId: member.agentId,
+        subjectKey: member.handle,
+        source: 'concordium-cis8004',
+        sourceUrl: entry.item.cardUrl,
+        observedAt,
+        effectiveAt: null,
+        facts: profileFacts({
+          displayName: entry.item.agentName,
+          description: entry.description,
+          endpoint: entry.item.cardUrl,
+          protocols: ['a2a-card'],
+          anchors: {
+            token_address: entry.item.tokenAddress || null,
+            owner_account: entry.item.ownerAccount || null,
+            metadata_hash: entry.item.metadataHash || null,
+            verification_anchor: entry.item.verificationAnchor || null,
+          },
+        }),
+        // The directory and the agent cards are public: the normalized summary may be
+        // shown. What stays paid is the timeline, not this single reading.
+        visibility: 'public_summary',
+        collector: 'cron:registry/concordium',
+        schemaVersion: EVIDENCE_SCHEMA_VERSION,
+      })
+    }
+    if (inputs.length === 0) return { ok: true, considered: 0, written: 0, unchanged: 0, skipped: 0, conflicts: 0, defects: 0 }
+    return await appendObservations(sql, inputs)
+  } catch (error) {
+    return { ok: false, reason: error instanceof Error ? error.message.slice(0, 200) : 'observation failed' }
   }
 }

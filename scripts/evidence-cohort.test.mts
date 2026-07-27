@@ -11,6 +11,7 @@ import {
   COHORT_MAX_SUBJECTS,
   COHORT_MIN_SUBJECTS,
   NON_MCP_PROVENANCE_CAP,
+  PROVENANCES_WITH_FIELD_COLLECTOR,
   PROXY_DISCLAIMER,
   STRATUM_CAPS,
   businessFamilyOf,
@@ -65,7 +66,7 @@ function catalogue(): CandidateSubject[] {
     rows.push(candidate({ handle: `io.github.silent/quiet-${String(i).padStart(2, '0')}`, endpointCheck: DOWN }))
   }
   for (let i = 0; i < 17; i++) {
-    rows.push(candidate({ handle: `concordium-${String(i).padStart(2, '0')}`, externalSource: 'concordium' }))
+    rows.push(candidate({ handle: `concordium-${String(i).padStart(2, '0')}`, externalSource: 'concordium-cis8004' }))
   }
   for (let i = 0; i < 2; i++) {
     rows.push(candidate({ handle: `moltbook-${i}`, externalSource: 'moltbook' }))
@@ -171,6 +172,39 @@ test('the non-MCP stratum never collapses onto a single registry', () => {
   }
   assert.ok(perProvenance.size >= 2, 'at least two provenances outside the MCP registry')
   for (const count of perProvenance.values()) assert.ok(count <= NON_MCP_PROVENANCE_CAP)
+})
+
+test('a non-MCP subject with nothing to look at is not tracked either', () => {
+  // The stratum used to accept any non-MCP row. A subject with neither endpoint nor
+  // repository would have sat in the cohort forever, producing one baseline and no
+  // history — and the whole point of the stratum is to prove history accrues off-registry.
+  const paperOnly = candidate({ handle: 'concordium-paper', externalSource: 'concordium-cis8004', endpoint: null })
+  const loopback = candidate({ handle: 'moltbook-local', externalSource: 'moltbook', endpoint: 'http://localhost:8080' })
+  const observable = candidate({ handle: 'native-live', externalSource: null, externalId: null })
+  const repoOnly = candidate({
+    handle: 'moltbook-repo',
+    externalSource: 'moltbook',
+    endpoint: null,
+    repository: 'https://github.com/a/b',
+  })
+  const picks = selectCohort([paperOnly, loopback, observable, repoOnly])
+  assert.deepEqual(
+    picks.map((entry) => entry.handle).sort(),
+    ['moltbook-repo', 'native-live'],
+    'a public endpoint or a source repository, nothing less',
+  )
+  for (const entry of picks) assert.equal(entry.stratum, 'non_mcp_provenance')
+})
+
+test('the stored reason does not promise a history nobody collects', () => {
+  const picks = selectCohort([
+    candidate({ handle: 'concordium-1', externalSource: 'concordium-cis8004' }),
+    candidate({ handle: 'moltbook-1', externalSource: 'moltbook' }),
+  ])
+  const byHandle = new Map(picks.map((entry) => [entry.handle, entry.selectionReason]))
+  assert.ok(PROVENANCES_WITH_FIELD_COLLECTOR.has('concordium-cis8004'))
+  assert.match(String(byHandle.get('concordium-1')), /appends profile observations, so field changes accumulate/)
+  assert.match(String(byHandle.get('moltbook-1')), /no automatic field history until a collector exists/)
 })
 
 test('a subject lands in exactly one stratum, by declared precedence', () => {
@@ -288,7 +322,7 @@ test('duplicates, unversioned rules and empty reasons are all caught', () => {
       twin,
       pick({ selectionRule: 'legacy' }),
       pick({ selectionReason: 'too short' }),
-      pick({ stratum: 'non_mcp_provenance', selectionRule: 'non_mcp_provenance/v1', selectionFamily: 'concordium' }),
+      pick({ stratum: 'non_mcp_provenance', selectionRule: 'non_mcp_provenance/v1', selectionFamily: 'concordium-cis8004' }),
     ]),
   )
   assert.ok(problems.includes('duplicate_subject'))
@@ -307,7 +341,7 @@ test('overfilling a stratum, a family or a provenance is caught', () => {
   assert.ok(codes(validateCohort(overFamily)).includes('family_over_cap'))
 
   const overProvenance = Array.from({ length: NON_MCP_PROVENANCE_CAP + 1 }, () =>
-    pick({ stratum: 'non_mcp_provenance', selectionRule: 'non_mcp_provenance/v1', selectionFamily: 'concordium' }),
+    pick({ stratum: 'non_mcp_provenance', selectionRule: 'non_mcp_provenance/v1', selectionFamily: 'concordium-cis8004' }),
   )
   assert.ok(codes(validateCohort(overProvenance)).includes('provenance_over_cap'))
 

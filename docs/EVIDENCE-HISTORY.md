@@ -43,7 +43,17 @@ afterwards.
    ```
    It is additive and idempotent — no existing table is altered, no data is migrated.
 3. Select the cohort and capture the baseline (see below).
-4. From then on the crons append on their own, and only when something changed.
+4. From then on, the sources that have a collector append on their own, and only when
+   something changed.
+
+Which sources actually accumulate:
+
+| Source | How it grows |
+|---|---|
+| `mcp-registry` | The registry cron appends a profile observation whenever the upstream delta reports a change. |
+| `concordium-cis8004` | The Concordium importer appends a profile observation, on-chain anchors included. |
+| `endpoint-probe` | The daily cron appends on every availability transition, for every cohort subject with a public endpoint. |
+| `moltbook`, `native` | **Baseline only.** No importer appends profile observations for them yet, so they contribute their initial reading plus endpoint availability, and nothing else until a collector exists. The stored selection reason says this explicitly. |
 
 ## Cohort commands
 
@@ -62,6 +72,15 @@ provenance, an unversioned rule, an empty reason). Re-running `--apply` never re
 existing selection reason: the justification stays the one recorded the day the subject was
 picked, which is the whole point of storing it.
 
+**The baseline is initialization-only, and that is not a detail.** It reads the stored
+catalogue row, while the crons read the fresh upstream payload — two readings of the same
+reality that are never byte-identical. If the baseline were allowed to *extend* a chain,
+a rerun would append a "change" that never happened at the vendor, and the ledger being
+immutable, that false evidence would be permanent. So a subject and source that already
+has any observation is skipped outright, whatever its content. Rerunning is therefore safe
+and does nothing for subjects already being tracked; it only starts chains for subjects
+added since. The output counts them as `started` and `already-tracked`.
+
 Four strata, applied in this order, a subject taken only once:
 
 | Stratum | Cap | What it tests |
@@ -70,6 +89,16 @@ Four strata, applied in this order, a subject taken only once:
 | `multi_source_identity` | 12 | Identity resolution across a registry entry, a source repository and a live endpoint — and whether those sources start contradicting each other. |
 | `availability_watch` | 10 | That the ledger records availability *transitions*, not one row per identical daily probe. |
 | `non_mcp_provenance` | 8, max 4 per provenance | That the design is not shaped by a single registry. |
+
+Every stratum requires an observable surface — a public endpoint or a source repository.
+A subject with neither can only repeat what it says about itself and would sit in the
+cohort producing one baseline forever.
+
+The cohort table has no foreign key to `agents`, for the same reason the ledger has none:
+a selection justification is a dated fact about *our* method, not a dependency of the
+current profile. A cascade would have erased the record of why we started tracking a
+subject at the exact moment we would want to explain it. `subject_key` keeps the handle as
+it was on selection day, so the audit row stays readable without the profile.
 
 Candidates are always ordered alphabetically. Popularity is never a tie-break: where a
 repository signal is used, only its *existence* counts, as proof that a third collector

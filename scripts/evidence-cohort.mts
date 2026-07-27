@@ -167,6 +167,10 @@ async function selectFromCatalogue(): Promise<CohortPick[]> {
            metadata->'endpoint_check'  as endpoint_check
     from agents
     where external_source is distinct from 'mcp-registry'
+      -- Même exigence que les autres strates : un sujet sans rien à regarder ne produirait
+      -- qu'un socle, éternellement. Le pré-filtre le dit aussi, pour ne pas remonter des
+      -- candidats que la règle écartera de toute façon.
+      and (endpoint ilike 'http%' or metadata ? 'repo')
     order by handle asc
     limit 80
   `)
@@ -181,9 +185,10 @@ async function writeCohort(picks: readonly CohortPick[]) {
   for (const pick of picks) {
     const result = await sql`
       insert into evidence_cohort (
-        agent_id, cohort, stratum, selection_rule, selection_family, selection_reason, subject_kind
+        agent_id, subject_key, cohort, stratum, selection_rule, selection_family,
+        selection_reason, subject_kind
       ) values (
-        ${pick.agentId}::uuid, ${COHORT_ID}, ${pick.stratum}, ${pick.selectionRule},
+        ${pick.agentId}::uuid, ${pick.handle}, ${COHORT_ID}, ${pick.stratum}, ${pick.selectionRule},
         ${pick.selectionFamily}, ${pick.selectionReason}, ${pick.subjectKind}
       )
       on conflict (agent_id) do nothing
@@ -195,10 +200,18 @@ async function writeCohort(picks: readonly CohortPick[]) {
 }
 
 /**
- * Socle historique : la première observation de chaque sujet, construite depuis l'état
- * courant déjà en base — aucun appel réseau, aucune page brute conservée. Relancer la
- * commande n'écrit rien de plus tant que rien n'a changé, puisque la déduplication porte
- * sur l'empreinte.
+ * Socle historique : la PREMIÈRE observation de chaque sujet, et rien d'autre.
+ *
+ * Le socle lit la fiche déjà stockée en base ; les crons, eux, lisent la charge utile
+ * fraîche du registre. Ce sont deux lectures de la même réalité, jamais strictement
+ * identiques — un champ qu'un import n'a pas encore répercuté suffit. Si le socle avait le
+ * droit de PROLONGER une chaîne, relancer la commande écrirait un « changement » qui n'a
+ * jamais eu lieu chez le vendeur, et le journal étant immuable, cette fausse preuve serait
+ * définitive. D'où `initializeOnly` : toute chaîne déjà commencée est sautée, quel que
+ * soit son contenu.
+ *
+ * Relancer la commande est donc sûr et sans effet sur les sujets déjà amorcés ; elle ne
+ * sert plus qu'à amorcer les sujets ajoutés depuis.
  */
 async function captureBaseline() {
   const cohort = await loadActiveCohort(sql)
@@ -245,11 +258,15 @@ async function captureBaseline() {
       schemaVersion: EVIDENCE_SCHEMA_VERSION,
     }))
 
-  const profileOutcome = await appendObservations(sql, profiles)
-  const availabilityOutcome = await appendObservations(sql, availability)
+  const profileOutcome = await appendObservations(sql, profiles, { initializeOnly: true })
+  const availabilityOutcome = await appendObservations(sql, availability, { initializeOnly: true })
   console.error(
-    `baseline: profiles written=${profileOutcome.written} unchanged=${profileOutcome.unchanged}, ` +
-      `availability written=${availabilityOutcome.written} unchanged=${availabilityOutcome.unchanged}`,
+    `baseline: profiles started=${profileOutcome.written} already-tracked=${profileOutcome.skipped}, ` +
+      `availability started=${availabilityOutcome.written} already-tracked=${availabilityOutcome.skipped}`,
   )
+  if (!profileOutcome.ok || !availabilityOutcome.ok) {
+    console.error(`baseline reported a problem: ${profileOutcome.error ?? availabilityOutcome.error ?? 'see output'}`)
+    process.exitCode = 1
+  }
   return { profiles: profileOutcome, availability: availabilityOutcome }
 }

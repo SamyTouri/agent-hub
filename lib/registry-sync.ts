@@ -132,11 +132,16 @@ async function recordCohortProfiles(
   effectiveByName: Map<string, string>,
   budgetMs: number,
 ): Promise<AppendOutcome | { ok: false; reason: string }> {
-  const startedAt = Date.now()
+  // A real wall-clock stop, not a loop guard. Building at most fifty fact objects in
+  // memory takes microseconds; what can actually run long is the cohort read followed by
+  // one INSERT per changed subject through a single pooled connection, so the deadline is
+  // handed to that path and re-checked before every statement.
+  const deadlineAt = Date.now() + budgetMs
   if (budgetMs <= 0) return { ok: false, reason: 'no_time_budget' }
   try {
     const cohort = await loadActiveCohort(sql)
     if (cohort === null) return { ok: false, reason: 'not_migrated' }
+    if (Date.now() >= deadlineAt) return { ok: false, reason: 'deadline' }
 
     const observedAt = new Date().toISOString()
     const inputs: ObservationInput[] = []
@@ -165,10 +170,11 @@ async function recordCohortProfiles(
         collector: 'cron:registry',
         schemaVersion: EVIDENCE_SCHEMA_VERSION,
       })
-      if (Date.now() - startedAt > budgetMs) break
     }
-    if (inputs.length === 0) return { ok: true, considered: 0, written: 0, unchanged: 0, refused: 0 }
-    return await appendObservations(sql, inputs)
+    if (inputs.length === 0) {
+      return { ok: true, considered: 0, written: 0, unchanged: 0, skipped: 0, conflicts: 0, defects: 0 }
+    }
+    return await appendObservations(sql, inputs, { deadlineAt })
   } catch (error) {
     return { ok: false, reason: error instanceof Error ? error.message.slice(0, 200) : 'observation failed' }
   }

@@ -30,8 +30,16 @@
 -- ---------------------------------------------------------------------------
 -- La raison de sélection est stockée AVEC le sujet. Un acheteur qui demande « pourquoi
 -- ces sujets-là ? » doit obtenir une règle versionnée, pas une intuition rétrospective.
+--
+-- Pas de clé étrangère vers agents, pour la même raison que le journal : une justification
+-- de sélection est un fait daté sur NOTRE méthode, pas une dépendance de la fiche courante.
+-- Un `on delete cascade` aurait effacé la trace de la sélection en même temps que le sujet,
+-- c'est-à-dire précisément au moment où l'on aimerait pouvoir expliquer pourquoi on avait
+-- commencé à le suivre. subject_key garde le handle du jour de la sélection, sinon il ne
+-- resterait qu'un uuid orphelin et une raison sans sujet.
 create table if not exists evidence_cohort (
-  agent_id         uuid primary key references agents(id) on delete cascade,
+  agent_id         uuid primary key,
+  subject_key      text not null check (char_length(subject_key) between 1 and 400),
   cohort           text not null default 'pilot-2026-07',
   stratum          text not null check (stratum in (
                      'business_system_connector',

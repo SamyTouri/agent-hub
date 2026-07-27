@@ -168,6 +168,24 @@ function provenanceOf(candidate: CandidateSubject): string {
   return candidate.externalSource ?? 'native'
 }
 
+/**
+ * Provenances whose importer also appends profile observations, so their subjects
+ * genuinely accumulate field history on their own. Everything else gets a baseline at
+ * selection time plus whatever the endpoint probe records — and the stored reason has to
+ * say so rather than promise a history nobody collects.
+ */
+export const PROVENANCES_WITH_FIELD_COLLECTOR: ReadonlySet<string> = new Set([
+  'mcp-registry',
+  'concordium-cis8004',
+])
+
+function nonMcpReason(provenance: string): string {
+  const head = `Provenance "${provenance}", outside the MCP registry. Tests that the history layer works on subjects whose identity, fields and update rhythm are not those of a single registry.`
+  return PROVENANCES_WITH_FIELD_COLLECTOR.has(provenance)
+    ? `${head} Its importer appends profile observations, so field changes accumulate on their own.`
+    : `${head} No importer appends profile observations for this provenance yet: expect a baseline plus endpoint availability, and no automatic field history until a collector exists.`
+}
+
 function subjectKindOf(candidate: CandidateSubject): SubjectKind {
   return candidate.externalSource === 'mcp-registry' ? 'mcp_server' : 'agent'
 }
@@ -272,6 +290,10 @@ export function selectCohort(candidates: readonly CandidateSubject[]): CohortPic
     if (nonMcpCount >= STRATUM_CAPS.non_mcp_provenance) break
     if (taken.has(candidate.agentId)) continue
     if (candidate.externalSource === 'mcp-registry') continue
+    // Same requirement as every other stratum: a subject with nothing to look at can only
+    // ever repeat what it says about itself, and would sit in the cohort producing a
+    // single baseline forever.
+    if (!hasObservableSurface(candidate)) continue
     const provenance = provenanceOf(candidate)
     const used = perProvenance.get(provenance) ?? 0
     if (used >= NON_MCP_PROVENANCE_CAP) continue
@@ -279,9 +301,7 @@ export function selectCohort(candidates: readonly CandidateSubject[]): CohortPic
       stratum: 'non_mcp_provenance',
       selectionRule: 'non_mcp_provenance/v1',
       selectionFamily: provenance,
-      selectionReason:
-        `Provenance "${provenance}", outside the MCP registry. Tests that the history layer works on subjects ` +
-        'whose identity, fields and update rhythm are not those of a single registry.',
+      selectionReason: nonMcpReason(provenance),
     })
     perProvenance.set(provenance, used + 1)
     nonMcpCount++

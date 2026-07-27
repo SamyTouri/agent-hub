@@ -30,11 +30,17 @@ import { readStatus, type EndpointCheck } from './endpoint-probe.ts'
  *  compared as if they were the same measurement. */
 export const EVIDENCE_SCHEMA_VERSION = 1
 
-/** Sources we currently attribute observations to. Kept as a union in code rather than a
- *  database CHECK: a new source must be a deliberate code change, not a migration. */
+/**
+ * Sources we currently attribute observations to. Kept as a union in code rather than a
+ * database CHECK: a new source must be a deliberate code change, not a migration.
+ *
+ * The registry identifiers must match `agents.external_source` EXACTLY. Attribution is
+ * the whole product: a fact imported from a chain registry that ends up labelled `native`
+ * would claim we produced evidence we merely copied.
+ */
 export type EvidenceSource =
   | 'mcp-registry'
-  | 'concordium'
+  | 'concordium-cis8004'
   | 'moltbook'
   | 'native'
   | 'endpoint-probe'
@@ -209,9 +215,17 @@ export function profileFacts(input: {
   protocols?: readonly string[] | null
   repository?: string | null
   status?: string | null
+  /**
+   * Source-specific stable identifiers: an on-chain metadata hash, a token address, a
+   * verification anchor. They belong in the fingerprint because a registry that silently
+   * re-anchors an identity has changed something a buyer must be told about — arguably
+   * more than a reworded description.
+   */
+  anchors?: Record<string, string | null | undefined>
 }): EvidenceFacts {
   const description = collapseWhitespace(input.description)
   return canonicalFacts({
+    anchors: input.anchors,
     display_name: collapseWhitespace(input.displayName),
     description: description === undefined ? undefined : excerpt(description, FACT_EXCERPT_CHARS),
     // The digest covers the WHOLE description, so an edit beyond the excerpt is still a

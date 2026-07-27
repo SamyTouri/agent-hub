@@ -79,7 +79,7 @@ test('what cannot be reproduced is refused rather than hashed', () => {
 test('the source and the schema version are part of the fingerprint', () => {
   const facts = { endpoint: 'https://example.test/' }
   const base = contentHash({ source: 'mcp-registry', facts })
-  assert.notEqual(base, contentHash({ source: 'concordium', facts }))
+  assert.notEqual(base, contentHash({ source: 'concordium-cis8004', facts }))
   assert.notEqual(base, contentHash({ source: 'mcp-registry', facts, schemaVersion: EVIDENCE_SCHEMA_VERSION + 1 }))
   assert.match(base, /^[a-f0-9]{64}$/)
 })
@@ -108,6 +108,25 @@ test('host casing is not a change, but the path is', () => {
   assert.notEqual(normalizeEndpointUrl('https://example.test/mcp'), normalizeEndpointUrl('https://example.test/MCP'))
   assert.equal(normalizeEndpointUrl('https://example.test/mcp#frag'), 'https://example.test/mcp')
   assert.equal(normalizeEndpointUrl('   '), undefined)
+})
+
+test('a silently re-anchored identity is a change, like any other', () => {
+  // On-chain anchors are the strongest identity claim a registry makes. A directory that
+  // quietly re-points a token or a metadata hash has changed something a buyer needs to
+  // know — arguably more than a reworded description.
+  const before = profileFacts({ displayName: 'Anchored', anchors: { metadata_hash: 'aa', token_address: 'tok-1' } })
+  const after = profileFacts({ displayName: 'Anchored', anchors: { metadata_hash: 'bb', token_address: 'tok-1' } })
+  assert.notEqual(
+    contentHash({ source: 'concordium-cis8004', facts: before }),
+    contentHash({ source: 'concordium-cis8004', facts: after }),
+  )
+  assert.deepEqual(diffFacts(before, after), [
+    { path: 'anchors.metadata_hash', kind: 'changed', from: 'aa', to: 'bb' },
+  ])
+})
+
+test('an absent anchor does not fabricate a field', () => {
+  assert.deepEqual(profileFacts({ displayName: 'X' }), profileFacts({ displayName: 'X', anchors: { a: null } }))
 })
 
 test('protocol lists are compared as sets, not as orderings', () => {
@@ -433,6 +452,16 @@ test('deduplication is enforced again in the database, not only in the collector
     // A global uniqueness on the fingerprint would forbid recording a return to a
     // previous state, which is exactly the evidence a buyer needs.
     assert.ok(!/unique\s*\(\s*subject_agent_id\s*,\s*source\s*,\s*content_hash\s*\)/i.test(sql))
+  }
+})
+
+test('deleting a profile never erases why we started tracking it', () => {
+  for (const sql of [MIGRATION, SCHEMA]) {
+    // A cascade from `agents` would have destroyed the selection rule and its reason at
+    // the exact moment we would need to explain the choice.
+    assert.ok(!/create table if not exists evidence_cohort[\s\S]*?on delete cascade/i.test(sql))
+    assert.ok(!/agent_id\s+uuid primary key references agents/i.test(sql))
+    assert.match(sql, /subject_key\s+text not null check \(char_length\(subject_key\)/i)
   }
 })
 

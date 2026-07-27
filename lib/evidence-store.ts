@@ -33,9 +33,22 @@ import type { StoredObservation } from './evidence-timeline.ts'
 export const MAX_OBSERVATIONS_PER_RUN = 100
 
 const UNDEFINED_TABLE = '42P01'
-/** Refusals the ledger produces on purpose: a duplicate, a fork, a backdated row. They are
- *  a correct outcome of a race, not an incident. */
-const LEDGER_REFUSALS = new Set(['23505', '23514', '23001'])
+
+/**
+ * The ONLY refusal that is routine: another writer reached the same point of the chain
+ * first. Both partial unique indexes and the trigger's "baseline already exists" /
+ * "identical consecutive observation" raise it, and all three mean the same benign thing
+ * — the row we wanted is already there.
+ */
+const CONCURRENT_CONFLICT = '23505'
+
+/**
+ * A chain violation is never routine. It means our idea of the head was wrong: a fork, a
+ * parent belonging to another subject, or an observation dated before the one it extends.
+ * Swallowing it as constraint noise would let the ledger drift while every job reports
+ * success — the exact failure mode an append-only design exists to prevent.
+ */
+const CHAIN_VIOLATION = '23514'
 
 function sqlState(error: unknown): string {
   const code = (error as { code?: unknown } | null)?.code
@@ -73,17 +86,28 @@ export type CohortMember = {
   endpointCheck: EndpointCheck | null
 }
 
-/** Provenance of a subject's own profile claims — its registry of origin, or us. */
+/**
+ * Provenance of a subject's own profile claims — its registry of origin, or us.
+ *
+ * Throws on an unrecognised registry instead of falling back to `native`. A silent
+ * fallback is the worst available failure: it would sign someone else's imported claim
+ * with our own name. The throw only reaches the operator commands, where refusing to
+ * attribute a fact is the correct behaviour and the fix is one line here.
+ */
 export function provenanceSource(externalSource: string | null): EvidenceSource {
+  if (externalSource === null || externalSource === '') return 'native'
   switch (externalSource) {
     case 'mcp-registry':
       return 'mcp-registry'
-    case 'concordium':
-      return 'concordium'
+    // Must match lib/concordium-sync.ts SOURCE exactly.
+    case 'concordium-cis8004':
+      return 'concordium-cis8004'
     case 'moltbook':
       return 'moltbook'
     default:
-      return 'native'
+      throw new Error(
+        `unknown provenance "${externalSource}": add it to EvidenceSource before observing this subject`,
+      )
   }
 }
 
@@ -164,15 +188,41 @@ export async function loadHeads(
 
 export type AppendOutcome = {
   ok: boolean
-  reason?: 'not_migrated' | 'error'
+  reason?: 'not_migrated' | 'chain_defect' | 'deadline' | 'error'
   considered: number
   written: number
   unchanged: number
-  refused: number
+  /** Initialization-only mode: a chain already exists for this subject and source. */
+  skipped: number
+  /** Another writer got there first. Expected under concurrency, not a problem. */
+  conflicts: number
+  /** Stale head, fork, wrong parent or backdated observation. Never routine. */
+  defects: number
   error?: string
 }
 
-const EMPTY_OUTCOME: AppendOutcome = { ok: true, considered: 0, written: 0, unchanged: 0, refused: 0 }
+const EMPTY_OUTCOME: AppendOutcome = {
+  ok: true,
+  considered: 0,
+  written: 0,
+  unchanged: 0,
+  skipped: 0,
+  conflicts: 0,
+  defects: 0,
+}
+
+export type AppendOptions = {
+  /**
+   * Only start chains, never extend one. Used by the baseline command: the crons derive
+   * their chains from the fresh upstream payload, while the baseline derives them from
+   * the stored catalogue row. Letting the second one extend a chain built by the first
+   * would manufacture immutable changes out of two different readings of the same
+   * reality — and immutable means unfixable.
+   */
+  initializeOnly?: boolean
+  /** Wall-clock stop, checked before every statement. */
+  deadlineAt?: number
+}
 
 /**
  * Writes the observations that actually changed something, one statement at a time.
@@ -180,9 +230,14 @@ const EMPTY_OUTCOME: AppendOutcome = { ok: true, considered: 0, written: 0, unch
  * The head map is updated in place as rows land, so several inputs for the same subject
  * and source inside one call chain correctly instead of all forking off the same parent.
  */
-export async function appendObservations(sql: Sql, inputs: readonly ObservationInput[]): Promise<AppendOutcome> {
+export async function appendObservations(
+  sql: Sql,
+  inputs: readonly ObservationInput[],
+  options: AppendOptions = {},
+): Promise<AppendOutcome> {
   if (inputs.length === 0) return { ...EMPTY_OUTCOME }
   const batch = inputs.slice(0, MAX_OBSERVATIONS_PER_RUN)
+  const outOfTime = () => options.deadlineAt !== undefined && Date.now() >= options.deadlineAt
 
   const bySource = new Map<EvidenceSource, ObservationInput[]>()
   for (const input of batch) {
@@ -191,15 +246,35 @@ export async function appendObservations(sql: Sql, inputs: readonly ObservationI
     else bySource.set(input.source, [input])
   }
 
-  const outcome: AppendOutcome = { ok: true, considered: batch.length, written: 0, unchanged: 0, refused: 0 }
+  const outcome: AppendOutcome = { ...EMPTY_OUTCOME, considered: batch.length }
+  const fail = (reason: AppendOutcome['reason'], error?: string): AppendOutcome => ({
+    ...outcome,
+    ok: false,
+    reason,
+    ...(error === undefined ? {} : { error }),
+  })
 
   for (const [source, sourceInputs] of bySource) {
+    if (outOfTime()) return fail('deadline')
     const heads = await loadHeads(sql, source, [...new Set(sourceInputs.map((input) => input.subjectAgentId))])
-    if (heads === null) return { ...outcome, ok: false, reason: 'not_migrated' }
+    if (heads === null) return fail('not_migrated')
 
     for (const input of sourceInputs) {
-      const plan = planObservation(heads.get(input.subjectAgentId), input)
+      if (outOfTime()) return fail('deadline')
+      const head = heads.get(input.subjectAgentId)
+      if (options.initializeOnly && head) {
+        outcome.skipped++
+        continue
+      }
+      const plan = planObservation(head, input)
       if (!plan.write) {
+        if (plan.reason === 'out_of_order') {
+          // Not "unchanged": the collector tried to date an observation before the one it
+          // extends. Counting it as a no-op would hide a broken clock or a stale head.
+          outcome.defects++
+          outcome.error ??= `out_of_order: ${input.source} ${input.subjectKey}`
+          continue
+        }
         outcome.unchanged++
         continue
       }
@@ -228,21 +303,25 @@ export async function appendObservations(sql: Sql, inputs: readonly ObservationI
         })
         outcome.written++
       } catch (error) {
-        if (isMissingTable(error)) return { ...outcome, ok: false, reason: 'not_migrated' }
-        if (LEDGER_REFUSALS.has(sqlState(error))) {
-          outcome.refused++
+        if (isMissingTable(error)) return fail('not_migrated')
+        const message = error instanceof Error ? error.message.slice(0, 200) : 'append failed'
+        if (sqlState(error) === CONCURRENT_CONFLICT) {
+          outcome.conflicts++
           continue
         }
-        return {
-          ...outcome,
-          ok: false,
-          reason: 'error',
-          error: error instanceof Error ? error.message.slice(0, 200) : 'append failed',
+        if (sqlState(error) === CHAIN_VIOLATION) {
+          // Keep going so one broken subject does not blind us to the other forty-nine,
+          // but the run is NOT ok and the first violation is reported verbatim.
+          outcome.defects++
+          outcome.error ??= `chain_violation: ${input.source} ${input.subjectKey}: ${message}`
+          continue
         }
+        return fail('error', message)
       }
     }
   }
 
+  if (outcome.defects > 0) return { ...outcome, ok: false, reason: 'chain_defect' }
   return outcome
 }
 

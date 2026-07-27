@@ -575,8 +575,13 @@ grant select, insert, update on table public.prepurchase_orders to service_role;
 --
 -- Détail commenté et procédure : db/migration-evidence-history.sql, docs/EVIDENCE-HISTORY.md.
 
+-- Pas de clé étrangère vers agents : une justification de sélection est un fait daté sur
+-- NOTRE méthode, pas une dépendance de la fiche courante. Un `on delete cascade` aurait
+-- effacé la trace de la sélection au moment précis où l'on voudrait pouvoir expliquer
+-- pourquoi on suivait ce sujet. subject_key garde le handle du jour de la sélection.
 create table if not exists evidence_cohort (
-  agent_id         uuid primary key references agents(id) on delete cascade,
+  agent_id         uuid primary key,
+  subject_key      text not null check (char_length(subject_key) between 1 and 400),
   cohort           text not null default 'pilot-2026-07',
   stratum          text not null check (stratum in (
                      'business_system_connector',
