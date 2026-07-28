@@ -7,14 +7,27 @@ export const HOST = 'agentreputation.dev'
 const ENDPOINT = 'https://api.indexnow.org/indexnow'
 const BATCH = 2000
 
-/** Soumet des URLs par lots. Retourne le nombre soumis (s'arrête au premier 429). */
+/**
+ * Soumet des URLs par lots. Retourne le nombre soumis (s'arrête au premier 429).
+ *
+ * `deadlineAt` borne l'étape entre deux lots. Chaque lot s'accorde jusqu'à 30 s, et avec
+ * 10 000 URLs cette boucle pouvait à elle seule dépasser la durée de vie de la fonction
+ * appelante — c'est ce qui a fait tuer le cron quotidien le 2026-07-28. Le référencement
+ * cède le pas : ce qui n'a pas été soumis repartira demain, alors qu'une sonde perdue est
+ * une mesure de moins sur l'agent de quelqu'un d'autre.
+ */
 export async function submitIndexNow(
   urls: string[],
   log: (m: string) => void = () => {},
+  options: { deadlineAt?: number } = {},
 ): Promise<{ submitted: number; batches: number; stopped?: string }> {
   let submitted = 0
   let batches = 0
   for (let i = 0; i < urls.length; i += BATCH) {
+    if (options.deadlineAt !== undefined && Date.now() >= options.deadlineAt) {
+      log(`deadline reached after ${batches} batch(es) — the rest waits for tomorrow`)
+      return { submitted, batches, stopped: 'deadline' }
+    }
     const urlList = urls.slice(i, i + BATCH)
     const res = await fetch(ENDPOINT, {
       method: 'POST',

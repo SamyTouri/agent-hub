@@ -9,9 +9,22 @@ import {
 } from '@/lib/endpoint-probe'
 import { EVIDENCE_SCHEMA_VERSION, availabilityFacts, type ObservationInput } from '@/lib/evidence-history'
 import { appendObservations, loadActiveCohort, type CohortMember } from '@/lib/evidence-store'
+import {
+  DAILY_ROUTE_BUDGET_MS,
+  FINALIZE_RESERVE_MS,
+  INDEXNOW_BUDGET_MS,
+  canStartWave,
+} from '@/lib/probe-budget'
 
 export const runtime = 'nodejs'
-export const maxDuration = 60
+// Fluid compute : le plan autorise 300 s, et le cron registre s'en sert déjà. À 60 s la
+// fonction a été tuée en pleine exécution le 2026-07-28 — les sondes écrites, la réponse
+// perdue, donc le cron marqué en échec. Le couperet était placé plus bas que le travail.
+//
+// Littéral obligatoire : Next analyse statiquement cette valeur et refuse la constante
+// importée. DAILY_MAX_DURATION_S en tient la copie côté budget, et un test vérifie que
+// les deux ne divergent pas.
+export const maxDuration = 300
 export const dynamic = 'force-dynamic'
 
 const encodeHandle = (handle: string) => handle.split('/').map(encodeURIComponent).join('/')
@@ -29,6 +42,12 @@ export async function GET(req: Request) {
     return new Response('Unauthorized', { status: 401 })
   }
 
+  // UNE échéance, ancrée ici. Chaque étape reçoit ce qui reste : c'est l'absence de ce
+  // point d'ancrage qui a fait dépasser la fonction, le budget de la sonde ne comptant
+  // que son propre temps alors qu'IndexNow s'était déjà servi avant elle.
+  const startedAt = Date.now()
+  const deadlineAt = startedAt + DAILY_ROUTE_BUDGET_MS
+
   const sql = getSql()
   const [{ total }] = await sql`select count(*)::int as total from agents`
 
@@ -38,7 +57,11 @@ export async function GET(req: Request) {
   let indexnow: unknown = { submitted: 0, batches: 0 }
   if (changed.length > 0) {
     try {
-      indexnow = await submitIndexNow(changed.map((r) => `https://${HOST}/agents/${encodeHandle(r.handle)}`))
+      indexnow = await submitIndexNow(
+        changed.map((r) => `https://${HOST}/agents/${encodeHandle(r.handle)}`),
+        () => {},
+        { deadlineAt: Math.min(Date.now() + INDEXNOW_BUDGET_MS, deadlineAt) },
+      )
     } catch (e) {
       indexnow = { error: e instanceof Error ? e.message : 'failed' }
     }
@@ -52,7 +75,7 @@ export async function GET(req: Request) {
     /* table pas encore créée : non bloquant */
   }
 
-  const endpoints = await probeEndpoints(sql)
+  const endpoints = await probeEndpoints(sql, deadlineAt)
 
   return Response.json({
     ok: true,
@@ -61,6 +84,7 @@ export async function GET(req: Request) {
     indexnow,
     purged,
     endpoints,
+    elapsed_ms: Date.now() - startedAt,
   })
 }
 
@@ -70,14 +94,12 @@ export async function GET(req: Request) {
 // Chaque endpoint silencieux coûte une seconde chance patiente (voir lib/endpoint-probe),
 // donc le lot reste modeste et la concurrence élevée — c'est de l'attente réseau, pas du
 // CPU. Le rattrapage de masse se fait hors ligne via scripts/probe-endpoints.mts.
+// La concurrence reste à 125 délibérément. Un premier jet à 40 requêtes parallèles et 3 s
+// avait fait passer pour muets 1 196 hôtes sur 8 648 : c'est notre propre liaison qui
+// saturait. Monter la concurrence pour gagner du débit rachèterait ce défaut, et un faux
+// silence est la pire erreur possible ici — il accuse publiquement l'agent d'un tiers.
 const PROBE_BATCH = 250
 const PROBE_CONCURRENCY = 125
-const PROBE_TIME_BUDGET_MS = 45_000
-
-// Une vague peut dépasser son budget de la durée d'une seconde chance patiente : sans
-// cette réserve, une vague lancée à 44 s finissait à 65 s et Vercel tuait la fonction en
-// plein milieu — avec les sondes déjà faites mais jamais écrites.
-const PROBE_WAVE_RESERVE_MS = 22_000
 
 type ProbeTarget = {
   id: string
@@ -95,9 +117,12 @@ type ProbeTarget = {
  * plutôt que sondés séparément — un second passage doublerait le temps réseau du cron et
  * réduirait d'autant la rotation du catalogue, pour la même information.
  */
-async function probeEndpoints(sql: Sql) {
+async function probeEndpoints(sql: Sql, deadlineAt: number) {
   const startedAt = Date.now()
-  const remaining = () => PROBE_TIME_BUDGET_MS - (Date.now() - startedAt)
+  // Le temps restant vient de l'échéance de la REQUÊTE, pas d'un compteur local : c'est
+  // toute la correction. Une étape qui ne compte que son propre temps ne peut pas tenir
+  // une promesse sur la durée totale.
+  const remaining = () => deadlineAt - Date.now()
   try {
     // Cohorte d'abord, et de façon absorbante : tant que la migration du journal de
     // preuves n'est pas appliquée, `cohort` vaut null et le cron se comporte exactement
@@ -153,8 +178,14 @@ async function probeEndpoints(sql: Sql) {
     const now = new Date().toISOString()
     const results: { target: ProbeTarget; check: EndpointCheck }[] = []
 
+    let deferred = 0
     for (let i = 0; i < ordered.length; i += PROBE_CONCURRENCY) {
-      if (remaining() < PROBE_WAVE_RESERVE_MS) break
+      // La vague ne démarre que si sa pire durée ET l'écriture finale tiennent encore.
+      // Ce qui ne rentre pas est reporté et compté, pas abandonné en silence.
+      if (!canStartWave(remaining())) {
+        deferred = ordered.length - i
+        break
+      }
       const wave = ordered.slice(i, i + PROBE_CONCURRENCY)
       // Réseau en parallèle (de l'attente, pas du CPU) ; les écritures DB restent
       // séquentielles et groupées, conformément à la règle du pooler.
@@ -173,9 +204,13 @@ async function probeEndpoints(sql: Sql) {
     return {
       probed: results.length,
       cohort_probed: results.filter((r) => r.target.cohort !== null).length,
+      // Reporté au prochain passage faute de temps : la rotation le reprendra, mais un
+      // opérateur doit pouvoir le lire plutôt que le déduire d'un compteur en baisse.
+      deferred_to_next_run: deferred,
       unreachable,
       history,
       elapsed_ms: Date.now() - startedAt,
+      finalize_reserve_ms: FINALIZE_RESERVE_MS,
     }
   } catch (e) {
     // Une sonde qui casse ne doit jamais casser le keep-alive ni l'indexation.

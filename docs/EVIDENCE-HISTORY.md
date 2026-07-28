@@ -193,6 +193,24 @@ a confident number there would be a comfortable fiction.
 the separate check to run: the cron logs for `/api/cron/registry` and `/api/cron/daily`
 over the same window. No telemetry is invented to fill that gap.
 
+**A failed cron and a successful write are not mutually exclusive.** The first production
+cycle (2026-07-28) makes the point concretely: the platform recorded
+`Task timed out after 60 seconds` on `/api/cron/daily`, and the database nonetheless shows
+250 fresh checks including all 36 probeable cohort subjects. The work had completed; only
+the response was lost. So read the two sources together and in this order — the database
+says what was written, the Vercel logs say whether the function returned. Neither answers
+the other's question, and the timeout in that run was a symptom of the route's own
+`maxDuration`, not of a collector failure.
+
+That route now declares the same 300-second ceiling as the registry cron and works against
+a single deadline anchored at the start of the request. The previous budget only counted
+the probe's own time, so the keep-alive query, IndexNow and the purge spent from a wallet
+nobody was watching. IndexNow is bounded and yields first: it is search-engine
+housekeeping, while a probe that was performed and never written is a lost measurement
+about someone else's agent. The response now carries `elapsed_ms` and
+`deferred_to_next_run`, so a short run is legible instead of having to be inferred from a
+falling counter.
+
 The report also counts chain defects (dangling parents, forks, duplicate baselines,
 cross-chain parents, identical consecutive states, backdated rows), attribution anomalies
 (a chain with more than one collector, an unknown source), and the approximate table and
