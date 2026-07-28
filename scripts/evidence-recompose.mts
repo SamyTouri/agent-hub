@@ -54,6 +54,7 @@ type ActiveRow = {
   endpoint: string | null
   stratum: CohortStratum
   selectionRule: string
+  selectionFamily: string | null
 }
 
 type Deactivation = { agent_id: string; handle: string; stratum: string; reason: string }
@@ -165,7 +166,7 @@ try {
 
 async function loadActive(): Promise<ActiveRow[]> {
   const rows = await sql`
-    select c.agent_id, c.stratum, c.selection_rule, a.handle, a.endpoint
+    select c.agent_id, c.stratum, c.selection_rule, c.selection_family, a.handle, a.endpoint
     from evidence_cohort c join agents a on a.id = c.agent_id
     where c.active and c.cohort = ${COHORT_ID}
     order by a.handle
@@ -176,6 +177,7 @@ async function loadActive(): Promise<ActiveRow[]> {
     endpoint: (row.endpoint as string | null) ?? null,
     stratum: String(row.stratum) as CohortStratum,
     selectionRule: String(row.selection_rule),
+    selectionFamily: (row.selection_family as string | null) ?? null,
   }))
 }
 
@@ -242,7 +244,7 @@ async function buildPlan(): Promise<RecompositionManifest> {
     handle: row.handle,
     endpoint: row.endpoint,
     stratum: row.stratum,
-    selectionFamily: null,
+    selectionFamily: row.selectionFamily,
   }))
   const excluded = new Set([...active.map((row) => row.agentId)])
   const candidates = (await loadCandidates()).filter((candidate) => !excluded.has(candidate.agentId))
@@ -266,7 +268,7 @@ async function buildPlan(): Promise<RecompositionManifest> {
         subjectKind: 'agent' as const,
         stratum: row.stratum,
         selectionRule: row.selectionRule,
-        selectionFamily: null,
+        selectionFamily: row.selectionFamily,
         selectionReason: 'Already tracked; its recorded reason lives in the database and is never rewritten.',
       })),
       ...admissions,
@@ -311,7 +313,8 @@ async function buildPlan(): Promise<RecompositionManifest> {
 }
 
 type Row = Record<string, unknown>
-const toCandidate = (row: Row): CandidateSubject => ({
+function toCandidate(row: Row): CandidateSubject {
+  return {
   agentId: String(row.id),
   handle: String(row.handle),
   displayName: (row.display_name as string | null) ?? null,
@@ -321,8 +324,9 @@ const toCandidate = (row: Row): CandidateSubject => ({
   endpoint: (row.endpoint as string | null) ?? null,
   repository: (row.repository as string | null) ?? null,
   hasRepositoryObservation: row.has_repository_observation === true,
-  endpointCheck: (row.endpoint_check as EndpointCheck | null) ?? null,
-})
+    endpointCheck: (row.endpoint_check as EndpointCheck | null) ?? null,
+  }
+}
 
 /** Mêmes pré-filtres que la sélection initiale ; la règle reste seule juge. */
 async function loadCandidates(): Promise<CandidateSubject[]> {
