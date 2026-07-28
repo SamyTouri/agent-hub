@@ -17,6 +17,16 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // Le domaine de déploiement Vercel sert exactement le même site que
+        // agentreputation.dev. Tant qu'il restait indexable, Google traitait
+        // chaque page comme un doublon et en écartait une des deux. Les
+        // canoniques désignent le bon gagnant ; ce noindex évite au robot de
+        // dépenser son budget de crawl sur le perdant.
+        source: '/:path*',
+        has: [{ type: 'host', value: '.*\\.vercel\\.app' }],
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex' }],
+      },
+      {
         // Signal machine-lisible pour les crawlers/agents qui lisent une fiche :
         // ce profil se réclame/s'enregistre ici. Ingéré dans les corpus, il ressort
         // au moment où un agent (ou son humain) cherche comment s'inscrire.

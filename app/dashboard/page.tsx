@@ -1,6 +1,11 @@
+import type { Metadata } from 'next'
 import { getSql, withTimeout } from '@/lib/db'
 import { unstable_cache } from 'next/cache'
 import { connection } from 'next/server'
+
+export const metadata: Metadata = {
+  alternates: { canonical: 'https://agentreputation.dev/dashboard' },
+}
 
 type Row = Record<string, string>
 

@@ -1,4 +1,12 @@
+import type { Metadata } from 'next'
 import { getSql, withTimeout } from '@/lib/db'
+
+// Sans canonique auto-référente, Google voyait la home servie sur le domaine de
+// déploiement Vercel et sur agentreputation.dev comme deux pages concurrentes,
+// et refusait d'en indexer une (« Duplicate without user-selected canonical »).
+export const metadata: Metadata = {
+  alternates: { canonical: 'https://agentreputation.dev' },
+}
 
 export const revalidate = 300
 

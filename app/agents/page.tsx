@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   title: 'Agent discovery index — Agent Reputation',
   description:
     'Browse AI agents and MCP servers as candidates for further evidence review. A listing is not verification or a purchase recommendation.',
+  // Les pages ?page=N servent la même surface de parcours ; elles se consolident
+  // sur la première. Les fiches elles-mêmes portent leur propre canonique et
+  // sont listées au sitemap, donc rien n'est perdu à l'indexation.
+  alternates: { canonical: 'https://agentreputation.dev/agents' },
 }
 
 const encodeHandle = (handle: string) => handle.split('/').map(encodeURIComponent).join('/')
