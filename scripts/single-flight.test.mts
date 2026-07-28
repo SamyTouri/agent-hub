@@ -16,8 +16,14 @@ import test from 'node:test'
 import { readFileSync } from 'node:fs'
 
 import type { Sql } from '../lib/db.ts'
-import { DAILY_LEASE_NAME, acquireLease, releaseLease, withLease } from '../lib/single-flight.ts'
-import { DAILY_LEASE_TTL_MS, DAILY_MAX_DURATION_S, DAILY_ROUTE_BUDGET_MS } from '../lib/probe-budget.ts'
+import {
+  CATALOGUE_LEASE_NAME,
+  CATALOGUE_LEASE_TTL_MS,
+  acquireLease,
+  releaseLease,
+  withLease,
+} from '../lib/single-flight.ts'
+import { DAILY_MAX_DURATION_S, DAILY_ROUTE_BUDGET_MS } from '../lib/probe-budget.ts'
 
 const LEASE = 'cron:test'
 const TTL_MS = 300_000
@@ -270,28 +276,119 @@ test('two invocations racing on a free lease produce exactly one worker', async 
 test('the lease outlives the work it protects and dies with the platform ceiling', () => {
   // Trop court, il serait repris pendant que la première invocation écrit encore. Trop
   // long, il survivrait à une invocation tuée et bloquerait la tâche pour rien.
-  assert.ok(DAILY_LEASE_TTL_MS >= DAILY_ROUTE_BUDGET_MS, 'a lease must not expire mid-run')
-  assert.ok(DAILY_LEASE_TTL_MS <= DAILY_MAX_DURATION_S * 1_000, 'a lease must not outlive a killed run')
+  assert.ok(CATALOGUE_LEASE_TTL_MS >= DAILY_ROUTE_BUDGET_MS, 'a lease must not expire mid-run')
+  assert.ok(CATALOGUE_LEASE_TTL_MS <= DAILY_MAX_DURATION_S * 1_000, 'a lease must not outlive a killed run')
 })
 
-test('the daily route takes the lease before it does any work', () => {
-  // Régression possible en une ligne : remonter une requête au-dessus du garde suffirait à
-  // faire travailler une invocation concurrente. Ce test lit la route elle-même.
-  const route = readFileSync(new URL('../app/api/cron/daily/route.ts', import.meta.url), 'utf8')
-  const start = route.indexOf('export async function GET')
-  assert.ok(start > 0)
-  const handler = route.slice(start, start + route.slice(start).search(/\r?\n\}\r?\n/))
+// ---------------------------------------------------------------------------
+// Les deux routes du catalogue, sous le MÊME bail
+// ---------------------------------------------------------------------------
 
-  assert.ok(handler.includes('withLease('), 'the daily route must run under a lease')
-  assert.ok(handler.includes('DAILY_LEASE_NAME'), 'the route must use the shared lease name')
-  assert.equal(DAILY_LEASE_NAME, 'cron:daily')
-  // Aucun travail dans le corps du handler : tout passe par la fonction appelée sous bail.
-  for (const work of ['sql`', 'submitIndexNow(', 'probeEndpoints(']) {
-    assert.ok(!handler.includes(work), `${work} must live under the lease, not beside it`)
+/** Corps du handler GET d'une route, sans ce qui vit en dessous. */
+function handlerOf(file: string): string {
+  const route = readFileSync(new URL(`../app/api/cron/${file}/route.ts`, import.meta.url), 'utf8')
+  const start = route.indexOf('export async function GET')
+  assert.ok(start > 0, `${file}: no GET handler`)
+  return route.slice(start, start + route.slice(start).search(/\r?\n\}\r?\n/))
+}
+
+test('both catalogue routes take the same lease before doing any work', () => {
+  // Régression possible en une ligne : remonter une requête au-dessus du garde, ou donner
+  // à l'une des routes son propre nom de bail, suffirait à les laisser écrire ensemble
+  // dans `agents`. Ces tests lisent les routes elles-mêmes.
+  for (const file of ['daily', 'registry']) {
+    const handler = handlerOf(file)
+    assert.ok(handler.includes('withLease('), `${file}: must run under a lease`)
+    assert.ok(handler.includes('CATALOGUE_LEASE_NAME'), `${file}: must use the shared lease name`)
+    // L'autorisation reste la toute première chose vérifiée.
+    assert.ok(
+      handler.indexOf('authorization') < handler.indexOf('withLease('),
+      `${file}: the authorization check must stay ahead of everything`,
+    )
   }
-  // Et l'autorisation reste la toute première chose vérifiée.
-  assert.ok(
-    handler.indexOf('authorization') < handler.indexOf('withLease('),
-    'the authorization check must stay ahead of everything',
+  assert.equal(CATALOGUE_LEASE_NAME, 'cron:catalogue')
+})
+
+test('neither route does catalogue work outside the lease', () => {
+  const daily = handlerOf('daily')
+  for (const work of ['sql`', 'submitIndexNow(', 'probeEndpoints(']) {
+    assert.ok(!daily.includes(work), `${work} must live under the lease, not beside it`)
+  }
+  const registry = handlerOf('registry')
+  for (const work of ['sql`', 'syncRegistryDelta(', 'syncConcordiumAgents(']) {
+    assert.ok(!registry.includes(work), `${work} must live under the lease, not beside it`)
+  }
+})
+
+test('the lease TTL cannot drift from the ceiling either route declares', () => {
+  // Next analyse `maxDuration` statiquement et refuse une constante importée, donc chaque
+  // route porte un littéral. Sans ce test, abaisser l'un des deux laisserait un bail qui
+  // survit à une invocation déjà tuée.
+  for (const file of ['daily', 'registry']) {
+    const route = readFileSync(new URL(`../app/api/cron/${file}/route.ts`, import.meta.url), 'utf8')
+    const declared = /export const maxDuration = (\d+)/.exec(route)
+    assert.ok(declared, `${file}: must declare maxDuration`)
+    assert.equal(Number(declared[1]) * 1_000, CATALOGUE_LEASE_TTL_MS, `${file}: ceiling and lease TTL disagree`)
+  }
+})
+
+test('an import cannot run while the daily maintenance holds the lease', async () => {
+  // Le cas que le bail par route laissait passer : deux tâches différentes écrivant dans
+  // `agents` en même temps, sur l'unique connexion du pooler.
+  const store = lockStore()
+  let imported = false
+
+  const daily = await withLease(store.sql, CATALOGUE_LEASE_NAME, CATALOGUE_LEASE_TTL_MS, async () => {
+    const registry = await withLease(store.sql, CATALOGUE_LEASE_NAME, CATALOGUE_LEASE_TTL_MS, async () => {
+      imported = true
+      return { ok: true }
+    })
+    assert.equal(registry.status, 'busy', 'the import must be refused while maintenance holds the lease')
+    return { ok: true }
+  })
+
+  assert.equal(imported, false, 'no upstream fetch, no embedding, no upsert')
+  assert.ok(daily.status === 'held')
+  assert.equal(daily.release.released, true)
+})
+
+test('the import releases the lease so the maintenance can run right after', async () => {
+  const store = lockStore()
+  const registry = await withLease(store.sql, CATALOGUE_LEASE_NAME, CATALOGUE_LEASE_TTL_MS, async () => ({ ok: true }))
+  assert.ok(registry.status === 'held')
+
+  const daily = await withLease(store.sql, CATALOGUE_LEASE_NAME, CATALOGUE_LEASE_TTL_MS, async () => ({ probed: 1 }))
+  assert.ok(daily.status === 'held', 'a finished import must not block the maintenance until the TTL')
+  assert.notEqual(daily.holder, registry.holder, 'each invocation holds its own token')
+})
+
+test('a killed import stops blocking the maintenance once its lease expires', async () => {
+  // L'import tué par la plateforme ne rend jamais son bail. Sans reprise, la tâche
+  // quotidienne serait bloquée pour toujours par une invocation morte.
+  const store = lockStore()
+  await acquireLease(store.sql, CATALOGUE_LEASE_NAME, CATALOGUE_LEASE_TTL_MS, 'killed-import')
+
+  const tooEarly = await withLease(store.sql, CATALOGUE_LEASE_NAME, CATALOGUE_LEASE_TTL_MS, async () => ({ ok: true }))
+  assert.equal(tooEarly.status, 'busy')
+
+  store.advance(CATALOGUE_LEASE_TTL_MS)
+  const later = await withLease(store.sql, CATALOGUE_LEASE_NAME, CATALOGUE_LEASE_TTL_MS, async () => ({ ok: true }))
+  assert.equal(later.status, 'held')
+})
+
+test('an import that fails releases the lease and lets its error through', async () => {
+  // Un import en échec doit rester un cron en échec : la route le retransforme en 500.
+  // Mais il ne doit pas condamner la tâche suivante jusqu'à l'échéance du bail.
+  const store = lockStore()
+  const upstream = new Error('registry upstream 502')
+  await assert.rejects(
+    withLease(store.sql, CATALOGUE_LEASE_NAME, CATALOGUE_LEASE_TTL_MS, async () => {
+      throw upstream
+    }),
+    (error: unknown) => error === upstream,
   )
+  assert.equal(store.rows.size, 0, 'the lease is released even when the import fails')
+
+  const next = await withLease(store.sql, CATALOGUE_LEASE_NAME, CATALOGUE_LEASE_TTL_MS, async () => ({ ok: true }))
+  assert.equal(next.status, 'held')
 })

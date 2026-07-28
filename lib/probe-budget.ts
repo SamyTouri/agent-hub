@@ -35,18 +35,6 @@ export const DAILY_MAX_DURATION_S = 300
  *  réponse et des aléas de plateforme. */
 export const DAILY_ROUTE_BUDGET_MS = 240_000
 
-/**
- * Durée de vie du bail d'exécution unique, calée sur le plafond de la plateforme.
- *
- * Les deux bornes comptent autant l'une que l'autre. Un bail plus court que le travail
- * qu'il protège serait repris par une seconde invocation pendant que la première écrit
- * encore — exactement la concurrence qu'il existe pour empêcher. Un bail plus long que le
- * plafond survivrait à une invocation que la plateforme a tuée, et bloquerait la tâche
- * pour rien. À 300 s il ne peut faire ni l'un ni l'autre : aucune invocation ne vit plus
- * longtemps, et le travail s'arrête soixante secondes plus tôt.
- */
-export const DAILY_LEASE_TTL_MS = DAILY_MAX_DURATION_S * 1_000
-
 /** IndexNow est du référencement, pas de la preuve. Il est borné pour ne pas pouvoir
  *  manger la part de la sonde, qui est la seule étape dont dépend une affirmation
  *  publique sur l'agent d'un tiers. */

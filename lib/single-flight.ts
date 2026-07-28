@@ -28,8 +28,32 @@ import { randomUUID } from 'node:crypto'
 
 import type { Sql } from './db.ts'
 
-/** Nom du bail de l'entretien quotidien. Un nom par tâche, jamais partagé par erreur. */
-export const DAILY_LEASE_NAME = 'cron:daily'
+/**
+ * Le bail des tâches qui MODIFIENT LE CATALOGUE — partagé, délibérément.
+ *
+ * Un bail nomme la ressource protégée, pas la route qui le prend. L'import de registre et
+ * l'entretien quotidien écrivent tous les deux dans `agents` : leur donner chacun le sien
+ * aurait empêché chaque tâche de se marcher dessus elle-même tout en laissant intact le
+ * cas où les deux écrivent ensemble sur l'unique connexion du pooler. Ils contendent donc
+ * sur ce nom-là.
+ *
+ * Le coût est assumé : si l'import déborde jusqu'à l'heure de l'entretien, l'entretien
+ * saute son cycle plutôt que d'écrire par-dessus. Une heure sépare les deux dans le
+ * planning et l'import est borné bien en deçà, donc le cas reste théorique sur la
+ * planification et ne mord que sur les lancements manuels — ceux qui ont causé l'incident.
+ */
+export const CATALOGUE_LEASE_NAME = 'cron:catalogue'
+
+/**
+ * Durée de vie du bail, calée sur le plafond de durée déclaré par les DEUX routes.
+ *
+ * Les deux bornes comptent autant l'une que l'autre. Un bail plus court que le travail
+ * qu'il protège serait repris pendant que le détenteur écrit encore — exactement la
+ * concurrence qu'il existe pour empêcher. Un bail plus long que le plafond survivrait à
+ * une invocation que la plateforme a tuée et bloquerait la tâche pour rien. Un test relit
+ * les deux routes pour que ce nombre ne puisse pas se désynchroniser d'elles.
+ */
+export const CATALOGUE_LEASE_TTL_MS = 300_000
 
 /** Ce qu'on peut dire du détenteur en place, sans rien deviner. */
 export type LeaseHolder = {

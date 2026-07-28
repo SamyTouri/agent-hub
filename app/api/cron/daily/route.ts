@@ -10,13 +10,12 @@ import {
 import { EVIDENCE_SCHEMA_VERSION, availabilityFacts, type ObservationInput } from '@/lib/evidence-history'
 import { appendObservations, loadActiveCohort, type CohortMember } from '@/lib/evidence-store'
 import {
-  DAILY_LEASE_TTL_MS,
   DAILY_ROUTE_BUDGET_MS,
   FINALIZE_RESERVE_MS,
   INDEXNOW_BUDGET_MS,
   canStartWave,
 } from '@/lib/probe-budget'
-import { DAILY_LEASE_NAME, withLease } from '@/lib/single-flight'
+import { CATALOGUE_LEASE_NAME, CATALOGUE_LEASE_TTL_MS, withLease } from '@/lib/single-flight'
 
 export const runtime = 'nodejs'
 // Fluid compute : le plan autorise 300 s, et le cron registre s'en sert déjà. À 60 s la
@@ -58,9 +57,10 @@ export async function GET(req: Request) {
   // hôte, n'écrire aucune ligne et n'attendre personne. Le 2026-07-28, quatre invocations
   // simultanées se sont mutuellement affamées sur l'unique connexion du pooler — trois
   // tuées à 300 s, une sur le délai d'instruction — pour un cycle inexploitable.
+  // Le bail est PARTAGÉ avec l'import de registre : les deux écrivent dans `agents`.
   // Une panne du TRAVAIL, elle, continue de remonter telle quelle : seul l'échec de la
   // PRISE du bail devient `unavailable`.
-  const run = await withLease(sql, DAILY_LEASE_NAME, DAILY_LEASE_TTL_MS, () =>
+  const run = await withLease(sql, CATALOGUE_LEASE_NAME, CATALOGUE_LEASE_TTL_MS, () =>
     runDailyMaintenance(sql, deadlineAt),
   )
 
