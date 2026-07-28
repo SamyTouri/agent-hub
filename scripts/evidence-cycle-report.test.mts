@@ -11,11 +11,13 @@ import {
   CYCLE_CHECK_SCHEMA,
   IMPORT_COLLECTORS,
   buildCycleReport,
+  groupOperatorEvents,
   isExpectedAvailabilityHandoff,
   resolveWindow,
   type Check,
   type CycleFacts,
   type CycleWindow,
+  type WindowTransition,
 } from '../lib/evidence-cycle-report.ts'
 import { BASELINE_COLLECTOR } from '../lib/evidence-store.ts'
 
@@ -48,6 +50,8 @@ function facts(overrides: Partial<CycleFacts> = {}): CycleFacts {
     },
     multiCollectorChains: [],
     multiCollectorTruncated: false,
+    windowTransitions: [],
+    windowTransitionsTruncated: false,
     unknownSources: [],
     storage: { observations_total_bytes: 65536 },
     ...overrides,
@@ -368,4 +372,231 @@ test('the report always says the database cannot prove an invocation', () => {
 
 test('the same facts always produce the same report', () => {
   assert.equal(JSON.stringify(buildCycleReport(facts(), NOW)), JSON.stringify(buildCycleReport(facts(), NOW)))
+})
+
+// ---------------------------------------------------------------------------
+// Événements d'opérateur : quatre lignes vraies, un seul événement
+// ---------------------------------------------------------------------------
+//
+// Cas réel du 2026-07-28 : le premier cycle protégé a écrit quatre transitions au même
+// instant pour `ai.boolsai/directory`, `/grep`, `/scan` et `/signals`, toutes passées de
+// 2xx à 4xx en restant joignables. Quatre lignes vraies. Un seul événement chez un seul
+// éditeur — et les compter comme quatre signaux de marché serait la lecture flatteuse.
+
+const OUTAGE = '2026-07-28T03:00:12.000Z'
+const TO_4XX = [{ path: 'http_class', kind: 'changed' as const, from: '2xx', to: '4xx' }]
+const TO_2XX = [{ path: 'http_class', kind: 'changed' as const, from: '4xx', to: '2xx' }]
+
+let nextObservationId = 0
+function transition(overrides: Partial<WindowTransition> = {}): WindowTransition {
+  nextObservationId += 1
+  return {
+    observationId: `obs-${nextObservationId}`,
+    subjectAgentId: `subject-${nextObservationId}`,
+    handle: 'ai.boolsai/directory',
+    endpoint: 'https://directory.boolsai.com/mcp',
+    stratum: 'availability_watch',
+    source: 'endpoint-probe',
+    observedAt: OUTAGE,
+    changeSummary: TO_4XX,
+    ...overrides,
+  }
+}
+
+/** Les quatre sujets du cas réel, chacun sur son propre hôte. */
+const boolsai = (): WindowTransition[] =>
+  ['directory', 'grep', 'scan', 'signals'].map((product) =>
+    transition({ handle: `ai.boolsai/${product}`, endpoint: `https://${product}.boolsai.com/mcp` }),
+  )
+
+test('four transitions at one operator stay four rows and read as one event', () => {
+  const rows = boolsai()
+  const events = groupOperatorEvents(rows)
+
+  assert.equal(rows.length, 4, 'the raw rows are untouched')
+  assert.equal(events.length, 1, 'one operator, one instant, one change: one event')
+  assert.equal(events[0].raw_transitions, 4, 'the event still says how many rows it covers')
+  assert.deepEqual(events[0].subjects, [
+    'ai.boolsai/directory',
+    'ai.boolsai/grep',
+    'ai.boolsai/scan',
+    'ai.boolsai/signals',
+  ])
+  assert.equal(events[0].operator, 'namespace:ai.boolsai')
+  assert.equal(events[0].operator_axis, 'namespace')
+})
+
+test('grouping never mutates the transitions it reads', () => {
+  // Le journal est append-only : rien de ce qui vient de la base ne doit être réécrit,
+  // même en mémoire, même par un rapport en lecture seule.
+  const rows = boolsai()
+  const before = JSON.stringify(rows)
+  groupOperatorEvents(rows)
+  assert.equal(JSON.stringify(rows), before)
+})
+
+test('one publisher spread over several hosts is still one event', () => {
+  // Le namespace est une identité d'éditeur déclarée : elle survit au changement
+  // d'hébergeur. Grouper sur le domaine aurait ici produit trois événements.
+  const events = groupOperatorEvents([
+    transition({ handle: 'ai.boolsai/grep', endpoint: 'https://grep.boolsai.com/mcp' }),
+    transition({ handle: 'ai.boolsai/scan', endpoint: 'https://boolsai-scan.fly.dev/mcp' }),
+    transition({ handle: 'ai.boolsai/signals', endpoint: 'https://signals.example.net/mcp' }),
+  ])
+  assert.equal(events.length, 1)
+  assert.equal(events[0].raw_transitions, 3)
+})
+
+test('two different operators changing at the same instant are two events', () => {
+  const events = groupOperatorEvents([
+    ...boolsai(),
+    transition({ handle: 'io.github.other/tool', endpoint: 'https://other.example.com/mcp' }),
+  ])
+  assert.equal(events.length, 2, 'an unrelated operator is never absorbed into another event')
+  assert.deepEqual(
+    events.map((event) => event.raw_transitions),
+    [4, 1],
+  )
+})
+
+test('two subjects sharing only a host are not made one operator', () => {
+  // Deux locataires du même hébergement partagé ont des namespaces différents. Fusionner
+  // sur le domaine leur prêterait une panne commune qu'ils n'ont pas.
+  const events = groupOperatorEvents([
+    transition({ handle: 'ai.alpha/one', endpoint: 'https://alpha.sharedhost.example/mcp' }),
+    transition({ handle: 'ai.beta/one', endpoint: 'https://beta.sharedhost.example/mcp' }),
+  ])
+  assert.equal(events.length, 2)
+})
+
+test('opposite changes at the same operator and instant are two events', () => {
+  const events = groupOperatorEvents([
+    transition({ handle: 'ai.boolsai/scan', changeSummary: TO_4XX }),
+    transition({ handle: 'ai.boolsai/grep', changeSummary: TO_2XX }),
+  ])
+  assert.equal(events.length, 2, 'one going down and one coming back are not the same event')
+})
+
+test('the same operator changing on two days is two events', () => {
+  const events = groupOperatorEvents([
+    transition({ handle: 'ai.boolsai/scan' }),
+    transition({ handle: 'ai.boolsai/grep', observedAt: '2026-07-29T03:00:04.000Z' }),
+  ])
+  assert.equal(events.length, 2)
+})
+
+test('subjects with no derivable operator never merge, not even with each other', () => {
+  const events = groupOperatorEvents([
+    transition({ handle: 'standalone-one', endpoint: null }),
+    transition({ handle: 'standalone-two', endpoint: null }),
+  ])
+  assert.equal(events.length, 2, 'not knowing who someone is is not a shared identity')
+  for (const event of events) {
+    assert.equal(event.operator, null)
+    assert.equal(event.operator_axis, null)
+    assert.equal(event.raw_transitions, 1)
+  }
+})
+
+test('a subject without a namespace falls back to its registrable domain', () => {
+  const events = groupOperatorEvents([
+    transition({ handle: 'standalone-a', endpoint: 'https://a.vendor.example/mcp' }),
+    transition({ handle: 'standalone-b', endpoint: 'https://b.vendor.example/mcp' }),
+  ])
+  assert.equal(events.length, 1)
+  assert.equal(events[0].operator, 'domain:vendor.example')
+  assert.equal(events[0].operator_axis, 'domain', 'the weaker axis is named, not hidden')
+})
+
+test('the interpretation applies to every stratum, not only availability', () => {
+  // Une transition de profil venue de l'import se groupe par la même règle. Restreindre
+  // l'agrégation à la disponibilité aurait laissé la même erreur de lecture ailleurs.
+  const profileChange = [{ path: 'description', kind: 'changed' as const, from: 'old', to: 'new' }]
+  const events = groupOperatorEvents([
+    ...boolsai(),
+    transition({
+      handle: 'ai.vendor/one',
+      endpoint: 'https://one.vendor.example/mcp',
+      stratum: 'multi_source_identity',
+      source: 'mcp-registry',
+      changeSummary: profileChange,
+    }),
+    transition({
+      handle: 'ai.vendor/two',
+      endpoint: 'https://two.vendor.example/mcp',
+      stratum: 'multi_source_identity',
+      source: 'mcp-registry',
+      changeSummary: profileChange,
+    }),
+  ])
+  assert.equal(events.length, 2, 'the profile pair groups exactly like the availability four')
+  const profile = events.find((event) => event.source === 'mcp-registry')!
+  assert.equal(profile.raw_transitions, 2)
+  assert.deepEqual(profile.strata, ['multi_source_identity'])
+})
+
+test('an availability change and a profile change are never the same event', () => {
+  const events = groupOperatorEvents([
+    transition({ handle: 'ai.boolsai/scan', source: 'endpoint-probe' }),
+    transition({ handle: 'ai.boolsai/scan', source: 'mcp-registry' }),
+  ])
+  assert.equal(events.length, 2, 'two sources are two kinds of fact about the same subject')
+})
+
+// ---------------------------------------------------------------------------
+// Ce que le rapport en dit
+// ---------------------------------------------------------------------------
+
+test('the report shows the raw count and the operator count side by side', () => {
+  const rows = boolsai()
+  const report = buildCycleReport(
+    facts({ windowTransitions: rows, windowTotals: { rows: 4, baselines: 0, transitions: 4 } }),
+    NOW,
+  )
+  const block = report.operator_events as Record<string, unknown>
+  assert.equal(block.raw_transitions, 4)
+  assert.equal(block.operator_events, 1)
+  assert.equal(block.grouped_events, 1)
+  assert.equal(block.largest_event_subjects, 4)
+  assert.deepEqual(block.events_by_operator_axis, { namespace: 1, domain: 0, unknown: 0 })
+  assert.deepEqual(block.by_stratum, { availability_watch: { raw_transitions: 4, operator_events: 1 } })
+
+  // Le chiffre brut ne doit jamais partir seul là où on le lirait comme un nombre de
+  // signaux de marché.
+  const dedup = checkById(report, 'deduplication-and-transitions')
+  assert.equal(dedup.evidence.transitions_in_window, 4)
+  assert.equal(dedup.evidence.distinct_operator_events, 1)
+  assert.match(String(dedup.finding), /1 distinct operator event/)
+})
+
+test('the report keeps the audit trail of every grouping it makes', () => {
+  const report = buildCycleReport(facts({ windowTransitions: boolsai() }), NOW)
+  const block = report.operator_events as Record<string, unknown>
+  const examples = block.grouped_event_examples as Array<Record<string, unknown>>
+  assert.equal(examples.length, 1)
+  assert.deepEqual(examples[0].subjects, [
+    'ai.boolsai/directory',
+    'ai.boolsai/grep',
+    'ai.boolsai/scan',
+    'ai.boolsai/signals',
+  ])
+  assert.equal(examples[0].change, 'http_class:changed:2xx->4xx')
+  assert.equal(block.grouped_event_examples_truncated, false)
+})
+
+test('a truncated transition sample refuses to describe the whole window', () => {
+  const report = buildCycleReport(facts({ windowTransitions: boolsai(), windowTransitionsTruncated: true }), NOW)
+  const block = report.operator_events as Record<string, unknown>
+  assert.equal(block.sample_truncated, true)
+  assert.match(String(block.cannot_prove), /sample of the window, not the window/)
+  const dedup = checkById(report, 'deduplication-and-transitions')
+  assert.equal(dedup.evidence.transition_sample_truncated, true)
+})
+
+test('an empty window reports zero events without inventing one', () => {
+  const report = buildCycleReport(facts(), NOW)
+  const block = report.operator_events as Record<string, unknown>
+  assert.equal(block.raw_transitions, 0)
+  assert.equal(block.operator_events, 0)
+  assert.deepEqual(block.by_stratum, {})
 })

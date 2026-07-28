@@ -16,6 +16,7 @@
 import { readFileSync } from 'node:fs'
 import postgres from 'postgres'
 import { COHORT_ID } from '../lib/evidence-cohort.ts'
+import type { FactChange } from '../lib/evidence-history.ts'
 import { isMissingTable } from '../lib/evidence-store.ts'
 import { isProbeableEndpoint } from '../lib/endpoint-probe.ts'
 import {
@@ -63,6 +64,10 @@ if (!process.env.DATABASE_URL) {
 /** Échantillon des chaînes à plusieurs collecteurs. Atteindre cette limite est signalé au
  *  rapport, qui refuse alors de conclure « aucune anomalie » sur un échantillon tronqué. */
 const MULTI_COLLECTOR_SAMPLE = 200
+
+/** Transitions détaillées de la fenêtre. Atteindre cette limite est signalé au rapport, qui
+ *  cesse alors de présenter son comptage d'événements comme celui de la fenêtre entière. */
+const TRANSITION_SAMPLE = 500
 
 const sql = postgres(process.env.DATABASE_URL, { prepare: false, ssl: 'require', max: 1 })
 const num = (value: unknown) => Number(value ?? 0)
@@ -196,6 +201,33 @@ try {
     limit ${MULTI_COLLECTOR_SAMPLE}
   `
 
+  // Les transitions de la fenêtre, UNE LIGNE PAR SUJET. Aucune agrégation ici : le
+  // regroupement par opérateur est une lecture, il vit dans le module de rapport et se
+  // teste sans base. L'identité de l'opérateur se dérive du handle et de l'endpoint
+  // COURANTS du catalogue — la même entrée que partout ailleurs dans le projet — avec repli
+  // sur le handle du jour de l'observation si la fiche a disparu.
+  //
+  // La strate passe par une sous-requête bornée, pas par une jointure : un sujet admis sous
+  // deux règles de sélection successives porte deux lignes de cohorte actives, et une
+  // jointure aurait alors DUPLIQUÉ sa transition — le rapport aurait compté plus de lignes
+  // brutes que le journal n'en contient, en prétendant les corriger.
+  const transitions = await sql`
+    select o.id, o.subject_agent_id, o.source, o.observed_at, o.change_summary,
+           coalesce(a.handle, o.subject_key) as handle,
+           a.endpoint,
+           (select c.stratum from evidence_cohort c
+             where c.agent_id = o.subject_agent_id and c.active and c.cohort = ${COHORT_ID}
+             order by c.stratum
+             limit 1) as stratum
+    from evidence_observations o
+    left join agents a on a.id = o.subject_agent_id
+    where o.previous_observation_id is not null
+      and o.observed_at >= ${window.since}::timestamptz
+      and o.observed_at <= ${window.until}::timestamptz
+    order by o.observed_at, o.id
+    limit ${TRANSITION_SAMPLE}
+  `
+
   const unknownSources = await sql`
     select source, count(*)::int as rows
     from evidence_observations
@@ -272,6 +304,17 @@ try {
       collectors: String(row.names),
     })),
     multiCollectorTruncated: attribution.length >= MULTI_COLLECTOR_SAMPLE,
+    windowTransitions: transitions.map((row) => ({
+      observationId: String(row.id),
+      subjectAgentId: String(row.subject_agent_id),
+      handle: String(row.handle ?? ''),
+      endpoint: (row.endpoint as string | null) ?? null,
+      stratum: (row.stratum as string | null) ?? null,
+      source: String(row.source),
+      observedAt: iso(row.observed_at) ?? '',
+      changeSummary: (row.change_summary as FactChange[] | null) ?? [],
+    })),
+    windowTransitionsTruncated: transitions.length >= TRANSITION_SAMPLE,
     unknownSources: unknownSources.map((row) => ({ source: String(row.source), rows: num(row.rows) })),
     capturedCronResponses,
     storage,

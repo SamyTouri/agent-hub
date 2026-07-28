@@ -6,7 +6,14 @@
 // entier est qu'une ligne écrite ne prouve que ce qu'elle prouve — et qu'aucune requête
 // SQL ne prouvera jamais qu'une fonction Vercel a été invoquée.
 
-import { emptyTally, operatorKeysOf, tallyOperator, topConcentration } from './evidence-operator.ts'
+import type { FactChange } from './evidence-history.ts'
+import {
+  emptyTally,
+  operatorIdentityOf,
+  operatorKeysOf,
+  tallyOperator,
+  topConcentration,
+} from './evidence-operator.ts'
 
 export const CYCLE_CHECK_SCHEMA = 'https://agentreputation.dev/schemas/evidence-cycle-check/v1'
 
@@ -116,6 +123,27 @@ export type CohortRow = {
   endpoint?: string | null
 }
 
+/**
+ * Une transition écrite dans la fenêtre, avec de quoi savoir QUI l'a produite.
+ *
+ * Ce sont des lignes brutes du journal, lues telles quelles. Le regroupement par opérateur
+ * se fait à la lecture et n'écrit rien : le journal est append-only, et une ligne par sujet
+ * est exactement ce qu'il doit contenir. Ce qu'on corrige ici, c'est la LECTURE de ces
+ * lignes, pas les lignes.
+ */
+export type WindowTransition = {
+  observationId: string
+  subjectAgentId: string
+  /** Handle courant du sujet ; à défaut, celui du jour de l'observation. */
+  handle: string
+  endpoint: string | null
+  /** Strate de cohorte, ou null si le sujet n'est pas (ou plus) suivi. */
+  stratum: string | null
+  source: string
+  observedAt: string
+  changeSummary: readonly FactChange[]
+}
+
 export type CycleFacts = {
   window: CycleWindow
   cohortId: string
@@ -142,6 +170,11 @@ export type CycleFacts = {
   /** La requête a atteint sa limite : la liste ci-dessus est un échantillon. Une anomalie
    *  peut alors se cacher hors échantillon, et le contrôle ne doit pas conclure. */
   multiCollectorTruncated: boolean
+  /** Les transitions de la fenêtre, une ligne par sujet. Jamais agrégées à la source. */
+  windowTransitions: readonly WindowTransition[]
+  /** La requête a atteint sa limite : le comptage d'événements porte sur un échantillon et
+   *  ne peut pas être présenté comme le compte de la fenêtre. */
+  windowTransitionsTruncated: boolean
   unknownSources: ReadonlyArray<{ source: string; rows: number }>
   /** Réponses de cron capturées par l opérateur, avec leur provenance. Facultatif : la
    *  base ne les contient pas. */
@@ -332,6 +365,7 @@ export function buildCycleReport(facts: CycleFacts, generatedAt: string): CycleR
   const availabilityWritten = facts.windowBySourceCollector
     .filter((row) => row.source === 'endpoint-probe')
     .reduce((total, row) => total + row.rows, 0)
+  const operatorEvents = buildOperatorEvents(facts)
   checks.push({
     id: 'deduplication-and-transitions',
     question: 'Were identical states deduplicated while genuine transitions were kept?',
@@ -342,13 +376,22 @@ export function buildCycleReport(facts: CycleFacts, generatedAt: string): CycleR
     // reproche aux autres.
     finding:
       facts.integrity.identicalConsecutive === 0
-        ? `No chain contains two consecutive identical states. ${availabilityWritten} availability observation(s) and ${facts.windowTotals.transitions} transition(s) in total were written in the window.`
+        ? `No chain contains two consecutive identical states. ${availabilityWritten} availability observation(s) and ${facts.windowTotals.transitions} transition(s) in total were written in the window, which read as ${operatorEvents.operator_events} distinct operator event(s).`
         : `${facts.integrity.identicalConsecutive} chain(s) contain two consecutive identical states, which the deduplication rule should have refused.`,
     evidence: {
       identical_consecutive_pairs: facts.integrity.identicalConsecutive,
       observations_written_in_window: facts.windowTotals.rows,
       baselines_in_window: facts.windowTotals.baselines,
       transitions_in_window: facts.windowTotals.transitions,
+      // Le chiffre brut ne part jamais seul. C'est ici qu'on lirait « autant de signaux de
+      // marché que de fiches », donc c'est ici que la correction doit se trouver.
+      distinct_operator_events: operatorEvents.operator_events,
+      operator_events_note:
+        'A correlated change at one operator is one event, however many of its listings moved. Detail in the operator_events block.',
+      // Un écart entre le compte SQL et les lignes détaillées voudrait dire qu'on
+      // interprète autre chose que ce qu'on compte. Exposé plutôt que supposé nul.
+      transitions_detailed: facts.windowTransitions.length,
+      transition_sample_truncated: facts.windowTransitionsTruncated,
       availability_observations_in_window: availabilityWritten,
       suppressed_identical_states:
         'not counted: the window can span several cycles and a check that produced no row leaves no trace to count.',
@@ -475,6 +518,155 @@ export function buildCycleReport(facts: CycleFacts, generatedAt: string): CycleR
     // seul opérateur se lit comme autant de signaux indépendants qu'il a de fiches — et
     // c'est la lecture flatteuse, donc celle qui s'impose toute seule.
     concentration: buildConcentration(facts),
+    // La concentration ci-dessus dit combien de FICHES un opérateur détient. Celui-ci dit
+    // combien d'ÉVÉNEMENTS ses fiches ont réellement produits dans la fenêtre. Le second
+    // est le chiffre qu'on publierait ; le premier explique pourquoi il diffère du brut.
+    operator_events: operatorEvents,
+  }
+}
+
+/**
+ * Signature normalisée de ce qui a changé, pour distinguer deux événements simultanés.
+ *
+ * Quatre sujets qui passent tous de 2xx à 4xx à la même seconde chez le même opérateur
+ * sont un événement. Deux sujets du même opérateur dont l'un monte et l'autre descend en
+ * sont deux, même à la même seconde — et sans la signature on les aurait fusionnés. Les
+ * valeurs entrent donc dans la clé, pas seulement les chemins.
+ */
+export function changeSignature(changes: readonly FactChange[]): string {
+  if (changes.length === 0) return '(no recorded change)'
+  return [...changes]
+    .map((change) => `${change.path}:${change.kind}:${change.from ?? ''}->${change.to ?? ''}`)
+    .sort()
+    .join(' | ')
+}
+
+export type OperatorEvent = {
+  /** Clé d'opérateur, ou null quand aucun axe n'est dérivable. */
+  operator: string | null
+  /** L'axe qui fonde le regroupement. `domain` est le repli, plus fragile : dit, pas tu. */
+  operator_axis: 'namespace' | 'domain' | null
+  source: string
+  observed_at: string
+  change: string
+  strata: string[]
+  subjects: string[]
+  raw_transitions: number
+}
+
+/**
+ * Regroupe des transitions en événements d'opérateur — sans jamais toucher aux lignes.
+ *
+ * Deux transitions appartiennent au même événement si elles partagent l'identité de
+ * l'opérateur, la source, l'instant d'observation et la signature du changement. Les quatre
+ * conditions ensemble : c'est ce qui empêche une panne groupée de compter comme autant de
+ * signaux de marché qu'elle touche de fiches, sans jamais fusionner deux changements
+ * différents ni deux moments différents.
+ *
+ * Un sujet dont l'opérateur n'est pas dérivable forme son propre événement. Il n'est
+ * regroupé avec personne, pas même avec les autres inconnus.
+ */
+export function groupOperatorEvents(transitions: readonly WindowTransition[]): OperatorEvent[] {
+  const events = new Map<string, OperatorEvent>()
+  for (const transition of transitions) {
+    const identity = operatorIdentityOf({ handle: transition.handle, endpoint: transition.endpoint })
+    const change = changeSignature(transition.changeSummary)
+    const key =
+      identity.key === null
+        ? `unknown ${transition.observationId}`
+        : [identity.key, transition.source, transition.observedAt, change].join(' ')
+
+    let event = events.get(key)
+    if (!event) {
+      event = {
+        operator: identity.key,
+        operator_axis: identity.axis,
+        source: transition.source,
+        observed_at: transition.observedAt,
+        change,
+        strata: [],
+        subjects: [],
+        raw_transitions: 0,
+      }
+      events.set(key, event)
+    }
+    event.raw_transitions += 1
+    if (!event.subjects.includes(transition.handle)) event.subjects.push(transition.handle)
+    const stratum = transition.stratum ?? 'not_in_cohort'
+    if (!event.strata.includes(stratum)) event.strata.push(stratum)
+  }
+  for (const event of events.values()) {
+    event.subjects.sort()
+    event.strata.sort()
+  }
+  // Ordre totalement déterminé : deux exécutions sur les mêmes faits doivent produire le
+  // même rapport, octet pour octet.
+  const rank = (event: OperatorEvent) => `${event.observed_at} ${event.operator ?? ''} ${event.change}`
+  return [...events.values()].sort(
+    (a, b) => b.raw_transitions - a.raw_transitions || (rank(a) < rank(b) ? -1 : rank(a) > rank(b) ? 1 : 0),
+  )
+}
+
+/** Combien d'exemples d'événements groupés le rapport détaille. Au-delà, il le dit. */
+export const OPERATOR_EVENT_EXAMPLES = 20
+
+/**
+ * Le bloc de lecture : combien de lignes brutes, et combien d'événements réels.
+ *
+ * Les deux chiffres sont exposés côte à côte, toujours. Ne donner que le second serait
+ * remplacer une lecture flatteuse par une lecture opaque ; ne donner que le premier est
+ * exactement l'erreur qu'on corrige.
+ */
+function buildOperatorEvents(facts: CycleFacts) {
+  const transitions = facts.windowTransitions
+  const events = groupOperatorEvents(transitions)
+  const grouped = events.filter((event) => event.raw_transitions > 1)
+
+  const strata = [...new Set(transitions.map((t) => t.stratum ?? 'not_in_cohort'))].sort()
+  const byStratum = Object.fromEntries(
+    strata.map((stratum) => {
+      const rows = transitions.filter((t) => (t.stratum ?? 'not_in_cohort') === stratum)
+      const stratumEvents = groupOperatorEvents(rows)
+      return [stratum, { raw_transitions: rows.length, operator_events: stratumEvents.length }]
+    }),
+  )
+
+  return {
+    note:
+      'Raw ledger rows are never merged: one transition per subject stays in the append-only ledger. ' +
+      'This block is interpretation only. Transitions are one operator event when they share the operator identity, ' +
+      'the source, the observation instant and the exact change. Applies to every stratum, not only availability.',
+    operator_identity_rule:
+      'The handle namespace when there is one: a declared, reverse-DNS publisher identity that unrelated operators ' +
+      'cannot share, and that survives a change of host. The registrable domain of the endpoint only as a fallback for ' +
+      'subjects without a namespace, where it is the sole identity available; that axis is weaker, so each event says ' +
+      'which one it rests on. Never merged transitively across axes. A subject whose operator cannot be derived is its ' +
+      'own event and merges with nobody, not even with other unknowns.',
+    raw_transitions: transitions.length,
+    operator_events: events.length,
+    grouped_events: grouped.length,
+    largest_event_subjects: events.reduce((max, event) => Math.max(max, event.subjects.length), 0),
+    events_by_operator_axis: {
+      namespace: events.filter((event) => event.operator_axis === 'namespace').length,
+      domain: events.filter((event) => event.operator_axis === 'domain').length,
+      unknown: events.filter((event) => event.operator_axis === null).length,
+    },
+    events_with_unknown_operator: events.filter((event) => event.operator === null).length,
+    by_stratum: byStratum,
+    by_stratum_note:
+      'Each stratum is grouped within itself, so its two numbers are self-consistent. An event spanning two strata ' +
+      'is counted in both, which is why the strata can sum above the overall event count.',
+    // Piste d'audit : les regroupements sont montrés sujet par sujet. Personne ne doit
+    // avoir à croire le compte sur parole.
+    grouped_event_examples: grouped.slice(0, OPERATOR_EVENT_EXAMPLES),
+    grouped_event_examples_truncated: grouped.length > OPERATOR_EVENT_EXAMPLES,
+    sample_truncated: facts.windowTransitionsTruncated,
+    ...(facts.windowTransitionsTruncated
+      ? {
+          cannot_prove:
+            'The transition query hit its limit, so these counts describe a sample of the window, not the window.',
+        }
+      : {}),
   }
 }
 

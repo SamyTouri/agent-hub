@@ -146,6 +146,50 @@ export function operatorKeysOf(subject: { handle: string; endpoint: string | nul
   return { domain, namespace }
 }
 
+/**
+ * Identité d'opérateur pour REGROUPER des événements — un seul axe à la fois, jamais une
+ * union de proche en proche.
+ *
+ * La sélection et le regroupement ne demandent pas la même chose. Plafonner se contente de
+ * deux axes indépendants : il suffit que deux sujets partagent l'axe considéré pour cesser
+ * d'être indépendants dessus. Regrouper exige une clé unique par opérateur, et le choix de
+ * cette clé décide ce qu'on affirme sur le marché de quelqu'un.
+ *
+ * Le NAMESPACE est cette clé quand il existe. Ce n'est pas un indice d'hébergement mais une
+ * identité d'éditeur déclarée, en DNS inversé, dont le registre exige la propriété : deux
+ * opérateurs sans rapport ne peuvent pas partager `ai.boolsai`. Il survit aussi au
+ * déménagement, donc quatre produits du même éditeur restent groupés même répartis sur
+ * quatre hébergeurs. Le cas d'un éditeur qui publie pour le compte de tiers — huit
+ * connecteurs sous un même namespace de plateforme — se groupe lui aussi, et c'est correct :
+ * si la plateforme tombe, les huit tombent ensemble. Ce sont bien huit fiches et un
+ * événement.
+ *
+ * Le DOMAINE enregistrable ne sert que de repli, pour les sujets sans namespace, parce
+ * qu'il est alors la seule identité disponible. Il est plus fragile : une plateforme
+ * d'hébergement absente de MULTI_LABEL_SUFFIXES réunirait sous une clé des locataires sans
+ * rapport. L'axe retenu est donc rendu avec la clé, pour qu'un lecteur voie lesquels de ses
+ * regroupements reposent sur le repli.
+ *
+ * Ce qui est exclu dans tous les cas : fusionner de proche en proche. A et B partagent un
+ * domaine, B et C un namespace, donc A, B et C ne forment PAS un opérateur. Une clé, un
+ * axe, aucune transitivité.
+ *
+ * `key` vaut null quand aucun axe n'est dérivable. Ces sujets ne se regroupent avec
+ * personne, pas même entre eux : « je ne sais pas qui c'est » n'est pas une identité
+ * partagée.
+ */
+export type OperatorIdentity = OperatorKeys & {
+  key: string | null
+  axis: 'namespace' | 'domain' | null
+}
+
+export function operatorIdentityOf(subject: { handle: string; endpoint: string | null }): OperatorIdentity {
+  const keys = operatorKeysOf(subject)
+  if (keys.namespace) return { ...keys, key: `namespace:${keys.namespace}`, axis: 'namespace' }
+  if (keys.domain) return { ...keys, key: `domain:${keys.domain}`, axis: 'domain' }
+  return { ...keys, key: null, axis: null }
+}
+
 /** Comptage par axe, pour le rapport comme pour la sélection. */
 export type OperatorTally = { domain: Map<string, number>; namespace: Map<string, number> }
 
