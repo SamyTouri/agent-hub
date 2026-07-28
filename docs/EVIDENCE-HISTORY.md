@@ -100,6 +100,40 @@ collector's own last measurement rather than a competing view of it. A subject t
 never been probed gets no availability row — inventing one would be the same mistake in a
 different chain.
 
+### Versions, and why writing goes through a manifest
+
+The cohort is versioned, not replaced. The original forty subjects keep the rule and the
+reason recorded on the day they were picked; an extension adds a layer and rewrites
+nothing. `selection_rule` already carries the version in the database, so no migration is
+involved. Selection is **incremental**: already-tracked subjects count against the caps and
+are never picked again, which is what keeps the total from overshooting when a later
+version would have chosen a different set.
+
+**v2 (2026-07-28) targets 112 subjects**, and that number is derived rather than rounded.
+Three connectors per workplace family instead of one, because a single Slack connector
+cannot distinguish "this family moves" from "this vendor moves"; thirty multi-source
+subjects, which is the surface where two registries can contradict each other; forty on
+availability watch, the largest stratum because it is the only one guaranteed to produce
+evidence — a host already silent will eventually transition, and whether the ledger
+accumulates anything at all is the pilot's open question; and twelve non-MCP, the ceiling
+of what exists. The caps sum to exactly the target. The operating bound is that the whole
+cohort must fit inside **one probe wave** (125 wide): past that, part of the tracked set
+can go unchecked on a given day, silently.
+
+Writing never re-derives the selection:
+
+```
+node --experimental-strip-types scripts/evidence-cohort.mts --plan <file.json>
+# review the file — it lists every addition with its rule and reason
+node --experimental-strip-types scripts/evidence-cohort.mts --apply --manifest <file.json>
+```
+
+The rule is deterministic for a given catalogue, but the catalogue moves. Re-running the
+rule at write time would let the reviewed set and the written set diverge with nobody
+seeing it. So `--plan` freezes the exact list with a content hash, and `--apply` refuses a
+manifest that changed by one character since it was reviewed. `--apply` without a manifest
+is refused outright.
+
 Four strata, applied in this order, a subject taken only once:
 
 | Stratum | Cap | What it tests |
@@ -210,6 +244,26 @@ housekeeping, while a probe that was performed and never written is a lost measu
 about someone else's agent. The response now carries `elapsed_ms` and
 `deferred_to_next_run`, so a short run is legible instead of having to be inferred from a
 falling counter.
+
+### What a cycle costs, in three separate stacks
+
+Every report carries a `cost` block with a model version, and it keeps three things apart
+on purpose: what was **observed** in the database, what was **derived** with a stated
+formula, and what remains **unavailable**. A cost figure that blends the three reads like
+an invoice when it is an estimate, which is precisely the reproach this project makes of
+everyone else.
+
+Observed: cohort size, probeable subjects, subjects freshly checked, catalogue rows with a
+fresh check, ledger rows written split into baselines and transitions, and table size.
+Derived: outbound probe requests as a **bound** — one attempt per host plus a patient
+second only when the first got nothing, and the per-host attempt count is not recorded —
+and ledger writes per subject checked, whose expected steady state is zero.
+
+Unavailable, and therefore no monetary figure: invocation count and execution duration.
+No query proves a Vercel invocation, and detailed runtime logs are not readable under the
+current plan. Stage timings exist only in the cron response, which nothing stores; an
+operator who captured one can pass it with `--captured-cron-response <file.json>` and it
+enters the report **with its provenance**, never as a database measurement.
 
 The report also counts chain defects (dangling parents, forks, duplicate baselines,
 cross-chain parents, identical consecutive states, backdated rows), attribution anomalies

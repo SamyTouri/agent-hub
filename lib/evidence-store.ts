@@ -31,9 +31,24 @@ import {
 import { COHORT_ID, hasFieldCollector } from './evidence-cohort.ts'
 import type { StoredObservation } from './evidence-timeline.ts'
 
-/** Hard ceiling per call. The cohort is bounded by design; this is the backstop that keeps
- *  a future caller from turning the ledger into an unbounded write path. */
-export const MAX_OBSERVATIONS_PER_RUN = 100
+/**
+ * Plafond dur par appel. La cohorte est bornée par conception ; ceci est le garde-fou qui
+ * empêche un appelant futur d'en faire un chemin d'écriture non borné.
+ *
+ * Il DOIT rester au-dessus de la taille de cohorte visée, marge comprise. À 100 alors que
+ * la cohorte v2 en vise 112, un socle de disponibilité aurait été tronqué en silence et
+ * douze sujets suivis n'auraient jamais eu de chaîne — une absence qu'aucune alerte
+ * n'aurait signalée, puisque ne rien écrire est un résultat normal ici.
+ */
+export const MAX_OBSERVATIONS_PER_RUN = 250
+
+/**
+ * Plafond de lecture de la cohorte. Séparé du précédent parce que les deux répondent à
+ * des questions différentes : combien on accepte d'ÉCRIRE d'un coup, et combien de sujets
+ * suivis on accepte de CHARGER. Les confondre est ce qui rendait une cohorte étendue
+ * silencieusement incomplète côté collecte.
+ */
+export const MAX_COHORT_SUBJECTS_LOADED = 250
 
 const UNDEFINED_TABLE = '42P01'
 
@@ -214,7 +229,7 @@ export async function loadActiveCohort(sql: Sql, cohortId = COHORT_ID): Promise<
       join agents a on a.id = c.agent_id
       where c.active and c.cohort = ${cohortId}
       order by a.handle
-      limit ${MAX_OBSERVATIONS_PER_RUN}
+      limit ${MAX_COHORT_SUBJECTS_LOADED}
     `
     return rows.map((row) => ({
       agentId: String(row.agent_id),

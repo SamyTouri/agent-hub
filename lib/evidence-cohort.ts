@@ -20,8 +20,6 @@ import { isProbeableEndpoint, type EndpointCheck } from './endpoint-probe.ts'
 import type { SubjectKind } from './evidence-history.ts'
 
 export const COHORT_ID = 'pilot-2026-07'
-export const COHORT_MIN_SUBJECTS = 20
-export const COHORT_MAX_SUBJECTS = 50
 
 export type CohortStratum =
   | 'business_system_connector'
@@ -36,21 +34,93 @@ export const COHORT_STRATA: readonly CohortStratum[] = [
   'non_mcp_provenance',
 ]
 
-/** Per-stratum maxima. They are ceilings, not quotas: a stratum that cannot be filled
- *  from the live catalogue stays short rather than being padded. */
-export const STRATUM_CAPS: Record<CohortStratum, number> = {
-  business_system_connector: 10,
-  multi_source_identity: 12,
-  availability_watch: 10,
-  non_mcp_provenance: 8,
+/**
+ * Une version de cohorte, en un seul objet.
+ *
+ * Versionner plutôt que remplacer : les quarante sujets de la v1 gardent leur règle et
+ * leur raison telles qu'elles ont été écrites le jour de leur sélection. Étendre la
+ * cohorte ne réécrit rien — c'est une strate d'ajouts, pas une nouvelle vérité sur les
+ * anciens. Le champ `selection_rule` porte déjà le numéro de version en base, donc rien
+ * de tout ceci n'a besoin d'une migration.
+ */
+export type CohortSpec = {
+  version: number
+  /** Plafonds par strate. Ce sont des plafonds, pas des quotas : une strate que le
+   *  catalogue ne peut pas remplir reste courte plutôt que d'être rembourrée. */
+  caps: Record<CohortStratum, number>
+  businessFamilyCap: number
+  nonMcpProvenanceCap: number
+  /** Taille visée une fois la strate d'ajouts appliquée. */
+  targetSubjects: number
+  minSubjects: number
+  maxSubjects: number
 }
 
-/** One subject per workplace-system family. Ten copies of the same connector would test
- *  nothing that one copy does not already test. */
-export const BUSINESS_FAMILY_CAP = 1
+/** Pilote initial du 2026-07-27 : quarante sujets, test d'architecture. */
+export const COHORT_SPEC_V1: CohortSpec = {
+  version: 1,
+  caps: {
+    business_system_connector: 10,
+    multi_source_identity: 12,
+    availability_watch: 10,
+    non_mcp_provenance: 8,
+  },
+  businessFamilyCap: 1,
+  nonMcpProvenanceCap: 4,
+  targetSubjects: 40,
+  minSubjects: 20,
+  maxSubjects: 50,
+}
 
-/** Ceiling per non-MCP provenance, so the stratum does not silently become one registry. */
-export const NON_MCP_PROVENANCE_CAP = 4
+/**
+ * Extension du 2026-07-28 — 112 sujets, et ce nombre est dérivé, pas arrondi.
+ *
+ * D'où viennent les plafonds :
+ *
+ *   - Connecteurs bureautiques : 3 par famille au lieu d'un. Un seul connecteur Slack ne
+ *     permet pas de distinguer « cette famille bouge » de « ce vendeur bouge ». Trois le
+ *     permettent. 10 familles × 3 = 30.
+ *   - Identité multi-source : 30. C'est la surface où deux registres peuvent se
+ *     contredire, et une contradiction ne se commande pas — elle s'attend.
+ *   - Veille de disponibilité : 40, la plus grosse strate. C'est la SEULE dont on sait
+ *     qu'elle produira des preuves : un hôte déjà muet finira par transiter. La question
+ *     ouverte du pilote est de savoir si le journal accumule quoi que ce soit ; c'est
+ *     cette strate qui y répond.
+ *   - Provenance hors MCP : 12, le plafond de ce qui existe. Il n'y a qu'une vingtaine de
+ *     sujets hors registre MCP au total, et tous n'ont pas de surface observable.
+ *
+ * Et pourquoi ce total tient : la cohorte entière doit rentrer dans UNE vague de sonde.
+ * La vague fait 125 (concurrence délibérément non augmentée, voir la route quotidienne),
+ * donc à 112 la cohorte est intégralement contrôlée à chaque passage même dans le pire
+ * cas où chaque sujet serait sondable. C'est l'invariant qui garantit qu'un sujet suivi
+ * est réellement suivi ; au-delà de 125 il tombe en silence.
+ */
+export const COHORT_SPEC_V2: CohortSpec = {
+  version: 2,
+  caps: {
+    business_system_connector: 30,
+    multi_source_identity: 30,
+    availability_watch: 40,
+    non_mcp_provenance: 12,
+  },
+  businessFamilyCap: 3,
+  nonMcpProvenanceCap: 4,
+  targetSubjects: 112,
+  minSubjects: 100,
+  maxSubjects: 120,
+}
+
+export const CURRENT_COHORT_SPEC: CohortSpec = COHORT_SPEC_V2
+
+/** Largeur d'une vague de sonde du cron quotidien. La cohorte doit y tenir entièrement,
+ *  sinon une partie des sujets suivis peut rester non contrôlée un jour donné. */
+export const PROBE_WAVE_WIDTH = 125
+
+export const STRATUM_CAPS: Record<CohortStratum, number> = CURRENT_COHORT_SPEC.caps
+export const BUSINESS_FAMILY_CAP = CURRENT_COHORT_SPEC.businessFamilyCap
+export const NON_MCP_PROVENANCE_CAP = CURRENT_COHORT_SPEC.nonMcpProvenanceCap
+export const COHORT_MIN_SUBJECTS = CURRENT_COHORT_SPEC.minSubjects
+export const COHORT_MAX_SUBJECTS = CURRENT_COHORT_SPEC.maxSubjects
 
 /**
  * The families are a bounded proxy for the kind of workplace connector a governed-access
@@ -217,12 +287,40 @@ function hasObservableSurface(candidate: CandidateSubject): boolean {
   return isProbeableEndpoint(candidate.endpoint) || Boolean(candidate.repository)
 }
 
+export type TrackedSubject = {
+  agentId: string
+  stratum: CohortStratum
+  /** Famille ou provenance enregistrée à la sélection, pour que les sous-plafonds
+   *  continuent de compter les sujets déjà suivis. */
+  selectionFamily: string | null
+}
+
+export type SelectCohortOptions = {
+  /** Version de cohorte à appliquer. Par défaut la version courante. */
+  spec?: CohortSpec
+  /** Sujets DÉJÀ dans la cohorte. Ils comptent dans les plafonds et ne sont jamais
+   *  re-sélectionnés : étendre la cohorte ajoute une strate, ça ne réécrit pas l'histoire
+   *  de sélection des anciens. */
+  alreadyTracked?: readonly TrackedSubject[]
+}
+
 /**
  * Deterministic selection: the same catalogue rows always produce the same cohort, in the
  * same order, whoever runs it. Strata are applied in declared order and a subject is only
  * ever picked once, so the precedence between two rules is recorded rather than accidental.
+ *
+ * La sélection est INCRÉMENTALE. On lui passe ce qui est déjà suivi, et elle ne rend que
+ * les ajouts nécessaires pour atteindre la cible. C'est ce qui permet d'étendre la cohorte
+ * sans toucher aux quarante premiers sujets, et ce qui empêche le total de déborder quand
+ * une version ultérieure sélectionnerait un ensemble différent.
  */
-export function selectCohort(candidates: readonly CandidateSubject[]): CohortPick[] {
+export function selectCohort(
+  candidates: readonly CandidateSubject[],
+  options: SelectCohortOptions = {},
+): CohortPick[] {
+  const spec = options.spec ?? CURRENT_COHORT_SPEC
+  const tracked = options.alreadyTracked ?? []
+
   const seen = new Set<string>()
   const pool: CandidateSubject[] = []
   for (const candidate of [...candidates].sort(byHandleAsc)) {
@@ -231,11 +329,32 @@ export function selectCohort(candidates: readonly CandidateSubject[]): CohortPic
     pool.push(candidate)
   }
 
-  const taken = new Set<string>()
+  const taken = new Set<string>(tracked.map((subject) => subject.agentId))
   const picks: CohortPick[] = []
+
+  // Les compteurs démarrent à ce qui est déjà suivi : un plafond de strate est un plafond
+  // sur la cohorte entière, pas sur le lot d'ajouts.
+  const stratumCount = new Map<CohortStratum, number>()
+  const familyCount = new Map<string, number>()
+  const provenanceCount = new Map<string, number>()
+  for (const subject of tracked) {
+    stratumCount.set(subject.stratum, (stratumCount.get(subject.stratum) ?? 0) + 1)
+    if (subject.selectionFamily === null) continue
+    if (subject.stratum === 'business_system_connector') {
+      familyCount.set(subject.selectionFamily, (familyCount.get(subject.selectionFamily) ?? 0) + 1)
+    } else if (subject.stratum === 'non_mcp_provenance') {
+      provenanceCount.set(subject.selectionFamily, (provenanceCount.get(subject.selectionFamily) ?? 0) + 1)
+    }
+  }
+
+  const total = () => tracked.length + picks.length
+  const countIn = (stratum: CohortStratum) => stratumCount.get(stratum) ?? 0
+  const room = (stratum: CohortStratum) => total() < spec.targetSubjects && countIn(stratum) < spec.caps[stratum]
+  const rule = (stratum: CohortStratum) => `${stratum}/v${spec.version}`
 
   const take = (candidate: CandidateSubject, pick: Omit<CohortPick, 'agentId' | 'handle' | 'subjectKind'>) => {
     taken.add(candidate.agentId)
+    stratumCount.set(pick.stratum, countIn(pick.stratum) + 1)
     picks.push({
       agentId: candidate.agentId,
       handle: candidate.handle,
@@ -245,70 +364,70 @@ export function selectCohort(candidates: readonly CandidateSubject[]): CohortPic
   }
 
   // 1. Workplace-system connectors — the family a governed-access buyer must approve.
-  let businessCount = 0
-  for (const { family } of BUSINESS_SYSTEM_FAMILIES) {
-    if (businessCount >= STRATUM_CAPS.business_system_connector) break
-    const match = pool.find(
-      (candidate) =>
-        !taken.has(candidate.agentId) &&
-        candidate.externalSource === 'mcp-registry' &&
-        hasObservableSurface(candidate) &&
-        businessFamilyOf(candidate) === family,
-    )
-    if (!match) continue
-    take(match, {
-      stratum: 'business_system_connector',
-      selectionRule: 'business_system_connector/v1',
-      selectionFamily: family,
-      selectionReason:
-        `Workplace-system connector family "${family}". Tests whether the business-system subjects an ` +
-        `access-governance buyer has to approve produce attributable change history over time. ${PROXY_DISCLAIMER}`,
-    })
-    businessCount++
+  //    Le balayage tourne famille par famille : à trois par famille, on prend un
+  //    connecteur de chacune avant d'en reprendre un deuxième quelque part, sinon les
+  //    premières familles de la liste épuiseraient la strate à elles seules.
+  for (let round = 0; round < spec.businessFamilyCap; round++) {
+    for (const { family } of BUSINESS_SYSTEM_FAMILIES) {
+      if (!room('business_system_connector')) break
+      if ((familyCount.get(family) ?? 0) >= spec.businessFamilyCap) continue
+      const match = pool.find(
+        (candidate) =>
+          !taken.has(candidate.agentId) &&
+          candidate.externalSource === 'mcp-registry' &&
+          hasObservableSurface(candidate) &&
+          businessFamilyOf(candidate) === family,
+      )
+      if (!match) continue
+      take(match, {
+        stratum: 'business_system_connector',
+        selectionRule: rule('business_system_connector'),
+        selectionFamily: family,
+        selectionReason:
+          `Workplace-system connector family "${family}". Tests whether the business-system subjects an ` +
+          `access-governance buyer has to approve produce attributable change history over time, and whether ` +
+          `two connectors of the same family behave the same way. ${PROXY_DISCLAIMER}`,
+      })
+      familyCount.set(family, (familyCount.get(family) ?? 0) + 1)
+    }
   }
 
   // 2. Three independent surfaces on one identity — where sources can contradict.
-  let multiSourceCount = 0
   for (const candidate of pool) {
-    if (multiSourceCount >= STRATUM_CAPS.multi_source_identity) break
+    if (!room('multi_source_identity')) break
     if (taken.has(candidate.agentId)) continue
     if (candidate.externalSource !== 'mcp-registry') continue
     if (!candidate.repository || !isProbeableEndpoint(candidate.endpoint) || !candidate.hasRepositoryObservation) continue
     take(candidate, {
       stratum: 'multi_source_identity',
-      selectionRule: 'multi_source_identity/v1',
+      selectionRule: rule('multi_source_identity'),
       selectionFamily: null,
       selectionReason:
         'Observable through three independent surfaces at once: a registry entry, a source repository and a live ' +
         'endpoint. Tests identity resolution across sources and whether those sources start contradicting each ' +
         'other. The repository signal is used only as proof that a third collector looked, never as a quality score.',
     })
-    multiSourceCount++
   }
 
   // 3. Subjects already in an availability incident — transitions are guaranteed here.
-  let availabilityCount = 0
   for (const candidate of pool) {
-    if (availabilityCount >= STRATUM_CAPS.availability_watch) break
+    if (!room('availability_watch')) break
     if (taken.has(candidate.agentId)) continue
     if (!isProbeableEndpoint(candidate.endpoint)) continue
     if (candidate.endpointCheck?.responded !== false) continue
     take(candidate, {
       stratum: 'availability_watch',
-      selectionRule: 'availability_watch/v1',
+      selectionRule: rule('availability_watch'),
       selectionFamily: null,
       selectionReason:
         'The last endpoint check did not answer. Tests that the ledger records availability transitions — a host ' +
         'going silent, and coming back — rather than one row per identical daily probe.',
     })
-    availabilityCount++
   }
 
   // 4. Provenance outside the MCP registry, so the design is not shaped by one source.
-  let nonMcpCount = 0
-  const perProvenance = new Map<string, number>()
   for (const candidate of pool) {
-    if (nonMcpCount >= STRATUM_CAPS.non_mcp_provenance) break
+    if (!room('non_mcp_provenance')) break
     if (taken.has(candidate.agentId)) continue
     if (candidate.externalSource === 'mcp-registry') continue
     // Same requirement as every other stratum: a subject with nothing to look at can only
@@ -316,16 +435,15 @@ export function selectCohort(candidates: readonly CandidateSubject[]): CohortPic
     // single baseline forever.
     if (!hasObservableSurface(candidate)) continue
     const provenance = provenanceOf(candidate)
-    const used = perProvenance.get(provenance) ?? 0
-    if (used >= NON_MCP_PROVENANCE_CAP) continue
+    const used = provenanceCount.get(provenance) ?? 0
+    if (used >= spec.nonMcpProvenanceCap) continue
     take(candidate, {
       stratum: 'non_mcp_provenance',
-      selectionRule: 'non_mcp_provenance/v1',
+      selectionRule: rule('non_mcp_provenance'),
       selectionFamily: provenance,
       selectionReason: nonMcpReason(provenance),
     })
-    perProvenance.set(provenance, used + 1)
-    nonMcpCount++
+    provenanceCount.set(provenance, used + 1)
   }
 
   return picks
@@ -335,14 +453,18 @@ export function selectCohort(candidates: readonly CandidateSubject[]): CohortPic
  * Invariants a cohort must satisfy before it is written or trusted. Returned as a list
  * rather than thrown: an operator needs to see everything that is wrong at once.
  */
-export function validateCohort(picks: readonly CohortPick[]): CohortProblem[] {
+export function validateCohort(
+  picks: readonly CohortPick[],
+  options: { spec?: CohortSpec } = {},
+): CohortProblem[] {
+  const spec = options.spec ?? CURRENT_COHORT_SPEC
   const problems: CohortProblem[] = []
 
-  if (picks.length < COHORT_MIN_SUBJECTS) {
-    problems.push({ code: 'size_below_minimum', detail: `${picks.length} subjects, minimum ${COHORT_MIN_SUBJECTS}` })
+  if (picks.length < spec.minSubjects) {
+    problems.push({ code: 'size_below_minimum', detail: `${picks.length} subjects, minimum ${spec.minSubjects}` })
   }
-  if (picks.length > COHORT_MAX_SUBJECTS) {
-    problems.push({ code: 'size_above_maximum', detail: `${picks.length} subjects, maximum ${COHORT_MAX_SUBJECTS}` })
+  if (picks.length > spec.maxSubjects) {
+    problems.push({ code: 'size_above_maximum', detail: `${picks.length} subjects, maximum ${spec.maxSubjects}` })
   }
 
   const subjects = new Set<string>()
@@ -364,8 +486,8 @@ export function validateCohort(picks: readonly CohortPick[]): CohortProblem[] {
 
   for (const stratum of COHORT_STRATA) {
     const count = picks.filter((pick) => pick.stratum === stratum).length
-    if (count > STRATUM_CAPS[stratum]) {
-      problems.push({ code: 'stratum_over_cap', detail: `${stratum}: ${count} > ${STRATUM_CAPS[stratum]}` })
+    if (count > spec.caps[stratum]) {
+      problems.push({ code: 'stratum_over_cap', detail: `${stratum}: ${count} > ${spec.caps[stratum]}` })
     }
   }
 
@@ -374,8 +496,8 @@ export function validateCohort(picks: readonly CohortPick[]): CohortProblem[] {
     if (pick.stratum !== 'business_system_connector' || !pick.selectionFamily) continue
     const count = (families.get(pick.selectionFamily) ?? 0) + 1
     families.set(pick.selectionFamily, count)
-    if (count > BUSINESS_FAMILY_CAP) {
-      problems.push({ code: 'family_over_cap', detail: `${pick.selectionFamily}: ${count} > ${BUSINESS_FAMILY_CAP}` })
+    if (count > spec.businessFamilyCap) {
+      problems.push({ code: 'family_over_cap', detail: `${pick.selectionFamily}: ${count} > ${spec.businessFamilyCap}` })
     }
   }
 
@@ -384,10 +506,10 @@ export function validateCohort(picks: readonly CohortPick[]): CohortProblem[] {
     if (pick.stratum !== 'non_mcp_provenance' || !pick.selectionFamily) continue
     const count = (provenances.get(pick.selectionFamily) ?? 0) + 1
     provenances.set(pick.selectionFamily, count)
-    if (count > NON_MCP_PROVENANCE_CAP) {
+    if (count > spec.nonMcpProvenanceCap) {
       problems.push({
         code: 'provenance_over_cap',
-        detail: `${pick.selectionFamily}: ${count} > ${NON_MCP_PROVENANCE_CAP}`,
+        detail: `${pick.selectionFamily}: ${count} > ${spec.nonMcpProvenanceCap}`,
       })
     }
   }

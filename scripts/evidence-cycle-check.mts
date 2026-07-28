@@ -13,16 +13,38 @@
 // que sur changement, donc l'absence de ligne ne prouve rien. Et aucune requête SQL ne
 // prouvera jamais qu'une fonction Vercel a été invoquée : le rapport le dit au lieu
 // d'inventer une télémétrie.
+import { readFileSync } from 'node:fs'
 import postgres from 'postgres'
 import { COHORT_ID } from '../lib/evidence-cohort.ts'
 import { isMissingTable } from '../lib/evidence-store.ts'
 import { isProbeableEndpoint } from '../lib/endpoint-probe.ts'
-import { KNOWN_SOURCES, buildCycleReport, resolveWindow, type CycleFacts } from '../lib/evidence-cycle-report.ts'
+import {
+  KNOWN_SOURCES,
+  buildCycleReport,
+  resolveWindow,
+  type CapturedCronResponse,
+  type CycleFacts,
+} from '../lib/evidence-cycle-report.ts'
 
 const argv = process.argv.slice(2)
 const flag = (name: string) => {
   const index = argv.indexOf(name)
   return index >= 0 ? argv[index + 1] : undefined
+}
+
+// Durées d'exécution : la base ne les contient pas, la route les renvoie et personne ne
+// les stocke. Un opérateur qui a capturé la réponse d'un cron peut la passer ici ; elle
+// entre alors dans le rapport AVEC sa provenance, jamais comme une mesure de la base.
+const CAPTURED_PATH = flag('--captured-cron-response')
+let capturedCronResponses: CapturedCronResponse[] = []
+if (CAPTURED_PATH) {
+  try {
+    const parsed = JSON.parse(readFileSync(CAPTURED_PATH, 'utf8')) as unknown
+    capturedCronResponses = (Array.isArray(parsed) ? parsed : [parsed]) as CapturedCronResponse[]
+  } catch (error) {
+    console.error(`cannot read captured cron response: ${error instanceof Error ? error.message : 'unreadable'}`)
+    process.exit(1)
+  }
 }
 
 const resolved = resolveWindow({ since: flag('--since'), until: flag('--until'), now: new Date().toISOString() })
@@ -250,6 +272,7 @@ try {
     })),
     multiCollectorTruncated: attribution.length >= MULTI_COLLECTOR_SAMPLE,
     unknownSources: unknownSources.map((row) => ({ source: String(row.source), rows: num(row.rows) })),
+    capturedCronResponses,
     storage,
   }
 

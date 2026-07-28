@@ -134,10 +134,100 @@ export type CycleFacts = {
    *  peut alors se cacher hors échantillon, et le contrôle ne doit pas conclure. */
   multiCollectorTruncated: boolean
   unknownSources: ReadonlyArray<{ source: string; rows: number }>
+  /** Réponses de cron capturées par l opérateur, avec leur provenance. Facultatif : la
+   *  base ne les contient pas. */
+  capturedCronResponses?: readonly CapturedCronResponse[]
   storage: Record<string, unknown>
 }
 
 export type CycleReport = Record<string, unknown>
+
+/** Version du modèle de coût. Bougée dès qu'une unité change de définition, pour que deux
+ *  mesures ne soient jamais comparées à travers deux définitions différentes. */
+export const CYCLE_COST_MODEL_VERSION = 1
+
+/**
+ * Ce qu'un opérateur a le droit de capturer de la réponse d'un cron, quand il l'a. Ces
+ * durées ne sont PAS dans la base : la route les renvoie, et personne ne les stocke. Elles
+ * n'entrent donc dans le rapport qu'accompagnées de leur provenance.
+ */
+export type CapturedCronResponse = {
+  route: string
+  captured_at: string
+  elapsed_ms?: number
+  probe_elapsed_ms?: number
+  probed?: number
+  deferred_to_next_run?: number
+}
+
+/**
+ * Le coût d'un cycle, en trois piles séparées.
+ *
+ * La séparation est le produit. Un chiffre de coût qui mélange ce qu'on a mesuré, ce
+ * qu'on a calculé et ce qu'on ne sait pas se lit comme une facture alors que c'est une
+ * estimation — et c'est exactement le reproche que ce projet adresse au reste du marché.
+ *
+ * Ce que la base peut dire : des volumes. Ce qu'elle ne peut pas dire : une durée
+ * d'exécution, un nombre d'invocations, et donc une somme d'argent. Le plan ne rend pas
+ * les logs détaillés accessibles, donc la pile « indisponible » n'est pas un aveu de
+ * paresse : c'est la raison pour laquelle aucune conclusion monétaire ne figure ici.
+ */
+export type CycleCost = {
+  model_version: number
+  window: { since: string; until: string; hours: number }
+  observed: Record<string, unknown>
+  derived: Record<string, unknown>
+  unavailable: string[]
+  captured_cron_responses: CapturedCronResponse[]
+}
+
+function buildCycleCost(facts: CycleFacts, probeable: number, freshlyChecked: number): CycleCost {
+  const { window } = facts
+  const hours = Math.round(((window.untilMs - window.sinceMs) / 3_600_000) * 100) / 100
+  const ledgerWrites = facts.windowTotals.rows
+  const captured = facts.capturedCronResponses ?? []
+
+  return {
+    model_version: CYCLE_COST_MODEL_VERSION,
+    window: { since: window.since, until: window.until, hours },
+    observed: {
+      cohort_subjects: facts.cohort.length,
+      cohort_subjects_probeable: probeable,
+      cohort_subjects_freshly_checked: freshlyChecked,
+      catalogue_rows_with_a_fresh_check: facts.probe.freshChecks,
+      ledger_rows_written: ledgerWrites,
+      ledger_baselines_written: facts.windowTotals.baselines,
+      ledger_transitions_written: facts.windowTotals.transitions,
+      ledger_rows_total: facts.ledger.rows,
+      storage: facts.storage,
+    },
+    derived: {
+      // Une sonde coûte un essai, plus un second UNIQUEMENT si le premier n'a rien
+      // obtenu. Le nombre exact d'essais n'est pas enregistré, donc on donne l'encadrement
+      // plutôt qu'un nombre qui aurait l'air mesuré.
+      outbound_probe_requests_min: facts.probe.freshChecks,
+      outbound_probe_requests_max: facts.probe.freshChecks * 2,
+      outbound_probe_requests_note:
+        'One attempt per host, plus a patient second attempt only when the first got nothing. The per-host attempt count is not recorded, so this is a bound, not a measurement.',
+      ledger_write_rate:
+        freshlyChecked > 0
+          ? Math.round((ledgerWrites / freshlyChecked) * 10_000) / 10_000
+          : null,
+      ledger_write_rate_note:
+        'Ledger rows written per cohort subject checked in this window. Zero is the expected steady state: the ledger only writes on change.',
+    },
+    unavailable: [
+      'Function invocation count and execution duration: no query proves a Vercel invocation, and detailed runtime logs are not available under the current plan.',
+      'Any monetary or platform-billing figure: it would require the invocation and duration facts above.',
+      'Per-host probe attempt counts: the probe records the resulting state, not how many tries it took.',
+      'IndexNow batches actually submitted: the count lives in the cron response, not in the database.',
+      captured.length === 0
+        ? 'Stage timings: the daily route returns elapsed_ms and probe elapsed_ms, but nothing stores them. Capture the cron response to include them.'
+        : `Stage timings are present only for the ${captured.length} captured response(s) listed below, with their provenance.`,
+    ],
+    captured_cron_responses: [...captured],
+  }
+}
 
 const freshIn = (value: string | null, window: CycleWindow) => {
   if (value === null) return false
@@ -371,5 +461,6 @@ export function buildCycleReport(facts: CycleFacts, generatedAt: string): CycleR
       'A cron that ran and legitimately wrote nothing is indistinguishable here from one that never ran.',
     ],
     checks,
+    cost: buildCycleCost(facts, probeable.length, fresh.length),
   }
 }

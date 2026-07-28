@@ -8,6 +8,10 @@ import test from 'node:test'
 import {
   BUSINESS_FAMILY_CAP,
   BUSINESS_SYSTEM_FAMILIES,
+  COHORT_SPEC_V1,
+  COHORT_SPEC_V2,
+  CURRENT_COHORT_SPEC,
+  PROBE_WAVE_WIDTH,
   COHORT_MAX_SUBJECTS,
   COHORT_MIN_SUBJECTS,
   NON_MCP_PROVENANCE_CAP,
@@ -44,6 +48,46 @@ function candidate(overrides: Partial<CandidateSubject> = {}): CandidateSubject 
 
 const DOWN = nextCheck(null, { responded: false }, '2026-07-26T10:00:00.000Z')
 const UP = nextCheck(null, { responded: true, status: 200 }, '2026-07-26T10:00:00.000Z')
+
+function countBy(values: readonly (string | null)[]): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const value of values) {
+    if (value === null) continue
+    counts.set(value, (counts.get(value) ?? 0) + 1)
+  }
+  return counts
+}
+
+/** Catalogue large enough to fill the v2 caps, shaped like the real one. */
+function wideCatalogue(): CandidateSubject[] {
+  const rows: CandidateSubject[] = []
+  for (const { family } of BUSINESS_SYSTEM_FAMILIES) {
+    for (let i = 0; i < 5; i++) {
+      rows.push(candidate({ handle: `io.github.vendor${i}/${family}-mcp-server`, endpointCheck: UP }))
+    }
+  }
+  for (let i = 0; i < 60; i++) {
+    rows.push(
+      candidate({
+        handle: `io.github.multi/depth-${String(i).padStart(3, '0')}`,
+        repository: `https://github.com/multi/depth-${i}`,
+        hasRepositoryObservation: true,
+        endpointCheck: UP,
+      }),
+    )
+  }
+  for (let i = 0; i < 60; i++) {
+    rows.push(candidate({ handle: `io.github.silent/quiet-${String(i).padStart(3, '0')}`, endpointCheck: DOWN }))
+  }
+  for (let i = 0; i < 17; i++) {
+    rows.push(candidate({ handle: `concordium-${String(i).padStart(2, '0')}`, externalSource: 'concordium-cis8004' }))
+  }
+  for (let i = 0; i < 6; i++) rows.push(candidate({ handle: `moltbook-${i}`, externalSource: 'moltbook' }))
+  for (let i = 0; i < 6; i++) {
+    rows.push(candidate({ handle: `native-${i}`, externalSource: null, externalId: null }))
+  }
+  return rows
+}
 
 /** A catalogue shaped like the real one: every subject sits in the `io.github.*`
  *  namespace, which is exactly what used to break naive keyword matching. */
@@ -136,10 +180,13 @@ test('the same catalogue always produces the same cohort, whatever order it arri
   assert.deepEqual(selectCohort([...rows, ...rows]), reference, 'a duplicated row is not a second subject')
 })
 
-test('a realistic catalogue yields a cohort inside the ratified bounds', () => {
-  const picks = selectCohort(catalogue())
-  assert.deepEqual(validateCohort(picks), [])
-  assert.ok(picks.length >= COHORT_MIN_SUBJECTS && picks.length <= COHORT_MAX_SUBJECTS, `${picks.length} subjects`)
+test('a realistic catalogue yields a v1 cohort inside its ratified bounds', () => {
+  const picks = selectCohort(catalogue(), { spec: COHORT_SPEC_V1 })
+  assert.deepEqual(validateCohort(picks, { spec: COHORT_SPEC_V1 }), [])
+  assert.ok(
+    picks.length >= COHORT_SPEC_V1.minSubjects && picks.length <= COHORT_SPEC_V1.maxSubjects,
+    `${picks.length} subjects`,
+  )
 })
 
 test('every stratum is represented and none exceeds its ceiling', () => {
@@ -152,16 +199,24 @@ test('every stratum is represented and none exceeds its ceiling', () => {
   }
 })
 
-test('one connector per workplace family, never ten copies of the same one', () => {
+test('a family never exceeds its cap, whatever the version', () => {
   const rows = [
-    ...Array.from({ length: 8 }, (_, i) => candidate({ handle: `io.github.a/slack-${i}` })),
+    ...Array.from({ length: 12 }, (_, i) => candidate({ handle: `io.github.a/slack-${i}` })),
     ...catalogue(),
   ]
-  const families = selectCohort(rows)
-    .filter((pick) => pick.stratum === 'business_system_connector')
-    .map((pick) => pick.selectionFamily)
-  assert.equal(new Set(families).size, families.length)
-  assert.equal(families.filter((family) => family === 'slack').length, BUSINESS_FAMILY_CAP)
+  for (const spec of [COHORT_SPEC_V1, COHORT_SPEC_V2]) {
+    const families = selectCohort(rows, { spec })
+      .filter((pick) => pick.stratum === 'business_system_connector')
+      .map((pick) => pick.selectionFamily)
+    assert.equal(
+      families.filter((family) => family === 'slack').length,
+      spec.businessFamilyCap,
+      `v${spec.version}: slack must fill exactly its cap when the catalogue can supply it`,
+    )
+    for (const count of countBy(families).values()) {
+      assert.ok(count <= spec.businessFamilyCap, `v${spec.version}: a family went over its cap`)
+    }
+  }
 })
 
 test('the non-MCP stratum never collapses onto a single registry', () => {
@@ -252,6 +307,105 @@ test('a private or loopback endpoint is never treated as an observable surface',
 // ---------------------------------------------------------------------------
 // What the cohort row says about itself
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Versioned extension: the v1 forty are preserved, the additions are bounded
+// ---------------------------------------------------------------------------
+
+test('the extension reaches its target from a catalogue that can supply it', () => {
+  const picks = selectCohort(wideCatalogue(), { spec: COHORT_SPEC_V2 })
+  assert.equal(picks.length, COHORT_SPEC_V2.targetSubjects)
+  assert.deepEqual(validateCohort(picks, { spec: COHORT_SPEC_V2 }), [])
+})
+
+test('the whole cohort fits inside one probe wave, even if every subject is probeable', () => {
+  // C'est la justification opérationnelle du chiffre : au-delà de la largeur d'une vague,
+  // une partie des sujets suivis peut rester non contrôlée un jour donné, en silence.
+  assert.ok(COHORT_SPEC_V2.targetSubjects < PROBE_WAVE_WIDTH)
+  assert.ok(COHORT_SPEC_V2.maxSubjects < PROBE_WAVE_WIDTH)
+  assert.equal(CURRENT_COHORT_SPEC, COHORT_SPEC_V2)
+})
+
+test('the target is the sum of what the strata are allowed to hold', () => {
+  const capsTotal = Object.values(COHORT_SPEC_V2.caps).reduce((total, cap) => total + cap, 0)
+  assert.equal(capsTotal, COHORT_SPEC_V2.targetSubjects, 'the number is derived, not rounded')
+  assert.ok(COHORT_SPEC_V2.targetSubjects >= COHORT_SPEC_V2.minSubjects)
+  assert.ok(COHORT_SPEC_V2.targetSubjects <= COHORT_SPEC_V2.maxSubjects)
+})
+
+test('subjects already tracked are never re-selected and never re-explained', () => {
+  const rows = wideCatalogue()
+  const first = selectCohort(rows, { spec: COHORT_SPEC_V1 })
+  const tracked = first.map((pick) => ({
+    agentId: pick.agentId,
+    stratum: pick.stratum,
+    selectionFamily: pick.selectionFamily,
+  }))
+  const additions = selectCohort(rows, { spec: COHORT_SPEC_V2, alreadyTracked: tracked })
+
+  const trackedIds = new Set(tracked.map((subject) => subject.agentId))
+  for (const pick of additions) {
+    assert.ok(!trackedIds.has(pick.agentId), `${pick.handle} was already tracked and must not be picked again`)
+    assert.match(pick.selectionRule, /\/v2$/, 'an addition carries the version that selected it')
+  }
+  for (const pick of first) assert.match(pick.selectionRule, /\/v1$/, 'the original rule is left untouched')
+})
+
+test('extending never overshoots the target, whatever the previous version picked', () => {
+  const rows = wideCatalogue()
+  const tracked = selectCohort(rows, { spec: COHORT_SPEC_V1 }).map((pick) => ({
+    agentId: pick.agentId,
+    stratum: pick.stratum,
+    selectionFamily: pick.selectionFamily,
+  }))
+  const additions = selectCohort(rows, { spec: COHORT_SPEC_V2, alreadyTracked: tracked })
+  assert.equal(tracked.length + additions.length, COHORT_SPEC_V2.targetSubjects)
+})
+
+test('already-tracked subjects count against the stratum and family ceilings', () => {
+  const rows = wideCatalogue()
+  const tracked = selectCohort(rows, { spec: COHORT_SPEC_V1 }).map((pick) => ({
+    agentId: pick.agentId,
+    stratum: pick.stratum,
+    selectionFamily: pick.selectionFamily,
+  }))
+  const additions = selectCohort(rows, { spec: COHORT_SPEC_V2, alreadyTracked: tracked })
+  const whole = [...tracked, ...additions.map((pick) => ({ stratum: pick.stratum, selectionFamily: pick.selectionFamily }))]
+
+  for (const stratum of Object.keys(COHORT_SPEC_V2.caps) as Array<keyof typeof COHORT_SPEC_V2.caps>) {
+    const count = whole.filter((subject) => subject.stratum === stratum).length
+    assert.ok(count <= COHORT_SPEC_V2.caps[stratum], `${stratum}: ${count} over cap`)
+  }
+  const families = countBy(
+    whole.filter((s) => s.stratum === 'business_system_connector').map((s) => s.selectionFamily),
+  )
+  for (const [family, count] of families) {
+    assert.ok(count <= COHORT_SPEC_V2.businessFamilyCap, `${family}: ${count} over cap`)
+  }
+})
+
+test('the extension is deterministic, whatever order the catalogue arrives in', () => {
+  const rows = wideCatalogue()
+  const tracked = selectCohort(rows, { spec: COHORT_SPEC_V1 }).map((pick) => ({
+    agentId: pick.agentId,
+    stratum: pick.stratum,
+    selectionFamily: pick.selectionFamily,
+  }))
+  const reference = selectCohort(rows, { spec: COHORT_SPEC_V2, alreadyTracked: tracked })
+  assert.deepEqual(selectCohort([...rows].reverse(), { spec: COHORT_SPEC_V2, alreadyTracked: tracked }), reference)
+  assert.deepEqual(
+    selectCohort([...rows, ...rows], { spec: COHORT_SPEC_V2, alreadyTracked: tracked }),
+    reference,
+    'a duplicated row is not a second subject',
+  )
+})
+
+test('a catalogue too thin to reach the target is reported, not padded', () => {
+  const picks = selectCohort(catalogue(), { spec: COHORT_SPEC_V2 })
+  assert.ok(picks.length < COHORT_SPEC_V2.minSubjects)
+  const problems = validateCohort(picks, { spec: COHORT_SPEC_V2 })
+  assert.ok(problems.some((problem) => problem.code === 'size_below_minimum'))
+})
 
 test('every subject carries a versioned rule and a reason worth reading', () => {
   for (const pick of selectCohort(catalogue())) {
