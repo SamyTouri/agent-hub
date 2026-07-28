@@ -255,6 +255,7 @@ try {
       handle: String(row.handle),
       stratum: String(row.stratum),
       probeable: isProbeableEndpoint(row.endpoint as string | null),
+      endpoint: (row.endpoint as string | null) ?? null,
       checkedAt: (row.checked_at as string | null) ?? null,
     })),
     integrity: {

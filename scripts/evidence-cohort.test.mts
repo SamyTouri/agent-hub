@@ -10,6 +10,7 @@ import {
   BUSINESS_SYSTEM_FAMILIES,
   COHORT_SPEC_V1,
   COHORT_SPEC_V2,
+  COHORT_SPEC_V3,
   CURRENT_COHORT_SPEC,
   PROBE_WAVE_WIDTH,
   COHORT_MAX_SUBJECTS,
@@ -323,7 +324,17 @@ test('the whole cohort fits inside one probe wave, even if every subject is prob
   // une partie des sujets suivis peut rester non contrôlée un jour donné, en silence.
   assert.ok(COHORT_SPEC_V2.targetSubjects < PROBE_WAVE_WIDTH)
   assert.ok(COHORT_SPEC_V2.maxSubjects < PROBE_WAVE_WIDTH)
-  assert.equal(CURRENT_COHORT_SPEC, COHORT_SPEC_V2)
+  assert.equal(CURRENT_COHORT_SPEC, COHORT_SPEC_V3)
+  assert.ok(COHORT_SPEC_V3.maxSubjects < PROBE_WAVE_WIDTH)
+})
+
+test('v3 corrects composition without touching the ambition', () => {
+  // Les plafonds de strate et la cible sont ceux de la v2 : seule la concentration change.
+  assert.deepEqual(COHORT_SPEC_V3.caps, COHORT_SPEC_V2.caps)
+  assert.equal(COHORT_SPEC_V3.targetSubjects, COHORT_SPEC_V2.targetSubjects)
+  assert.equal(COHORT_SPEC_V3.minSubjects, COHORT_SPEC_V2.minSubjects)
+  assert.equal(COHORT_SPEC_V2.availabilityOperatorCap, undefined, 'v2 had no operator cap — that was the defect')
+  assert.equal(COHORT_SPEC_V3.availabilityOperatorCap, 3)
 })
 
 test('the target is the sum of what the strata are allowed to hold', () => {

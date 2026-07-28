@@ -14,6 +14,8 @@
 // Ce que la sonde ne dit PAS : que le service fonctionne, qu'il livre, qu'il est honnête ou
 // qu'il convient à une mission. Un hôte qui répond n'est pas un hôte qui tient ses promesses.
 
+import { isPlaceholderHost } from './evidence-operator.ts'
+
 export type EndpointCheck = {
   /** ISO date de la dernière tentative. */
   checked_at: string
@@ -137,7 +139,12 @@ export function isProbeableEndpoint(value: string | null | undefined): value is 
     const url = new URL(value)
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return false
     const host = url.hostname.toLowerCase()
-    return host !== 'localhost' && !host.endsWith('.local') && !/^\d+\.\d+\.\d+\.\d+$/.test(host)
+    if (host === 'localhost' || host.endsWith('.local') || /^\d+\.\d+\.\d+\.\d+$/.test(host)) return false
+    // Un gabarit non substitué n'est pas une adresse, c'est un champ de formulaire vide.
+    // Le catalogue en contient (`https://{host}/mcp`, `{api_host}`, `{baseurl}`) et le
+    // sonder revenait à écrire publiquement que l'hôte de ce vendeur ne répond pas — alors
+    // que personne n'a jamais publié d'hôte à sonder.
+    return !isPlaceholderHost(host)
   } catch {
     return false
   }

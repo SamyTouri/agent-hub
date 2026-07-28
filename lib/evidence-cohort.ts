@@ -18,6 +18,7 @@
 
 import { isProbeableEndpoint, type EndpointCheck } from './endpoint-probe.ts'
 import type { SubjectKind } from './evidence-history.ts'
+import { emptyTally, operatorAtCap, operatorKeysOf, tallyOperator } from './evidence-operator.ts'
 
 export const COHORT_ID = 'pilot-2026-07'
 
@@ -54,6 +55,9 @@ export type CohortSpec = {
   targetSubjects: number
   minSubjects: number
   maxSubjects: number
+  /** Plafond par opérateur dans la strate de disponibilité. Absent = pas de plafond, ce
+   *  qui était le cas jusqu au 2026-07-28 et a produit 21 sujets d un seul éditeur. */
+  availabilityOperatorCap?: number
 }
 
 /** Pilote initial du 2026-07-27 : quarante sujets, test d'architecture. */
@@ -110,7 +114,34 @@ export const COHORT_SPEC_V2: CohortSpec = {
   maxSubjects: 120,
 }
 
-export const CURRENT_COHORT_SPEC: CohortSpec = COHORT_SPEC_V2
+/**
+ * Correction de composition du 2026-07-28 — v3.
+ *
+ * La v2 a réalisé 40 sujets en veille de disponibilité dont 21 appartenaient au même
+ * éditeur, décliné par pays. La règle était respectée : ces hôtes ne répondaient
+ * effectivement pas, et le tri alphabétique les plaçait en tête. L'effet, lui, ne l'était
+ * pas — si cet éditeur remet tout en ligne, on écrit vingt-un changements en quelques
+ * minutes, et comptés comme un nombre ils raconteraient vingt-un signaux indépendants là
+ * où il n'y a eu qu'un événement chez un opérateur.
+ *
+ * D'où un plafond de TROIS par opérateur dans cette strate, sur chacun des deux axes
+ * (domaine enregistrable de l'endpoint, namespace du handle). Trois et pas moins parce
+ * qu'un éditeur qui a réellement plusieurs produits distincts mérite d'être représenté, et
+ * parce que c'est déjà le plafond retenu pour les familles bureautiques — trois exemplaires
+ * suffisent à voir si une famille se comporte comme une famille. Trois et pas plus parce
+ * que sur quarante places cela ramène le poids maximal d'un opérateur de 52 % à 7,5 % : un
+ * seul événement ne peut plus dominer la strate.
+ *
+ * Les plafonds de strate et la cible sont inchangés. La v3 corrige la composition, pas
+ * l'ambition.
+ */
+export const COHORT_SPEC_V3: CohortSpec = {
+  ...COHORT_SPEC_V2,
+  version: 3,
+  availabilityOperatorCap: 3,
+}
+
+export const CURRENT_COHORT_SPEC: CohortSpec = COHORT_SPEC_V3
 
 /** Largeur d'une vague de sonde du cron quotidien. La cohorte doit y tenir entièrement,
  *  sinon une partie des sujets suivis peut rester non contrôlée un jour donné. */
@@ -289,6 +320,10 @@ function hasObservableSurface(candidate: CandidateSubject): boolean {
 
 export type TrackedSubject = {
   agentId: string
+  /** Handle et endpoint : nécessaires pour recalculer les clés d opérateur d un sujet
+   *  déjà suivi, sinon son poids ne compterait pas dans le plafond. */
+  handle?: string
+  endpoint?: string | null
   stratum: CohortStratum
   /** Famille ou provenance enregistrée à la sélection, pour que les sous-plafonds
    *  continuent de compter les sujets déjà suivis. */
@@ -410,11 +445,27 @@ export function selectCohort(
   }
 
   // 3. Subjects already in an availability incident — transitions are guaranteed here.
+  //    Plafonné par opérateur : un éditeur qui décline un produit par pays produirait
+  //    autant de transitions simultanées que de pays, et elles se liraient comme autant de
+  //    signaux indépendants. Les sujets déjà suivis comptent dans ce plafond.
+  const operatorCap = spec.availabilityOperatorCap
+  const availabilityOperators = emptyTally()
+  if (operatorCap !== undefined) {
+    for (const subject of tracked) {
+      if (subject.stratum !== 'availability_watch' || subject.handle === undefined) continue
+      tallyOperator(availabilityOperators, operatorKeysOf({ handle: subject.handle, endpoint: subject.endpoint ?? null }))
+    }
+  }
   for (const candidate of pool) {
     if (!room('availability_watch')) break
     if (taken.has(candidate.agentId)) continue
     if (!isProbeableEndpoint(candidate.endpoint)) continue
     if (candidate.endpointCheck?.responded !== false) continue
+    const keys = operatorKeysOf({ handle: candidate.handle, endpoint: candidate.endpoint })
+    if (operatorCap !== undefined) {
+      if (operatorAtCap(availabilityOperators, keys, operatorCap)) continue
+      tallyOperator(availabilityOperators, keys)
+    }
     take(candidate, {
       stratum: 'availability_watch',
       selectionRule: rule('availability_watch'),

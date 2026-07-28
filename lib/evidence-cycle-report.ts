@@ -6,6 +6,8 @@
 // entier est qu'une ligne écrite ne prouve que ce qu'elle prouve — et qu'aucune requête
 // SQL ne prouvera jamais qu'une fonction Vercel a été invoquée.
 
+import { emptyTally, operatorKeysOf, tallyOperator, topConcentration } from './evidence-operator.ts'
+
 export const CYCLE_CHECK_SCHEMA = 'https://agentreputation.dev/schemas/evidence-cycle-check/v1'
 
 /** Collecteurs qui n'appartiennent qu'à l'import de registre. Une ligne du journal signée
@@ -105,7 +107,14 @@ export function resolveWindow(input: {
 
 export type SourceCollectorRows = { source: string; collector: string; rows: number; lastObservedAt?: string | null }
 
-export type CohortRow = { handle: string; stratum: string; probeable: boolean; checkedAt: string | null }
+export type CohortRow = {
+  handle: string
+  stratum: string
+  probeable: boolean
+  checkedAt: string | null
+  /** Nécessaire pour dériver la clé d opérateur ; sans lui la concentration est aveugle. */
+  endpoint?: string | null
+}
 
 export type CycleFacts = {
   window: CycleWindow
@@ -462,5 +471,50 @@ export function buildCycleReport(facts: CycleFacts, generatedAt: string): CycleR
     ],
     checks,
     cost: buildCycleCost(facts, probeable.length, fresh.length),
+    // La concentration est exposée par défaut. Sans elle, un événement corrélé chez un
+    // seul opérateur se lit comme autant de signaux indépendants qu'il a de fiches — et
+    // c'est la lecture flatteuse, donc celle qui s'impose toute seule.
+    concentration: buildConcentration(facts),
+  }
+}
+
+/**
+ * Concentration par opérateur, globale et par strate.
+ *
+ * Le compte des TRANSITIONS par opérateur est le chiffre qui compte : c'est lui qui
+ * empêche de présenter une remise en ligne groupée comme vingt-et-un changements de
+ * marché. Les lignes historiques restent, mais elles arrivent regroupées.
+ */
+function buildConcentration(facts: CycleFacts) {
+  const overall = emptyTally()
+  const perStratum = new Map<string, ReturnType<typeof emptyTally>>()
+  for (const member of facts.cohort) {
+    const keys = operatorKeysOf({ handle: member.handle, endpoint: member.endpoint ?? null })
+    tallyOperator(overall, keys)
+    let stratum = perStratum.get(member.stratum)
+    if (!stratum) {
+      stratum = emptyTally()
+      perStratum.set(member.stratum, stratum)
+    }
+    tallyOperator(stratum, keys)
+  }
+  const largest = (tally: ReturnType<typeof emptyTally>) =>
+    Math.max(0, ...[...tally.domain.values()], ...[...tally.namespace.values()])
+  return {
+    note:
+      'Subjects grouped by operator on two independent axes: the registrable domain of the endpoint, and the handle namespace. ' +
+      'A correlated outage at one operator is one event, however many listings it holds.',
+    cohort_subjects: facts.cohort.length,
+    largest_operator_share:
+      facts.cohort.length > 0 ? Math.round((largest(overall) / facts.cohort.length) * 1000) / 1000 : 0,
+    overall: topConcentration(overall),
+    by_stratum: Object.fromEntries(
+      [...perStratum.entries()]
+        .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+        .map(([stratum, tally]) => [
+          stratum,
+          { subjects: facts.cohort.filter((m) => m.stratum === stratum).length, largest_operator: largest(tally), ...topConcentration(tally, 4) },
+        ]),
+    ),
   }
 }
