@@ -746,3 +746,26 @@ grant select, insert, update on table public.evidence_cohort to service_role;
 grant select, insert         on table public.evidence_observations to service_role;
 grant usage, select on sequence public.evidence_observations_seq_seq to service_role;
 revoke update, delete, truncate on table public.evidence_observations from public, service_role;
+
+-- 22. Bail d'exécution unique des tâches planifiées (2026-07-28).
+--     Le 2026-07-28, quatre invocations de /api/cron/daily se sont chevauchées : trois ont
+--     atteint le plafond de 300 s de la plateforme, la quatrième est morte sur le délai
+--     d'instruction PostgreSQL. Elles sondaient les mêmes hôtes et écrivaient les mêmes
+--     lignes en même temps, sur un pooler où chaque instance n'a qu'une connexion.
+--     Un verrou consultatif ne convient pas ici : `pg_advisory_lock` est lié à une session
+--     que PgBouncer en mode transaction ne nous garantit pas, et `pg_advisory_xact_lock`
+--     mourrait avec sa transaction alors que le travail dure des minutes. D'où un bail
+--     daté : la prise est une seule instruction atomique
+--     (`on conflict do update ... where expires_at <= now()`), la ligne n'est pas tenue
+--     verrouillée pendant le travail, et un détenteur tué par la plateforme cesse de
+--     bloquer à l'échéance de son bail.
+--     Voir db/migration-cron-single-flight.sql et lib/single-flight.ts.
+create table if not exists cron_locks (
+  name        text        primary key,   -- une tâche, p. ex. 'cron:daily'
+  holder      text        not null,      -- jeton de l'invocation : elle seule peut rendre son bail
+  acquired_at timestamptz not null default now(),
+  expires_at  timestamptz not null       -- calée sur le plafond de durée de la plateforme
+);
+
+alter table cron_locks enable row level security;
+revoke all on table public.cron_locks from anon, authenticated;

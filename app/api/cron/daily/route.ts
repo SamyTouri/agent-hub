@@ -10,11 +10,13 @@ import {
 import { EVIDENCE_SCHEMA_VERSION, availabilityFacts, type ObservationInput } from '@/lib/evidence-history'
 import { appendObservations, loadActiveCohort, type CohortMember } from '@/lib/evidence-store'
 import {
+  DAILY_LEASE_TTL_MS,
   DAILY_ROUTE_BUDGET_MS,
   FINALIZE_RESERVE_MS,
   INDEXNOW_BUDGET_MS,
   canStartWave,
 } from '@/lib/probe-budget'
+import { DAILY_LEASE_NAME, withLease } from '@/lib/single-flight'
 
 export const runtime = 'nodejs'
 // Fluid compute : le plan autorise 300 s, et le cron registre s'en sert déjà. À 60 s la
@@ -37,6 +39,8 @@ const encodeHandle = (handle: string) => handle.split('/').map(encodeURIComponen
 // 3. purge des crawler_hits > 60 jours
 // 4. une seule passe de sonde : cohorte suivie d'abord, rotation du catalogue ensuite,
 //    puis historisation des seules transitions de disponibilité de la cohorte
+//
+// Tout cela sous bail : une seule invocation travaille à la fois (voir lib/single-flight).
 export async function GET(req: Request) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return new Response('Unauthorized', { status: 401 })
@@ -49,6 +53,49 @@ export async function GET(req: Request) {
   const deadlineAt = startedAt + DAILY_ROUTE_BUDGET_MS
 
   const sql = getSql()
+
+  // Le bail est pris AVANT tout travail : une invocation concurrente ne doit sonder aucun
+  // hôte, n'écrire aucune ligne et n'attendre personne. Le 2026-07-28, quatre invocations
+  // simultanées se sont mutuellement affamées sur l'unique connexion du pooler — trois
+  // tuées à 300 s, une sur le délai d'instruction — pour un cycle inexploitable.
+  // Une panne du TRAVAIL, elle, continue de remonter telle quelle : seul l'échec de la
+  // PRISE du bail devient `unavailable`.
+  const run = await withLease(sql, DAILY_LEASE_NAME, DAILY_LEASE_TTL_MS, () =>
+    runDailyMaintenance(sql, deadlineAt),
+  )
+
+  if (run.status === 'unavailable') {
+    // Impossible de prouver qu'on est seul : on ne travaille pas. Refuser bruyamment vaut
+    // mieux que retomber dans la concurrence que ce garde existe pour empêcher — et une
+    // tâche quotidienne sautée est visible, contrairement à quatre cycles qui se marchent
+    // dessus. Le cas attendu ici est la migration cron_locks non appliquée.
+    return Response.json(
+      { ok: false, skipped: 'lock_unavailable', error: run.error, elapsed_ms: Date.now() - startedAt },
+      { status: 503 },
+    )
+  }
+
+  if (run.status === 'busy') {
+    // Résultat normal, pas un échec : le cycle du jour est déjà en cours ailleurs. HTTP 200
+    // délibérément — marquer le cron en échec ici apprendrait à l'opérateur à ignorer ses
+    // propres alertes. Le détenteur est rendu pour qu'on voie depuis quand il travaille.
+    return Response.json({
+      ok: true,
+      skipped: 'already_running',
+      lock: run.lock,
+      elapsed_ms: Date.now() - startedAt,
+    })
+  }
+
+  return Response.json({
+    ...run.result,
+    lease: { holder: run.holder, expires_at: run.expiresAt, released: run.release.released },
+    elapsed_ms: Date.now() - startedAt,
+  })
+}
+
+/** Le travail lui-même, inchangé : il ne s'exécute que sous bail. */
+async function runDailyMaintenance(sql: Sql, deadlineAt: number) {
   const [{ total }] = await sql`select count(*)::int as total from agents`
 
   const changed = await sql`
@@ -77,15 +124,14 @@ export async function GET(req: Request) {
 
   const endpoints = await probeEndpoints(sql, deadlineAt)
 
-  return Response.json({
+  return {
     ok: true,
     agents: total,
     changed_urls: changed.length,
     indexnow,
     purged,
     endpoints,
-    elapsed_ms: Date.now() - startedAt,
-  })
+  }
 }
 
 // Sonde de fraîcheur des endpoints — promesse publique du premier dossier (2026-07-25) :
