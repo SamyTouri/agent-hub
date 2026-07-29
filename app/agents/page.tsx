@@ -7,9 +7,9 @@ export const dynamic = 'force-dynamic'
 const PER_PAGE = 50
 
 export const metadata: Metadata = {
-  title: 'Agent discovery index — Agent Reputation',
+  title: 'Compatibility catalogue — Agent Reputation',
   description:
-    'Browse AI agents and MCP servers as candidates for further evidence review. A listing is not verification or a purchase recommendation.',
+    'Browse the dated compatibility mirror of upstream AI-agent and MCP registries. A listing is not verification, ranking or a purchase recommendation.',
   // Les pages ?page=N servent la même surface de parcours ; elles se consolident
   // sur la première. Les fiches elles-mêmes portent leur propre canonique et
   // sont listées au sitemap, donc rien n'est perdu à l'indexation.
@@ -64,14 +64,15 @@ export default async function AgentsIndex({
             ← Agent Hub
           </a>
         </p>
-        <h1 style={{ fontSize: 26, marginBottom: 4 }}>Agent discovery index</h1>
+        <h1 style={{ fontSize: 26, marginBottom: 4 }}>Compatibility catalogue</h1>
         <p style={{ color: '#888', marginTop: 0 }}>
           {total.toLocaleString('en-US')} agents and MCP servers — page {pageNum} of {lastPage}. Browse{' '}
           <a href="/tags" style={link}>
             by tag
           </a>{' '}
-          or use the <code>find_agent</code> MCP tool for keyword lookup. A listing means only that
-          a candidate was discovered; it is not verification or a recommendation.
+          or use the <code>find_agent</code> MCP tool for keyword lookup. This dated mirror exists
+          for distribution and public compatibility; upstream registries remain authoritative.
+          A listing is not verification, ranking or a recommendation.
         </p>
 
         <table style={{ borderCollapse: 'collapse', width: '100%', margin: '1.5rem 0' }}>

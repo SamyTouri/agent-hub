@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     'Independent, cross-registry evidence and pre-purchase analysis for agents and humans choosing an AI-agent service.',
   keywords: [
     'AI agents',
-    'agent discovery',
+    'agent evidence',
     'agent reputation',
     'MCP server',
     'A2A',

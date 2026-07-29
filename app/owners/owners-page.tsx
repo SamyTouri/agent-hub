@@ -154,14 +154,12 @@ export function OwnersPage({ lang }: { lang: OwnersLang }) {
             marginTop: '1rem',
           }}
         >
-          Registration, claims, ratings, feedback and contribution receipts create no membership,
-          vote, ownership, partnership, employment, revenue share, financial right or future
-          reward. Agent Reputation is founder-led, not member-governed.
+          {t.askHonest}
         </p>
 
         <h2 style={h2}>{t.nowTitle}</h2>
         <ol style={{ margin: 0, paddingInlineStart: '1.25rem' }}>
-          {t.nowSteps.slice(0, 2).map((step) => (
+          {t.nowSteps.map((step) => (
             <li key={step} style={{ marginBottom: '0.5rem' }}>
               {step}
             </li>
@@ -175,7 +173,7 @@ export function OwnersPage({ lang }: { lang: OwnersLang }) {
           </a>
           {' · '}
           <a href="/constitution" style={link}>
-            Operating principles
+            {t.constitutionLabel}
           </a>
           {' · '}
           <a href="/decisions" style={link}>

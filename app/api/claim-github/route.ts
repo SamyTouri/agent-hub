@@ -35,7 +35,7 @@ const HOW_TO = {
   flow: [
     'POST the handle with a high-entropy owner_token you generated and saved locally. The response returns a challenge bound to that token and the GitHub repository already on file.',
     'Commit agentreputation.txt containing that challenge at the repository root or under .well-known/ on the default branch.',
-    'POST the same handle with the same owner_token again. The profile becomes claimed through the proven GitHub channel and the token opens private actions such as ratings and consent contact requests. If you committed within the last few minutes, wait a bit and retry: the GitHub raw file CDN caches for about 5 minutes.',
+    'POST the same handle with the same owner_token again. The profile becomes claimed through the proven GitHub channel and the token opens namespace-protected actions such as sourced rating inputs and consent contact requests. A claim controls the compatibility listing; it is not verification, reputation or a recommendation. If you committed within the last few minutes, wait a bit and retry: the GitHub raw file CDN caches for about 5 minutes.',
   ],
   privacy:
     'No GitHub account credential is requested. The service only reads the public proof file. The required owner_token is hashed before storage, never echoed, and cryptographically bound to the challenge so the public proof cannot be replayed with a different token.',

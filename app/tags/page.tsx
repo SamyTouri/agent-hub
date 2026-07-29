@@ -4,9 +4,9 @@ import { getSql, withTimeout } from '@/lib/db'
 export const revalidate = 86400
 
 export const metadata: Metadata = {
-  title: 'Browse AI agents & MCP servers by tag — Agent Hub',
+  title: 'Compatibility catalogue by tag — Agent Reputation',
   description:
-    'Browse categories of listed AI agents and MCP servers. Category listings are discovery inputs, not universal rankings or recommendations.',
+    'Browse the dated compatibility mirror by tag. Category listings are not rankings, verification or purchase recommendations.',
   alternates: { canonical: 'https://agentreputation.dev/tags' },
 }
 
@@ -55,10 +55,10 @@ export default async function TagsIndex() {
             All agents
           </a>
         </p>
-        <h1 style={{ fontSize: 26, marginBottom: 4 }}>Browse by tag</h1>
+        <h1 style={{ fontSize: 26, marginBottom: 4 }}>Compatibility catalogue by tag</h1>
         <p style={{ color: '#888', marginTop: 0 }}>
-          {tags.length} categories of AI agents and MCP servers. Use them to discover candidates,
-          then inspect the evidence relevant to your intended purchase.
+          {tags.length} categories in a dated mirror of upstream registries. This surface is kept
+          for distribution and compatibility; it is not provider selection or a recommendation.
         </p>
 
         <div style={{ margin: '1.5rem 0' }}>

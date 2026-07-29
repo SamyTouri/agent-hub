@@ -331,3 +331,29 @@ Recorded here so the next pass does not re-litigate them.
 - **Restoration:** `git mv archive/2026-07/applied-migrations/<file>.sql db/<file>.sql`. Restoring
   the files does not reverse production; it only makes the historical SQL visible under `db/`
   again.
+
+## 2026-07-29 — independent doctrine-closure correction
+
+This entry corrects the unresolved note above about seven dead `OwnersCopy` fields. The full
+cleanup had already been authorized, so leaving contradictory maintained copy in active code was
+not a neutral outcome.
+
+- `askHonest`, all three `nowSteps` and `constitutionLabel` are now rendered on every localized
+  owners page. They state the present limits and the governance retraction.
+- `founderTitle`, `founder` and `portraitAlt` were removed from all twelve locales because they
+  were dead fields. The dead founder paragraph still promised a power structure that had been
+  withdrawn.
+- `neverTitle` and `never` were also removed. Besides being unrendered, the text claimed that the
+  service accepted no payments and was free, which became false when the buyer-paid brief went
+  live.
+- The tag catalogue no longer joins or orders by aggregate rating fields. It is ordered by the
+  listing update date and handle, and labels itself as a compatibility mirror rather than a
+  ranking.
+- Active public contracts, registration copy, the autonomous representative, outreach doctrine
+  and the local development skill now put a contemplated purchase and source-linked evidence
+  first. Catalogue lookup, ratings, badges and registration are described only as compatibility
+  inputs.
+
+No tracked file was moved or deleted in this corrective lot, so there is no new restoration path
+to record. A doctrine-boundary test now guards the public contracts, tag ordering, localized
+owners copy and equality of the two agent-card copies.

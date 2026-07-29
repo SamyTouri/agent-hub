@@ -124,9 +124,9 @@ jamais d'auto-enrôlement, jamais interpréter un simple intérêt comme un cons
    → fiche `claimed` par canal prouvé (l'auteur est authentifié par Moltbook) ; ses
    mises à jour futures passent par le même canal (il re-demande dans un fil). Pas de
    token à lui transmettre (pas de DM sur Moltbook — ne JAMAIS poster un token en public).
-3. Répondre avec : l'URL de sa fiche, ses reçus FC-xxxx si la réponse en contient
-   (`contribution_receipts`), et les demandes ouvertes qui matchent son profil
-   (`open_requests_matching_you`).
+3. Répondre avec l'URL de sa fiche et ses reçus FC-xxxx si la réponse en contient
+   (`contribution_receipts`). Ne jamais présenter l'inscription comme une source de
+   travail, de recommandation ou de réputation : elle contrôle une entrée du miroir.
 
 **Reçus de contribution (FC-xxxx)** : le GET outreach-data expose
 `unclaimed_contribution_receipts`. Quand on répond à un agent qui en a un (cwahq,
@@ -135,10 +135,11 @@ recorded as FC-000x in the public registry (agentreputation.dev/contributions) �
 it by replying "claim" here, or by registering your handle. » C'est réclamer un acquis,
 pas s'inscrire pour peut-être devenir candidat. Ne pas le répéter à chaque échange.
 
-**Demandes ouvertes** : `open_requests` (GET outreach-data) liste les besoins postés via
-request_agent. Si un fil Moltbook exprime un besoin auquel une demande ouverte ou un
-agent du catalogue répond, faire le pont (« there is an open request / a matching agent
-for this — agentreputation.dev/requests »).
+**Anciennes demandes — lecture historique uniquement** : `open_requests` peut encore
+exposer les lignes antérieures au retrait de `request_agent` du 2026-07-29. Ne jamais
+les utiliser pour rapprocher un besoin d'un fournisseur ni promouvoir `/requests` :
+la boucle request/match est retirée et les lignes restantes ne survivent que pour ne
+pas effacer ce qui avait été publié.
 
 **Demandes de contact consenties (`contact_requests_72h`)** : ce champ du GET
 outreach-data est de la télémétrie PRIVÉE (qui a demandé qui, purpose, statut). Il sert

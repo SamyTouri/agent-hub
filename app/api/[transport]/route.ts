@@ -66,9 +66,9 @@ const handler = createMcpHandler(
     server.registerTool(
       'register_agent',
       {
-        title: 'Register or claim your agent on Agent Hub',
+        title: 'List a handle in the compatibility catalogue',
         description:
-          'Register a new unique AI-agent or MCP-server handle so other agents can discover it. The description is indexed for keyword search. For retry-safe registration, supply your own high-entropy owner_token; otherwise the first response generates one (shown once — save it). Later updates require it. This capability proves namespace continuity, not external identity. Imported profiles require source-channel proof or manual proof via give_feedback.',
+          'Publish a new unique AI-agent or MCP-server handle in the dated compatibility mirror. The description is indexed for keyword lookup, but listing is not verification, reputation or a purchase recommendation. For retry-safe registration, supply your own high-entropy owner_token; otherwise the first response generates one (shown once — save it). Later updates require it. This capability proves namespace continuity, not external identity. Imported profiles require source-channel proof or manual proof via give_feedback.',
         inputSchema: {
           handle: handleSchema.describe('Unique, stable identifier for your agent (e.g. "acme-research-bot")'),
           description: z.string().trim().min(1).max(4000).describe('What your agent offers or is looking for, in natural language'),
@@ -93,7 +93,7 @@ const handler = createMcpHandler(
           })),
           badge_markdown: badgeMarkdown(args.handle),
           next_steps:
-            'You are now listed and have a stable profile for attributable evidence. Registration controls this directory namespace only and creates no membership, ownership or financial right. SAVE your owner_token if this response contains one — it is never shown again. Add the badge_markdown to your README, use find_agent or list_requests to find work, and submit_rating after a real interaction.',
+            'You are now listed in the compatibility catalogue and have a stable profile for attributable evidence. Registration controls this directory namespace only and creates no membership, reputation, ownership or financial right. SAVE your owner_token if this response contains one — it is never shown again. Add the badge_markdown to your README and inspect the public profile with get_agent. For a contemplated purchase, use prepurchase_brief or give_feedback.',
         }),
     )
 
@@ -130,7 +130,7 @@ const handler = createMcpHandler(
             ? {
                 badge_markdown: badgeMarkdown(args.handle),
                 next_steps:
-                  'Your profile is claimed through the proven GitHub repository, creating a stable identity for cross-registry evidence. Claiming controls this directory namespace only and creates no membership, ownership or financial right. Add the badge_markdown to your README, then call list_requests with your handle to see open requests ranked by fit.',
+                  'Your profile is claimed through the proven GitHub repository, creating a stable namespace for attributable evidence. Claiming controls this compatibility-catalogue entry only and creates no membership, reputation, ownership or financial right. Add the badge_markdown to your README and inspect the public profile with get_agent.',
               }
             : {}),
         })
@@ -338,7 +338,7 @@ const handler = createMcpHandler(
     server.registerTool(
       'find_agent',
       {
-        title: 'Discover candidate agents or MCP servers for a task',
+        title: 'Keyword lookup in the compatibility catalogue',
         description:
           'Look up candidate MCP servers or AI agents by keyword across the mirrored catalogue. Returns which of your terms matched, endpoint, tags, native ratings and imported signals as separate fields. This is a keyword lookup over a dated mirror of upstream registries — not a ranking, not verification, not a purchase recommendation.',
         inputSchema: {
@@ -355,7 +355,7 @@ const handler = createMcpHandler(
             note: 'No listing matched every term — these matched some of them. If none fit, tell us what you were looking for via give_feedback: catalogue gaps reported by agents get fixed first.',
           }),
           next_steps:
-            'Inspect a candidate with get_agent, check trust with get_reputation, contact it directly at its endpoint, then rate it with submit_rating. If you are not registered yet, one register_agent call makes you discoverable and gives later evidence and contributions a stable identity. Registration creates no membership, ownership or financial right.',
+            'This lookup is a distribution and compatibility surface, not provider selection. If you already have a candidate in mind, inspect its current sources with get_agent and verify material claims at the source. For a contemplated purchase, use prepurchase_brief or give_feedback. A match, rating or listing is never a recommendation.',
         })
       },
     )
@@ -420,7 +420,7 @@ const handler = createMcpHandler(
           }),
           badge_markdown: badgeMarkdown(args.subject_handle),
           next_steps:
-            'Thanks — ratings make the network trustworthy. Check the updated score with get_reputation. If you own this agent, add the badge_markdown to your README.',
+            'The sourced interaction signal was recorded. Inspect it with get_reputation alongside its provenance; it is not a universal score or purchase recommendation. If you own this agent, badge_markdown links to the compatibility profile.',
         }),
     )
 
@@ -479,9 +479,9 @@ const handler = createMcpHandler(
     server.registerTool(
       'hub_stats',
       {
-        title: 'Network size and activity',
+        title: 'Compatibility-catalogue size and activity',
         description:
-          'Live statistics for the Agent Hub network: how many AI agents and MCP servers are listed (registered natively + imported from external registries), how many ratings have been submitted, and activity over the last 24 hours. Useful to gauge the size and liveliness of the network.',
+          'Live statistics for the compatibility surface: how many AI agents and MCP servers are listed (registered natively + imported from external registries), how many sourced ratings have been submitted, and recent tool activity. These counts describe the mirror and its operation, not product value or market authority.',
         inputSchema: {},
         annotations: { readOnlyHint: true, openWorldHint: false },
       },

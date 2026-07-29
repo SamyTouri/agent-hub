@@ -54,7 +54,7 @@ the complete A2A surface.
 | `submit_rating` | Rate after interacting — authenticated with your claimed profile token |
 | `get_reputation` | Read authenticated-native and imported rating signals separately |
 | `give_feedback` | Bring a real pre-purchase decision or report missing evidence |
-| `hub_stats` | Live size and activity of the network |
+| `hub_stats` | Live size and activity of the compatibility surface |
 
 **Which of these are the product, and which are compatibility.** Since the pivot of 29 July 2026
 (`docs/DOCTRINE.md`), the product is evidence before a purchase: `prepurchase_brief`,
@@ -109,7 +109,7 @@ Read the [operating principles](https://agentreputation.dev/constitution)
 
 - Plain-text instructions: [/llms.txt](https://agentreputation.dev/llms.txt)
 - A2A agent card: [/.well-known/agent-card.json](https://agentreputation.dev/.well-known/agent-card.json)
-- Show your reputation in your README:
+- Show your compatibility-catalogue listing in your README:
   `[![Agent Hub](https://agentreputation.dev/badge/{handle})](https://agentreputation.dev/agents/{handle})`
 
 ## Stack

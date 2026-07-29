@@ -30,9 +30,9 @@ const MAX_BODY_BYTES = 65_536
 // A2A v0.3 over JSON-RPC 2.0 — endpoint synchrone (message/send uniquement).
 // Chaque message reçoit une réponse Message directe (jamais de Task) : la carte
 // déclare streaming/pushNotifications false, donc un client conforme n'attend
-// ni SSE ni cycle de vie de tâche. Texte libre = découverte sémantique ;
+// ni SSE ni cycle de vie de tâche. Texte libre = recherche lexicale dans le miroir ;
 // DataPart {skill, args} = appel structuré sur le sous-ensemble servi ici.
-// La surface complète (15 tools, dont claim_github et submit_rating) reste MCP.
+// La surface complète, dont claim_github et submit_rating, reste MCP.
 // ---------------------------------------------------------------------------
 
 // Codes d'erreur définis par la spec A2A v0.3 (+ JSON-RPC standard).
@@ -96,7 +96,7 @@ const SKILLS: Record<string, { schema: z.ZodTypeAny; run: (args: never) => Promi
         .join(', ')
       return {
         summary: results.length
-          ? `${results.length} agents matching "${args.query.slice(0, 80)}" — top: ${top}. Vet one with {"skill":"get_agent"}, then contact it directly at its endpoint.`
+          ? `${results.length} catalogue listings matching "${args.query.slice(0, 80)}" — first: ${top}. This dated mirror is a compatibility surface, not provider selection. Inspect a candidate you already have in mind with {"skill":"get_agent"} and verify material claims at the source.`
           : `No agent matched "${args.query.slice(0, 80)}".`,
         data: {
           results,
@@ -358,7 +358,7 @@ const SKILLS: Record<string, { schema: z.ZodTypeAny; run: (args: never) => Promi
       })
       const enc = args.handle.split('/').map(encodeURIComponent).join('/')
       return {
-        summary: `Registered: ${args.handle} is now discoverable (${BASE}/agents/${enc}). ${'owner_token' in result ? 'SAVE the owner_token from the data part — it is shown once and required for updates.' : ''}`,
+        summary: `Registered: ${args.handle} is now listed in the compatibility catalogue (${BASE}/agents/${enc}). A listing is not verification or a purchase recommendation. ${'owner_token' in result ? 'SAVE the owner_token from the data part — it is shown once and required for updates.' : ''}`,
         data: {
           ...result,
           badge_markdown: `[![Agent Hub](${BASE}/badge/${enc})](${BASE}/agents/${enc})`,
@@ -377,7 +377,7 @@ const USAGE = {
     'For a contemplated purchase, use give_feedback with category why_i_came and describe the candidate, mission and exposure. Manual MVP intake does not guarantee acceptance.',
   ],
   skills: Object.keys(SKILLS),
-  full_surface: `The complete 16-tool surface (incl. claim_github, submit_rating, list_requests, the consent inbox and a persistent authenticated representative conversation) is served over MCP: ${BASE}/api/mcp — docs: ${BASE}/llms.txt`,
+  full_surface: `The complete surface (incl. claim_github, submit_rating, the retired list_requests compatibility notice, the consent inbox and a persistent authenticated representative conversation) is served over MCP: ${BASE}/api/mcp — docs: ${BASE}/llms.txt`,
   agent_card: `${BASE}/.well-known/agent-card.json`,
 }
 
@@ -488,7 +488,7 @@ async function handleMessageSend(id: RpcId, params: unknown): Promise<Response> 
       const entry = SKILLS[name]
       if (!entry) {
         outcome = {
-          summary: `Unknown skill "${name}". Available: ${Object.keys(SKILLS).join(', ')}. The full 15-tool surface is served over MCP (${BASE}/api/mcp).`,
+          summary: `Unknown skill "${name}". Available: ${Object.keys(SKILLS).join(', ')}. The full surface is served over MCP (${BASE}/api/mcp).`,
           data: { ok: false, error: `unknown skill "${name}"`, usage: USAGE },
         }
       } else {
@@ -513,7 +513,7 @@ async function handleMessageSend(id: RpcId, params: unknown): Promise<Response> 
     } else {
       outcome = {
         summary:
-          'Agent Reputation: discover candidate agents by plain-text search, inspect source-separated evidence with structured calls, or bring a contemplated purchase through give_feedback. Matches and ratings are inputs, not recommendations.',
+          'Agent Reputation provides independent evidence before a purchase. Bring a contemplated purchase through give_feedback, inspect a candidate you already have in mind with structured calls, or use plain text for keyword lookup in the compatibility mirror. Matches and ratings are inputs, not recommendations.',
         data: { ok: true, usage: USAGE },
       }
     }

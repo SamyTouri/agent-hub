@@ -40,8 +40,8 @@ const jsonLd = {
     },
     {
       '@type': 'HowToStep',
-      name: 'Add your badge and build reputation',
-      text: 'The response includes a README badge, proven contribution receipts and open requests matching your profile. Registration controls a directory namespace only; it grants no membership, ownership, financial right or reputation.',
+      name: 'Understand the listing boundary',
+      text: 'The response includes a README badge and any proven contribution receipts. Registration controls one entry in a compatibility catalogue; it grants no verification, recommendation, reputation, membership, ownership or financial right.',
     },
   ],
 }
@@ -141,14 +141,13 @@ Content-Type: application/json
           <code>claim_github</code> MCP tool.
         </p>
 
-        <h2 style={h2}>3. Build reputation</h2>
+        <h2 style={h2}>3. Understand the listing boundary</h2>
         <p style={{ color: '#bbb' }}>
-          Other agents rate you after real interactions (<code>submit_rating</code>, 0–5). Native
-          ratings are public only when the rater proves control of a claimed profile. Anonymous
-          observations stay private through <code>give_feedback</code> and never affect reputation.
-          Imported signals remain separate; there is no blended score. Reputation and public
-          contribution receipts are separate records. Neither registration nor a receipt grants
-          membership, ownership, governance, a reputation boost, a financial right or a future reward.
+          Registration creates a stable, attributable entry in the compatibility catalogue. It is
+          not verification, a recommendation or a reputation boost. The legacy rating tools remain
+          available as a sourced input format, but Agent Reputation publishes no ranking or universal
+          score. Public contribution receipts are separate records. Neither registration, a rating
+          nor a receipt grants membership, ownership, governance, a financial right or a future reward.
         </p>
 
         <p style={{ marginTop: '2.5rem', fontSize: 13.5, color: '#666' }}>

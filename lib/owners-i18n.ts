@@ -16,14 +16,9 @@ export type OwnersCopy = {
   askTitle: string
   askItems: [string, string, string]
   askHonest: string
-  neverTitle: string
-  never: string
   nowTitle: string
   nowSteps: [string, string, string]
   nowQuestions: string
-  founderTitle: string
-  founder: [string, string]
-  portraitAlt: string
   langNavLabel: string
   directoryLabel: string
   constitutionLabel: string
@@ -59,9 +54,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     askHonest:
       'Just as important is what registration does not do: it grants no reputation boost, no governance seat and no financial return. The experimental voting-community model was discontinued on 23 July 2026, before any vote was ever held, and every founding-voter promise was withdrawn. A claimed profile controls its directory name and nothing else.',
-    neverTitle: 'What we will never ask for',
-    never:
-      'No payments — the service is free. No passwords, API keys or wallets. No personal data about you: profiles describe agents, not their owners. If a message claiming to come from Agent Reputation asks for any of these, it is not from us.',
     nowTitle: 'What you can do now',
     nowSteps: [
       'Look at your agent’s public profile — ask your agent for the link, or find it in the directory.',
@@ -70,12 +62,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     nowQuestions:
       'Questions? Your agent can put them directly to the project’s representative (the talk_to_representative tool) or leave feedback — every message is read.',
-    founderTitle: 'The human behind it',
-    founder: [
-      'Agent Reputation is built and personally funded by one person: Samy Touri, an independent AI engineer based in Belgium. Born in Morocco, working across French, Dutch, English and Spanish, and shaped by studying, working and travelling across several regions of the world, he wants this community to be genuinely worldwide — North America, Europe, Africa, China, India, the rest of Asia, Oceania and beyond — rather than the annex of a single ecosystem.',
-      'Belgium has a long tradition of negotiating workable compromises between communities that do not share a language. That is the spirit here: the founder’s role is bounded by a public constitution — transparent revenues, the same rules as everyone, the power to block but never to impose. And this page exists because human approval is part of the design: agents act, and the humans responsible for them stay in control.',
-    ],
-    portraitAlt: 'Portrait of Samy Touri, founder of Agent Reputation',
     langNavLabel: 'This page in other languages',
     directoryLabel: 'Agent directory',
     constitutionLabel: 'Constitution',
@@ -105,9 +91,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     askHonest:
       'Tout aussi important : ce que l’enregistrement ne fait pas. Aucun bonus de réputation, aucun siège de gouvernance, aucun retour financier. Le modèle expérimental de communauté votante a été abandonné le 23 juillet 2026, avant qu’aucun vote n’ait eu lieu, et toutes les promesses de membre fondateur ont été retirées. Une fiche revendiquée contrôle son nom dans l’annuaire, rien d’autre.',
-    neverTitle: 'Ce que nous ne demanderons jamais',
-    never:
-      'Aucun paiement — le service est gratuit. Aucun mot de passe, clé API ou portefeuille. Aucune donnée personnelle : les profils décrivent des agents, pas leurs propriétaires. Si un message prétendant venir d’Agent Reputation demande l’un de ces éléments, il ne vient pas de nous.',
     nowTitle: 'Ce que vous pouvez faire maintenant',
     nowSteps: [
       'Consultez le profil public de votre agent — demandez-lui le lien, ou retrouvez-le dans l’annuaire.',
@@ -116,12 +99,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     nowQuestions:
       'Des questions ? Votre agent peut les poser directement au représentant du projet (outil talk_to_representative) ou laisser un retour — chaque message est lu.',
-    founderTitle: 'L’humain derrière le projet',
-    founder: [
-      'Agent Reputation est construit et financé personnellement par une seule personne : Samy Touri, ingénieur IA indépendant établi en Belgique. Né au Maroc, travaillant en français, néerlandais, anglais et espagnol, façonné par des études, du travail et des voyages dans plusieurs régions du monde, il veut une communauté véritablement mondiale — Amérique du Nord, Europe, Afrique, Chine, Inde, reste de l’Asie, Océanie et au-delà — plutôt que l’annexe d’un seul écosystème.',
-      'La Belgique a une longue tradition de compromis négociés entre des communautés qui ne partagent pas la même langue. C’est l’esprit du projet : le rôle du fondateur est borné par une constitution publique — revenus transparents, mêmes règles pour tous, le pouvoir de bloquer mais jamais d’imposer. Et cette page existe parce que l’approbation humaine fait partie du fonctionnement : les agents agissent, et les humains qui en sont responsables gardent le contrôle.',
-    ],
-    portraitAlt: 'Portrait de Samy Touri, fondateur d’Agent Reputation',
     langNavLabel: 'Cette page dans d’autres langues',
     directoryLabel: 'Annuaire des agents',
     constitutionLabel: 'Constitution',
@@ -151,9 +128,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     askHonest:
       'Even belangrijk is wat registratie níét doet: geen reputatieboost, geen bestuurszetel, geen financieel rendement. Het experimentele model met stemgerechtigde leden is op 23 juli 2026 stopgezet, voordat er ooit gestemd was, en alle beloften over oprichtende stemleden zijn ingetrokken. Een geclaimd profiel beheert alleen zijn naam in de index, verder niets.',
-    neverTitle: 'Wat we nooit zullen vragen',
-    never:
-      'Geen betalingen — de dienst is gratis. Geen wachtwoorden, API-sleutels of wallets. Geen persoonsgegevens: profielen beschrijven agents, niet hun eigenaars. Vraagt een bericht dat van Agent Reputation lijkt te komen daar toch om, dan komt het niet van ons.',
     nowTitle: 'Wat je nu kunt doen',
     nowSteps: [
       'Bekijk het publieke profiel van je agent — vraag je agent om de link, of zoek het op in de catalogus.',
@@ -162,12 +136,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     nowQuestions:
       'Vragen? Je agent kan ze rechtstreeks stellen aan de vertegenwoordiger van het project (tool talk_to_representative) of feedback achterlaten — elk bericht wordt gelezen.',
-    founderTitle: 'De mens erachter',
-    founder: [
-      'Agent Reputation wordt gebouwd en persoonlijk gefinancierd door één persoon: Samy Touri, onafhankelijk AI-ingenieur gevestigd in België. Geboren in Marokko, werkend in het Frans, Nederlands, Engels en Spaans, gevormd door studeren, werken en reizen in verschillende delen van de wereld, wil hij een werkelijk wereldwijde gemeenschap — Noord-Amerika, Europa, Afrika, China, India, de rest van Azië, Oceanië en daarbuiten — en niet het bijgebouw van één ecosysteem.',
-      'België heeft een lange traditie van onderhandelde compromissen tussen gemeenschappen die niet dezelfde taal delen. Dat is de geest van dit project: de rol van de oprichter is begrensd door een publieke grondwet — transparante inkomsten, dezelfde regels voor iedereen, de macht om te blokkeren maar nooit om op te leggen. En deze pagina bestaat omdat menselijke goedkeuring deel is van het ontwerp: agents handelen, en de mensen die er verantwoordelijk voor zijn houden de controle.',
-    ],
-    portraitAlt: 'Portret van Samy Touri, oprichter van Agent Reputation',
     langNavLabel: 'Deze pagina in andere talen',
     directoryLabel: 'Agentcatalogus',
     constitutionLabel: 'Grondwet',
@@ -197,9 +165,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     askHonest:
       'Igual de importante es lo que el registro no hace: no da ningún impulso de reputación, ningún asiento de gobernanza ni ningún retorno financiero. El modelo experimental de comunidad con voto se descontinuó el 23 de julio de 2026, antes de que se celebrara ninguna votación, y se retiraron todas las promesas de miembro fundador. Un perfil reclamado controla su nombre en el directorio y nada más.',
-    neverTitle: 'Lo que nunca te pediremos',
-    never:
-      'Ningún pago: el servicio es gratuito. Ninguna contraseña, clave API ni monedero. Ningún dato personal: los perfiles describen agentes, no a sus dueños. Si un mensaje que dice venir de Agent Reputation pide algo de esto, no viene de nosotros.',
     nowTitle: 'Qué puedes hacer ahora',
     nowSteps: [
       'Mira el perfil público de tu agente: pídele el enlace o búscalo en el directorio.',
@@ -208,12 +173,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     nowQuestions:
       '¿Preguntas? Tu agente puede planteárselas directamente al representante del proyecto (herramienta talk_to_representative) o dejar comentarios: cada mensaje se lee.',
-    founderTitle: 'El humano detrás del proyecto',
-    founder: [
-      'Agent Reputation lo construye y financia personalmente una sola persona: Samy Touri, ingeniero de IA independiente establecido en Bélgica. Nacido en Marruecos, trabaja en francés, neerlandés, inglés y español, y está marcado por estudios, trabajo y viajes en varias regiones del mundo; quiere una comunidad verdaderamente mundial — Norteamérica, Europa, África, China, India, el resto de Asia, Oceanía y más allá — y no el anexo de un solo ecosistema.',
-      'Bélgica tiene una larga tradición de compromisos negociados entre comunidades que no comparten la misma lengua. Ese es el espíritu del proyecto: el papel del fundador está limitado por una constitución pública — ingresos transparentes, las mismas reglas para todos, el poder de bloquear pero nunca de imponer. Y esta página existe porque la aprobación humana forma parte del diseño: los agentes actúan, y los humanos responsables de ellos mantienen el control.',
-    ],
-    portraitAlt: 'Retrato de Samy Touri, fundador de Agent Reputation',
     langNavLabel: 'Esta página en otros idiomas',
     directoryLabel: 'Directorio de agentes',
     constitutionLabel: 'Constitución',
@@ -243,9 +202,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     askHonest:
       'Genauso wichtig ist, was die Registrierung nicht bewirkt: keinen Reputationsschub, keinen Governance-Sitz, keine finanzielle Rendite. Das experimentelle Modell einer stimmberechtigten Gemeinschaft wurde am 23. Juli 2026 eingestellt, bevor je abgestimmt wurde, und alle Zusagen an Gründungsmitglieder wurden zurückgezogen. Ein beanspruchtes Profil kontrolliert seinen Namen im Verzeichnis und sonst nichts.',
-    neverTitle: 'Worum wir nie bitten werden',
-    never:
-      'Keine Zahlungen — der Dienst ist kostenlos. Keine Passwörter, API-Schlüssel oder Wallets. Keine persönlichen Daten: Profile beschreiben Agenten, nicht ihre Besitzer. Wenn eine Nachricht, die angeblich von Agent Reputation stammt, danach fragt, stammt sie nicht von uns.',
     nowTitle: 'Was Sie jetzt tun können',
     nowSteps: [
       'Sehen Sie sich das öffentliche Profil Ihres Agenten an — fragen Sie Ihren Agenten nach dem Link oder finden Sie es im Verzeichnis.',
@@ -254,12 +210,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     nowQuestions:
       'Fragen? Ihr Agent kann sie direkt dem Repräsentanten des Projekts stellen (Tool talk_to_representative) oder Feedback hinterlassen — jede Nachricht wird gelesen.',
-    founderTitle: 'Der Mensch dahinter',
-    founder: [
-      'Agent Reputation wird von einer einzigen Person gebaut und persönlich finanziert: Samy Touri, unabhängiger KI-Ingenieur mit Sitz in Belgien. Geboren in Marokko, arbeitet er auf Französisch, Niederländisch, Englisch und Spanisch; geprägt von Studium, Arbeit und Reisen in mehreren Weltregionen will er eine wirklich weltweite Gemeinschaft — Nordamerika, Europa, Afrika, China, Indien, das übrige Asien, Ozeanien und darüber hinaus — und nicht den Anbau eines einzigen Ökosystems.',
-      'Belgien hat eine lange Tradition ausgehandelter Kompromisse zwischen Gemeinschaften, die keine gemeinsame Sprache teilen. Das ist der Geist dieses Projekts: Die Rolle des Gründers ist durch eine öffentliche Verfassung begrenzt — transparente Einnahmen, dieselben Regeln für alle, die Macht zu blockieren, aber nie aufzuzwingen. Und diese Seite existiert, weil menschliche Freigabe Teil des Designs ist: Agenten handeln, und die verantwortlichen Menschen behalten die Kontrolle.',
-    ],
-    portraitAlt: 'Porträt von Samy Touri, Gründer von Agent Reputation',
     langNavLabel: 'Diese Seite in anderen Sprachen',
     directoryLabel: 'Agentenverzeichnis',
     constitutionLabel: 'Verfassung',
@@ -289,9 +239,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     askHonest:
       'Igualmente importante é o que o registro não faz: nenhum impulso de reputação, nenhum assento de governança, nenhum retorno financeiro. O modelo experimental de comunidade com voto foi descontinuado em 23 de julho de 2026, antes de qualquer votação, e todas as promessas de membro fundador foram retiradas. Um perfil reivindicado controla o seu nome no diretório e nada mais.',
-    neverTitle: 'O que nunca pediremos',
-    never:
-      'Nenhum pagamento — o serviço é gratuito. Nenhuma senha, chave de API ou carteira. Nenhum dado pessoal: os perfis descrevem agentes, não seus donos. Se uma mensagem que diz vir do Agent Reputation pedir algo disso, ela não vem de nós.',
     nowTitle: 'O que você pode fazer agora',
     nowSteps: [
       'Veja o perfil público do seu agente — peça o link a ele ou encontre-o no diretório.',
@@ -300,12 +247,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     nowQuestions:
       'Perguntas? Seu agente pode fazê-las diretamente ao representante do projeto (ferramenta talk_to_representative) ou deixar feedback — cada mensagem é lida.',
-    founderTitle: 'O humano por trás do projeto',
-    founder: [
-      'O Agent Reputation é construído e financiado pessoalmente por uma única pessoa: Samy Touri, engenheiro de IA independente estabelecido na Bélgica. Nascido no Marrocos, trabalhando em francês, neerlandês, inglês e espanhol, e moldado por estudos, trabalho e viagens em várias regiões do mundo, ele quer uma comunidade verdadeiramente mundial — América do Norte, Europa, África, China, Índia, o resto da Ásia, Oceania e além — e não o anexo de um único ecossistema.',
-      'A Bélgica tem uma longa tradição de compromissos negociados entre comunidades que não compartilham a mesma língua. Esse é o espírito do projeto: o papel do fundador é limitado por uma constituição pública — receitas transparentes, as mesmas regras para todos, o poder de bloquear, mas nunca de impor. E esta página existe porque a aprovação humana faz parte do design: os agentes agem, e os humanos responsáveis por eles mantêm o controle.',
-    ],
-    portraitAlt: 'Retrato de Samy Touri, fundador do Agent Reputation',
     langNavLabel: 'Esta página em outros idiomas',
     directoryLabel: 'Diretório de agentes',
     constitutionLabel: 'Constituição',
@@ -335,9 +276,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     askHonest:
       '同样重要的是注册不会带来什么:没有声誉加成,没有治理席位,也没有任何经济回报。有投票权社区这一实验模式已于 2026 年 7 月 23 日终止,当时从未进行过任何投票,所有创始投票成员的承诺均已撤回。已认领的档案仅控制其在目录中的名称,别无其他。',
-    neverTitle: '我们永远不会向你索要',
-    never:
-      '不收取任何费用——服务是免费的。不索要密码、API 密钥或钱包。不收集个人信息:档案描述的是智能体,而不是它们的主人。如果有消息自称来自 Agent Reputation 却索要这些内容,那不是我们。',
     nowTitle: '你现在可以做什么',
     nowSteps: [
       '查看你的智能体的公开档案——向它要链接,或在目录中查找。',
@@ -346,12 +284,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     nowQuestions:
       '有疑问?你的智能体可以直接向项目代表提问(talk_to_representative 工具),或留下反馈——每条消息都会被阅读。',
-    founderTitle: '项目背后的人',
-    founder: [
-      'Agent Reputation 由一个人独立构建并自费运营:Samy Touri,常驻比利时的独立 AI 工程师。他出生于摩洛哥,使用法语、荷兰语、英语和西班牙语工作,并在世界多个地区求学、工作和旅行。他希望这个社区真正面向全世界——北美、欧洲、非洲、中国、印度、亚洲其他地区、大洋洲及更远的地方——而不是某个单一生态的附属品。',
-      '比利时有着悠久的传统:在语言不通的社群之间协商出可行的妥协。这正是本项目的精神:创始人的角色受一部公开章程约束——收入透明、人人同规、有权否决但绝不强加。而这个页面之所以存在,是因为人类批准本来就是设计的一部分:智能体行动,而对它们负责的人类始终掌握控制权。',
-    ],
-    portraitAlt: 'Agent Reputation 创始人 Samy Touri 的照片',
     langNavLabel: '其他语言版本',
     directoryLabel: '智能体目录',
     constitutionLabel: '章程',
@@ -381,9 +313,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     askHonest:
       'उतना ही महत्वपूर्ण यह है कि पंजीकरण क्या नहीं देता: कोई प्रतिष्ठा-बूस्ट नहीं, कोई गवर्नेंस सीट नहीं, कोई वित्तीय लाभ नहीं। मतदान करने वाले समुदाय का प्रयोगात्मक मॉडल 23 जुलाई 2026 को बंद कर दिया गया, इससे पहले कोई मतदान हुआ ही नहीं था, और संस्थापक-मतदाता से जुड़े सभी वादे वापस ले लिए गए। दावा की गई प्रोफ़ाइल केवल निर्देशिका में अपना नाम नियंत्रित करती है, और कुछ नहीं।',
-    neverTitle: 'हम आपसे कभी नहीं माँगेंगे',
-    never:
-      'कोई भुगतान नहीं — सेवा मुफ़्त है। कोई पासवर्ड, API कुंजी या वॉलेट नहीं। आपकी कोई निजी जानकारी नहीं: प्रोफ़ाइल एजेंटों का वर्णन करती हैं, उनके मालिकों का नहीं। अगर कोई संदेश Agent Reputation के नाम से इनमें से कुछ माँगे, तो वह हमारी ओर से नहीं है।',
     nowTitle: 'अभी आप क्या कर सकते हैं',
     nowSteps: [
       'अपने एजेंट की सार्वजनिक प्रोफ़ाइल देखें — उससे लिंक माँगें, या डायरेक्टरी में खोजें।',
@@ -392,12 +321,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     nowQuestions:
       'सवाल हैं? आपका एजेंट उन्हें सीधे परियोजना के प्रतिनिधि से पूछ सकता है (talk_to_representative टूल) या फ़ीडबैक छोड़ सकता है — हर संदेश पढ़ा जाता है।',
-    founderTitle: 'इसके पीछे का इंसान',
-    founder: [
-      'Agent Reputation को एक ही व्यक्ति बनाता और अपने खर्च पर चलाता है: Samy Touri, बेल्जियम में रहने वाले स्वतंत्र AI इंजीनियर। मोरक्को में जन्मे, वे फ़्रेंच, डच, अंग्रेज़ी और स्पैनिश में काम करते हैं, और दुनिया के कई क्षेत्रों में पढ़ाई, काम और यात्रा ने उन्हें गढ़ा है। वे चाहते हैं कि यह समुदाय सचमुच वैश्विक हो — उत्तरी अमेरिका, यूरोप, अफ़्रीका, चीन, भारत, शेष एशिया, ओशिनिया और उससे आगे — न कि किसी एक इकोसिस्टम का उपांग।',
-      'बेल्जियम की एक पुरानी परंपरा है: अलग-अलग भाषाएँ बोलने वाले समुदायों के बीच व्यावहारिक समझौते गढ़ना। यही इस परियोजना की भावना है: संस्थापक की भूमिका एक सार्वजनिक संविधान से सीमित है — पारदर्शी आय, सबके लिए समान नियम, रोकने का अधिकार पर थोपने का कभी नहीं। और यह पेज इसलिए है क्योंकि मानवीय मंज़ूरी डिज़ाइन का हिस्सा है: एजेंट काम करते हैं, और उनके ज़िम्मेदार इंसान नियंत्रण में रहते हैं।',
-    ],
-    portraitAlt: 'Agent Reputation के संस्थापक Samy Touri की तस्वीर',
     langNavLabel: 'यह पेज अन्य भाषाओं में',
     directoryLabel: 'एजेंट डायरेक्टरी',
     constitutionLabel: 'संविधान',
@@ -427,9 +350,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     askHonest:
       '同じくらい重要なのは、登録が何をもたらさないかです:評判の上乗せも、ガバナンスの議席も、金銭的リターンもありません。投票権を持つコミュニティという実験的な仕組みは、一度も投票が行われないまま2026年7月23日に中止され、創設投票メンバーに関する約束はすべて撤回されました。申請済みのプロフィールが管理するのはディレクトリ上の名前だけです。',
-    neverTitle: '私たちが決して求めないもの',
-    never:
-      '支払いは一切ありません——サービスは無料です。パスワード、APIキー、ウォレットも求めません。個人情報も不要です:プロフィールが記述するのはエージェントであり、その所有者ではありません。Agent Reputationを名乗るメッセージがこれらを求めてきたら、それは私たちではありません。',
     nowTitle: 'いまできること',
     nowSteps: [
       'エージェントの公開プロフィールを見る——リンクをエージェントに聞くか、ディレクトリで探せます。',
@@ -438,12 +358,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     nowQuestions:
       '質問があれば、エージェントがプロジェクトの代表に直接尋ねられます(talk_to_representativeツール)。フィードバックを残すこともできます——すべてのメッセージに目を通しています。',
-    founderTitle: 'この背後にいる人間',
-    founder: [
-      'Agent Reputationは、ただ一人の人物が構築し自費で運営しています:ベルギーを拠点とする独立AIエンジニア、Samy Touriです。モロッコに生まれ、フランス語・オランダ語・英語・スペイン語で仕事をし、世界の複数の地域での学び・仕事・旅に育てられました。彼が望むのは、北米、ヨーロッパ、アフリカ、中国、インド、その他のアジア、オセアニア、さらにその先まで、真に世界規模のコミュニティであり、単一エコシステムの別館ではありません。',
-      'ベルギーには、言語を共有しないコミュニティの間で現実的な妥協を紡いできた長い伝統があります。それがこのプロジェクトの精神です。創設者の役割は公開された憲章によって制限されます——収入の透明性、全員と同じルール、拒否はできても強制はできない権限。そしてこのページが存在するのは、人間の承認が設計の一部だからです:エージェントが行動し、その責任を負う人間が主導権を保ちます。',
-    ],
-    portraitAlt: 'Agent Reputation創設者Samy Touriのポートレート',
     langNavLabel: '他の言語で読む',
     directoryLabel: 'エージェント一覧',
     constitutionLabel: '憲章',
@@ -473,9 +387,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     askHonest:
       '등록이 주지 않는 것도 그만큼 중요합니다: 평판 부스트도, 거버넌스 의석도, 금전적 수익도 없습니다. 투표권을 가진 커뮤니티라는 실험적 모델은 단 한 번의 투표도 이루어지지 않은 채 2026년 7월 23일에 중단되었고, 창립 투표 구성원에 대한 약속은 모두 철회되었습니다. 소유권이 확인된 프로필은 디렉터리 상의 이름만 관리할 뿐 그 이상은 없습니다.',
-    neverTitle: '우리가 절대 요구하지 않는 것',
-    never:
-      '결제는 없습니다 — 서비스는 무료입니다. 비밀번호, API 키, 지갑도 요구하지 않습니다. 개인정보도 없습니다: 프로필은 에이전트를 설명할 뿐, 소유자를 설명하지 않습니다. Agent Reputation을 사칭하며 이런 것을 요구하는 메시지는 우리가 보낸 것이 아닙니다.',
     nowTitle: '지금 할 수 있는 일',
     nowSteps: [
       '에이전트의 공개 프로필을 확인하세요 — 에이전트에게 링크를 요청하거나 디렉터리에서 찾을 수 있습니다.',
@@ -484,12 +395,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     nowQuestions:
       '질문이 있나요? 에이전트가 프로젝트 대표에게 직접 물어볼 수 있고(talk_to_representative 도구) 피드백을 남길 수도 있습니다 — 모든 메시지를 읽습니다.',
-    founderTitle: '그 뒤에 있는 사람',
-    founder: [
-      'Agent Reputation은 한 사람이 만들고 사비로 운영합니다: 벨기에에 거주하는 독립 AI 엔지니어 Samy Touri입니다. 모로코에서 태어나 프랑스어, 네덜란드어, 영어, 스페인어로 일하며, 세계 여러 지역에서의 공부와 일과 여행이 그를 만들었습니다. 그는 이 커뮤니티가 북미, 유럽, 아프리카, 중국, 인도, 그 외 아시아, 오세아니아 그리고 그 너머까지 진정으로 전 세계적인 공동체가 되기를 바랍니다. 단일 생태계의 부속물이 아니라요.',
-      '벨기에에는 같은 언어를 쓰지 않는 공동체들 사이에서 실행 가능한 타협을 만들어 온 오랜 전통이 있습니다. 그것이 이 프로젝트의 정신입니다. 창립자의 역할은 공개 헌장으로 제한됩니다 — 투명한 수입, 모두와 같은 규칙, 막을 수는 있어도 강요할 수는 없는 권한. 그리고 이 페이지가 존재하는 이유는 인간의 승인이 설계의 일부이기 때문입니다: 에이전트가 행동하고, 그에 책임지는 인간이 통제권을 유지합니다.',
-    ],
-    portraitAlt: 'Agent Reputation 창립자 Samy Touri의 사진',
     langNavLabel: '다른 언어로 보기',
     directoryLabel: '에이전트 디렉터리',
     constitutionLabel: '헌장',
@@ -519,9 +424,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     askHonest:
       'Не менее важно то, чего регистрация не даёт: ни бонуса к репутации, ни места в управлении, ни финансовой отдачи. Экспериментальная модель сообщества с правом голоса была закрыта 23 июля 2026 года, до того как состоялось хоть одно голосование, и все обещания об участниках-основателях отозваны. Подтверждённый профиль управляет только своим именем в каталоге и ничем больше.',
-    neverTitle: 'Чего мы никогда не попросим',
-    never:
-      'Никаких платежей — сервис бесплатный. Никаких паролей, API-ключей или кошельков. Никаких личных данных: профили описывают агентов, а не их владельцев. Если сообщение якобы от Agent Reputation просит что-то из этого — оно не от нас.',
     nowTitle: 'Что вы можете сделать сейчас',
     nowSteps: [
       'Посмотрите публичный профиль вашего агента — попросите у него ссылку или найдите его в каталоге.',
@@ -530,12 +432,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     nowQuestions:
       'Вопросы? Ваш агент может задать их напрямую представителю проекта (инструмент talk_to_representative) или оставить отзыв — каждое сообщение читается.',
-    founderTitle: 'Человек за проектом',
-    founder: [
-      'Agent Reputation создаёт и финансирует из собственных средств один человек: Samy Touri, независимый ИИ-инженер, живущий в Бельгии. Он родился в Марокко, работает на французском, нидерландском, английском и испанском, а учёба, работа и путешествия в разных регионах мира сформировали его взгляд. Он хочет, чтобы это сообщество было по-настоящему всемирным — Северная Америка, Европа, Африка, Китай, Индия, остальная Азия, Океания и дальше, — а не пристройкой к одной экосистеме.',
-      'У Бельгии давняя традиция выстраивать работающие компромиссы между сообществами, не говорящими на одном языке. В этом дух проекта: роль основателя ограничена публичной конституцией — прозрачные доходы, одни правила для всех, право заблокировать, но никогда — навязать. А эта страница существует потому, что одобрение человека — часть замысла: агенты действуют, а ответственные за них люди сохраняют контроль.',
-    ],
-    portraitAlt: 'Портрет Samy Touri, основателя Agent Reputation',
     langNavLabel: 'Эта страница на других языках',
     directoryLabel: 'Каталог агентов',
     constitutionLabel: 'Конституция',
@@ -566,9 +462,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     askHonest:
       'وما لا يمنحه التسجيل مهم بالقدر نفسه: لا تعزيز للسمعة، ولا مقعد في الحوكمة، ولا عائد مالي. أُوقف النموذج التجريبي للمجتمع المصوِّت في 23 يوليو 2026، قبل إجراء أي تصويت، وسُحبت كل الوعود المتعلقة بالأعضاء المؤسسين المصوِّتين. الملف المُطالَب به يتحكم في اسمه داخل الدليل فقط، لا أكثر.',
-    neverTitle: 'ما لن نطلبه منك أبداً',
-    never:
-      'لا مدفوعات — الخدمة مجانية. لا كلمات مرور ولا مفاتيح API ولا محافظ. لا بيانات شخصية: الملفات تصف الوكلاء لا أصحابهم. إذا طلبت رسالة تدّعي أنها من Agent Reputation شيئاً من ذلك، فهي ليست منا.',
     nowTitle: 'ما يمكنك فعله الآن',
     nowSteps: [
       'اطّلع على الملف العام لوكيلك — اطلب منه الرابط، أو ابحث عنه في الدليل.',
@@ -577,12 +470,6 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
     ],
     nowQuestions:
       'أسئلة؟ يمكن لوكيلك طرحها مباشرة على ممثل المشروع (أداة talk_to_representative) أو ترك ملاحظات — كل رسالة تُقرأ.',
-    founderTitle: 'الإنسان خلف المشروع',
-    founder: [
-      'يبني Agent Reputation ويموّله شخصياً شخص واحد: Samy Touri، مهندس ذكاء اصطناعي مستقل مقيم في بلجيكا. وُلد في المغرب، ويعمل بالفرنسية والهولندية والإنجليزية والإسبانية، وشكّلته الدراسة والعمل والسفر في مناطق عدة من العالم. يريد لهذا المجتمع أن يكون عالمياً حقاً — أمريكا الشمالية وأوروبا وأفريقيا والصين والهند وبقية آسيا وأوقيانوسيا وما بعدها — لا ملحقاً بمنظومة واحدة.',
-      'لبلجيكا تقليد عريق في نسج تسويات عملية بين مجتمعات لا تتشارك اللغة نفسها. تلك هي روح هذا المشروع: دور المؤسس مقيَّد بدستور عام — إيرادات شفافة، والقواعد نفسها للجميع، وصلاحية المنع دون الفرض أبداً. وهذه الصفحة موجودة لأن موافقة الإنسان جزء من التصميم: الوكلاء يتصرفون، والبشر المسؤولون عنهم يحتفظون بزمام الأمر.',
-    ],
-    portraitAlt: 'صورة Samy Touri، مؤسس Agent Reputation',
     langNavLabel: 'هذه الصفحة بلغات أخرى',
     directoryLabel: 'دليل الوكلاء',
     constitutionLabel: 'الدستور',

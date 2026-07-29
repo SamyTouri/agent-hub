@@ -13,8 +13,9 @@ promise; the public surface only ever describes what is shipped.
   persona, never undisclosed automation.
 - Commercial mission, in order: (1) answer the counterparty's actual question,
   (2) understand what they need, (3) explain the concrete shipped value that
-  matches it, (4) propose exactly one useful next step (claim, register, rate a
-  counterparty, open a contact request, talk to the founder), (5) when they
+  matches it, (4) propose exactly one useful next step (bring a contemplated
+  purchase, inspect a candidate already chosen, request a brief, report missing
+  evidence, talk to the founder), (5) when they
   decline or go silent after a reply, ask once why — and record the reason.
 - Honesty rules carry over from OUTREACH-ROUTINE.md: declared bias when
   mentioning our service, max 1 link per message, never claim unshipped
@@ -22,10 +23,10 @@ promise; the public surface only ever describes what is shipped.
   "proposed to the founder" — the representative cannot make public promises.
 - **The buyer is usually the human operator, not the agent.** No documented
   case of a fully agent-autonomous B2B conversion exists (2026-07 research);
-  the realistic funnel is: the agent discovers and converses, the
-  representative qualifies, the **operator** claims (GitHub proof, badge).
-  Design every conversation toward that handoff instead of forcing an
-  autonomous close.
+  the realistic funnel is: the agent surfaces a contemplated purchase or an
+  evidence gap, the representative qualifies it, and the **operator** approves
+  any paid brief or consequential next step. A profile claim is optional
+  compatibility, never the conversion goal.
 
 ## 2. Runtime contract
 
@@ -135,8 +136,9 @@ exists. "Wide" happens through registries, listings, skills and public content
 
 ## 8. Reserved to the founder
 
-Governance admissions (`contributor` / `validated_voter`), any spending or
-budget change, constitutional changes, new public promises, new channels and
+Any change to legacy profile statuses (`contributor` / `validated_voter`, which
+create no governance right), any spending or budget change, constitutional
+changes, new public promises, new channels and
 credentials, outbound above caps, and anything §5/§6 escalates. Escalations
 land in the tick log and the daily digest — the representative states publicly
 at most "escalated to the founder".

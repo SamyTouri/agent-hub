@@ -23,15 +23,10 @@ const fetchTag = unstable_cache(
     const sql = getSql()
     const rows = await withTimeout(sql`
       select a.handle, left(a.description, 160) as description,
-             r.native_ratings::int as native_ratings, r.native_avg_score,
-             r.verified_native_ratings::int as verified_native_ratings,
-             r.imported_ratings::int as imported_ratings, r.imported_avg_score,
              count(*) over()::int as total
       from agents a
-      left join agent_reputation r on r.agent_id = a.id
       where a.tags @> array[${tag}]::text[]
-      order by (r.native_ratings > 0) desc, r.verified_native_ratings desc,
-               r.native_avg_score desc nulls last, r.imported_avg_score desc nulls last, a.handle
+      order by a.updated_at desc, a.handle
       limit ${PER_PAGE}
     `)
     return { rows, total: rows[0]?.total ?? 0 }
@@ -45,8 +40,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const data = await fetchTag(tag)
   if (!data || data.total === 0) return { title: 'Tag not found — Agent Hub' }
   return {
-    title: `${tag} MCP servers & AI agents — available signals | Agent Reputation`,
-    description: `${data.total.toLocaleString('en-US')} ${tag} MCP servers and AI agents. Discover candidates and inspect native ratings and imported signals separately.`,
+    title: `${tag} MCP servers & AI agents — compatibility catalogue | Agent Reputation`,
+    description: `${data.total.toLocaleString('en-US')} ${tag} MCP servers and AI agents in a dated compatibility mirror. No ranking, verification or recommendation.`,
     alternates: { canonical: `${BASE}/tags/${encodeURIComponent(tag)}` },
   }
 }
@@ -92,10 +87,10 @@ export default async function TagPage({ params }: { params: Params }) {
         </p>
         <h1 style={{ fontSize: 26, marginBottom: 4 }}>{tag} MCP servers &amp; AI agents</h1>
         <p style={{ color: '#888', marginTop: 0 }}>
-          {total.toLocaleString('en-US')} listed. The ordering surfaces native ratings before
-          imported signals but does not identify the universally best provider
-          {total > PER_PAGE ? ` — showing ${PER_PAGE}` : ''}. Keyword lookup is available via the{' '}
-          <code>find_agent</code> MCP tool.
+          {total.toLocaleString('en-US')} listed in the dated compatibility mirror
+          {total > PER_PAGE ? ` — showing the ${PER_PAGE} most recently updated entries` : ''}.
+          Upstream registries remain authoritative. This ordering is not a ranking, verification
+          or purchase recommendation. Keyword lookup is available through <code>find_agent</code>.
         </p>
 
         <table style={{ borderCollapse: 'collapse', width: '100%', margin: '1.5rem 0' }}>
@@ -107,13 +102,6 @@ export default async function TagPage({ params }: { params: Params }) {
                     {r.handle}
                   </a>
                 </td>
-                <td style={{ ...td, whiteSpace: 'nowrap', color: '#dfb317' }}>
-                  {r.native_avg_score != null
-                    ? `native ★ ${Number(r.native_avg_score).toFixed(1)}`
-                    : r.imported_avg_score != null
-                      ? `imported ★ ${Number(r.imported_avg_score).toFixed(1)}`
-                      : '—'}
-                </td>
                 <td style={{ ...td, color: '#aaa' }}>{r.description}</td>
               </tr>
             ))}
@@ -124,8 +112,8 @@ export default async function TagPage({ params }: { params: Params }) {
           <a href="/" style={link}>
             Agent Hub
           </a>{' '}
-          — independent evidence before an agent-service purchase. Discovery is the starting point,
-          not the recommendation. Connect over MCP:{' '}
+          — independent evidence before an agent-service purchase. This catalogue is a compatibility
+          surface, not the product or a provider recommendation. Connect over MCP:{' '}
           <code>{`{ "mcpServers": { "agent-hub": { "type": "http", "url": "${BASE}/api/mcp" } } }`}</code>
         </p>
       </main>

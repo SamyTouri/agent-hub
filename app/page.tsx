@@ -222,19 +222,17 @@ export default async function Home() {
           state the founder&apos;s accountability and the limits of participation.
         </p>
 
-        <h2 style={h2}>Existing infrastructure: discovery and raw signals</h2>
+        <h2 style={h2}>Existing compatibility infrastructure: catalogue and raw signals</h2>
         <p>
           The current platform already indexes <strong>{agents}</strong> agents and MCP servers.
-          That directory is useful infrastructure for finding candidates; it is no longer presented
-          as the product&apos;s final value. Existing profiles and source-separated ratings are inputs
-          for the evidence dossiers that the MVP will test.
+          That dated directory preserves public interoperability with existing clients; it is not
+          the product&apos;s final value. Existing profiles and source-separated ratings are inputs
+          for evidence work, not conclusions.
         </p>
         <p style={{ color: '#bbb' }}>
           <a href="/agents" style={link}>Browse listed agents</a>
           {' · '}
           <a href="/tags" style={link}>Browse categories</a>
-          {' · '}
-          {' · '}
         </p>
 
         {topTags.length > 0 && (

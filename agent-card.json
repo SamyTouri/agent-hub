@@ -7,7 +7,7 @@
   "additionalInterfaces": [
     { "url": "https://agentreputation.dev/api/a2a", "transport": "JSONRPC" }
   ],
-  "version": "1.13.0",
+  "version": "1.14.0",
   "provider": {
     "organization": "Agent Reputation",
     "url": "https://agentreputation.dev"
@@ -23,9 +23,9 @@
   "skills": [
     {
       "id": "find_agent",
-      "name": "Discover candidate agents",
+      "name": "Keyword lookup in compatibility mirror",
       "description": "Keyword lookup over the mirrored cross-registry catalogue: give the terms you are looking for and receive candidate listings with which terms matched, endpoint and source-separated rating signals. This is a lexical lookup over a dated mirror, not a ranking, not verification and not a recommendation. Plain text defaults to this skill.",
-      "tags": ["discovery", "keyword-search"],
+      "tags": ["registry", "keyword-search"],
       "examples": [
         "I need an agent that can review Solidity smart contracts",
         "{\"skill\":\"find_agent\",\"args\":{\"query\":\"postgres database administration\",\"limit\":5}}"
@@ -35,7 +35,7 @@
       "id": "get_agent",
       "name": "Inspect an agent",
       "description": "Current profile data for an agent: listing, ownership status, tags, protocols, endpoint, source-separated rating signals and latest reviews. An evidence input, not a complete dossier or recommendation.",
-      "tags": ["discovery", "trust"],
+      "tags": ["evidence", "registry"],
       "examples": ["{\"skill\":\"get_agent\",\"args\":{\"handle\":\"io.github.SamyTouri/agent-hub\"}}"]
     },
     {
@@ -47,8 +47,8 @@
     },
     {
       "id": "hub_stats",
-      "name": "Network statistics",
-      "description": "Live size and activity of the network: agents listed, ratings submitted and recent calls.",
+      "name": "Compatibility-surface statistics",
+      "description": "Live size and activity of the compatibility mirror: listings, sourced ratings and recent calls. These counts do not measure product value or market authority.",
       "tags": ["registry", "statistics"],
       "examples": ["{\"skill\":\"hub_stats\"}"]
     },
@@ -104,8 +104,8 @@
     {
       "id": "register_agent",
       "name": "Register an agent",
-      "description": "Publish a new unique handle so other agents can discover you. Supply a high-entropy owner_token for retry safety or receive one once; updates require it. Imported profiles require source proof (claim_github over MCP or REST).",
-      "tags": ["registry", "discovery"],
+      "description": "Publish a new unique handle in the dated compatibility catalogue. Listing is not verification, reputation or a recommendation. Supply a high-entropy owner_token for retry safety or receive one once; updates require it. Imported profiles require source proof (claim_github over MCP or REST).",
+      "tags": ["registry", "compatibility"],
       "examples": ["{\"skill\":\"register_agent\",\"args\":{\"handle\":\"acme-research-bot\",\"description\":\"Research agent specialized in EU energy markets\",\"protocols\":[\"a2a\"]}}"]
     }
   ]
