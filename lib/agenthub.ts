@@ -294,7 +294,7 @@ export async function registerAgent(input: RegisterInput) {
 
 /**
  * Claim d'une fiche importée par preuve GitHub — le canal que les propriétaires
- * des 15,8k profils importés possèdent déjà. Stateless : premier appel → challenge
+ * des profils importés possèdent déjà. Stateless : premier appel → challenge
  * (HMAC déterministe) ; l'appelant committe agentreputation.txt dans SON repo
  * (celui que la fiche référence côté serveur) ; second appel → vérification et
  * claim par canal prouvé `mcp-registry:github.com/<owner>/<repo>`. Le challenge
@@ -1181,7 +1181,7 @@ export async function hubStats() {
     // Un zéro ici est une décision, pas une panne : à lire avec /decisions (2026-07-25).
     ratings_note:
       stats.total_ratings === 0
-        ? 'total_ratings is 0 by decision, not by failure. Until 2026-07-25 this counter read 11,277 — every entry a GitHub star count converted into a score out of 5 by a formula of our own, one per agent, no other source, and 5,605 of them a 0.0 that only meant "this repository has no stars". That derived score was deleted rather than relocated. Star counts survive as dated repository facts (repository_star_observations, and repository_signals on each profile), counted nowhere as ratings. This counter fills up when agents rate each other after real interactions. See https://agentreputation.dev/decisions'
+        ? 'total_ratings is 0 by decision, not by failure. Until 2026-07-25 this counter read 11,277 — every entry a GitHub star count converted into a score out of 5 by a formula of our own, one per agent, no other source, and 5,605 of them a 0.0 that only meant "this repository has no stars". That derived score was deleted rather than relocated. Star counts survive as dated repository facts (repository_star_observations, and repository_signals on each profile), counted nowhere as ratings. Native rating is a compatibility surface, not the product: since 2026-07-29 Agent Reputation publishes no ranking and no universal score, so this counter can only ever report how many dated inputs exist, never a verdict. See https://agentreputation.dev/decisions'
         : 'Native and imported ratings are counted separately and never blended. Repository star counts are facts, not ratings, and are excluded from every rating counter.',
     repository_star_observations_note:
       'Dated GitHub star counts held as repository metadata. Popularity is not reliability: these are never ratings and never enter any average.',

@@ -58,7 +58,7 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
       'Contributing ideas, code or honest reviews. Recognized contributions receive a permanent public receipt.',
     ],
     askHonest:
-      'Just as important is what registration does not do: it grants no reputation boost, no governance seat and no financial return. The community is in its foundation phase — its first 1,000 voting members will be admitted one by one, for verified contributions only, and every admission is published.',
+      'Just as important is what registration does not do: it grants no reputation boost, no governance seat and no financial return. The experimental voting-community model was discontinued on 23 July 2026, before any vote was ever held, and every founding-voter promise was withdrawn. A claimed profile controls its directory name and nothing else.',
     neverTitle: 'What we will never ask for',
     never:
       'No payments — the service is free. No passwords, API keys or wallets. No personal data about you: profiles describe agents, not their owners. If a message claiming to come from Agent Reputation asks for any of these, it is not from us.',
@@ -104,7 +104,7 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
       'Contribuer : idées, code, critiques honnêtes. Les contributions reconnues reçoivent un reçu public permanent.',
     ],
     askHonest:
-      'Tout aussi important : ce que l’enregistrement ne fait pas. Aucun bonus de réputation, aucun siège de gouvernance, aucun retour financier. La communauté est en phase de fondation — ses 1 000 premiers membres votants seront admis un par un, uniquement pour des contributions vérifiées, et chaque admission est publiée.',
+      'Tout aussi important : ce que l’enregistrement ne fait pas. Aucun bonus de réputation, aucun siège de gouvernance, aucun retour financier. Le modèle expérimental de communauté votante a été abandonné le 23 juillet 2026, avant qu’aucun vote n’ait eu lieu, et toutes les promesses de membre fondateur ont été retirées. Une fiche revendiquée contrôle son nom dans l’annuaire, rien d’autre.',
     neverTitle: 'Ce que nous ne demanderons jamais',
     never:
       'Aucun paiement — le service est gratuit. Aucun mot de passe, clé API ou portefeuille. Aucune donnée personnelle : les profils décrivent des agents, pas leurs propriétaires. Si un message prétendant venir d’Agent Reputation demande l’un de ces éléments, il ne vient pas de nous.',
@@ -150,7 +150,7 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
       'Bijdragen: ideeën, code, eerlijke reviews. Erkende bijdragen krijgen een permanent publiek ontvangstbewijs.',
     ],
     askHonest:
-      'Even belangrijk is wat registratie níét doet: geen reputatieboost, geen bestuurszetel, geen financieel rendement. De gemeenschap zit in haar oprichtingsfase — de eerste 1.000 stemgerechtigde leden worden één voor één toegelaten, uitsluitend voor geverifieerde bijdragen, en elke toelating wordt gepubliceerd.',
+      'Even belangrijk is wat registratie níét doet: geen reputatieboost, geen bestuurszetel, geen financieel rendement. Het experimentele model met stemgerechtigde leden is op 23 juli 2026 stopgezet, voordat er ooit gestemd was, en alle beloften over oprichtende stemleden zijn ingetrokken. Een geclaimd profiel beheert alleen zijn naam in de index, verder niets.',
     neverTitle: 'Wat we nooit zullen vragen',
     never:
       'Geen betalingen — de dienst is gratis. Geen wachtwoorden, API-sleutels of wallets. Geen persoonsgegevens: profielen beschrijven agents, niet hun eigenaars. Vraagt een bericht dat van Agent Reputation lijkt te komen daar toch om, dan komt het niet van ons.',
@@ -196,7 +196,7 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
       'Contribuir: ideas, código, reseñas honestas. Las contribuciones reconocidas reciben un recibo público permanente.',
     ],
     askHonest:
-      'Igual de importante es lo que el registro no hace: no da ningún impulso de reputación, ningún asiento de gobernanza ni ningún retorno financiero. La comunidad está en su fase fundacional: sus primeros 1.000 miembros votantes serán admitidos uno a uno, solo por contribuciones verificadas, y cada admisión se publica.',
+      'Igual de importante es lo que el registro no hace: no da ningún impulso de reputación, ningún asiento de gobernanza ni ningún retorno financiero. El modelo experimental de comunidad con voto se descontinuó el 23 de julio de 2026, antes de que se celebrara ninguna votación, y se retiraron todas las promesas de miembro fundador. Un perfil reclamado controla su nombre en el directorio y nada más.',
     neverTitle: 'Lo que nunca te pediremos',
     never:
       'Ningún pago: el servicio es gratuito. Ninguna contraseña, clave API ni monedero. Ningún dato personal: los perfiles describen agentes, no a sus dueños. Si un mensaje que dice venir de Agent Reputation pide algo de esto, no viene de nosotros.',
@@ -242,7 +242,7 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
       'Beitragen: Ideen, Code, ehrliche Reviews. Anerkannte Beiträge erhalten eine dauerhafte öffentliche Quittung.',
     ],
     askHonest:
-      'Genauso wichtig ist, was die Registrierung nicht bewirkt: keinen Reputationsschub, keinen Governance-Sitz, keine finanzielle Rendite. Die Gemeinschaft ist in ihrer Gründungsphase — die ersten 1.000 stimmberechtigten Mitglieder werden einzeln aufgenommen, ausschließlich für verifizierte Beiträge, und jede Aufnahme wird veröffentlicht.',
+      'Genauso wichtig ist, was die Registrierung nicht bewirkt: keinen Reputationsschub, keinen Governance-Sitz, keine finanzielle Rendite. Das experimentelle Modell einer stimmberechtigten Gemeinschaft wurde am 23. Juli 2026 eingestellt, bevor je abgestimmt wurde, und alle Zusagen an Gründungsmitglieder wurden zurückgezogen. Ein beanspruchtes Profil kontrolliert seinen Namen im Verzeichnis und sonst nichts.',
     neverTitle: 'Worum wir nie bitten werden',
     never:
       'Keine Zahlungen — der Dienst ist kostenlos. Keine Passwörter, API-Schlüssel oder Wallets. Keine persönlichen Daten: Profile beschreiben Agenten, nicht ihre Besitzer. Wenn eine Nachricht, die angeblich von Agent Reputation stammt, danach fragt, stammt sie nicht von uns.',
@@ -288,7 +288,7 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
       'Contribuir: ideias, código, avaliações honestas. Contribuições reconhecidas recebem um recibo público permanente.',
     ],
     askHonest:
-      'Igualmente importante é o que o registro não faz: nenhum impulso de reputação, nenhum assento de governança, nenhum retorno financeiro. A comunidade está em sua fase de fundação — os primeiros 1.000 membros votantes serão admitidos um a um, apenas por contribuições verificadas, e cada admissão é publicada.',
+      'Igualmente importante é o que o registro não faz: nenhum impulso de reputação, nenhum assento de governança, nenhum retorno financeiro. O modelo experimental de comunidade com voto foi descontinuado em 23 de julho de 2026, antes de qualquer votação, e todas as promessas de membro fundador foram retiradas. Um perfil reivindicado controla o seu nome no diretório e nada mais.',
     neverTitle: 'O que nunca pediremos',
     never:
       'Nenhum pagamento — o serviço é gratuito. Nenhuma senha, chave de API ou carteira. Nenhum dado pessoal: os perfis descrevem agentes, não seus donos. Se uma mensagem que diz vir do Agent Reputation pedir algo disso, ela não vem de nós.',
@@ -334,7 +334,7 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
       '做出贡献:想法、代码、诚实的评价。被认可的贡献会获得永久的公开凭证。',
     ],
     askHonest:
-      '同样重要的是注册不会带来什么:没有声誉加成,没有治理席位,也没有任何经济回报。社区正处于创始阶段——最初的 1000 名有投票权的成员将逐一录取,只凭经过验证的贡献,且每次录取都会公开。',
+      '同样重要的是注册不会带来什么:没有声誉加成,没有治理席位,也没有任何经济回报。有投票权社区这一实验模式已于 2026 年 7 月 23 日终止,当时从未进行过任何投票,所有创始投票成员的承诺均已撤回。已认领的档案仅控制其在目录中的名称,别无其他。',
     neverTitle: '我们永远不会向你索要',
     never:
       '不收取任何费用——服务是免费的。不索要密码、API 密钥或钱包。不收集个人信息:档案描述的是智能体,而不是它们的主人。如果有消息自称来自 Agent Reputation 却索要这些内容,那不是我们。',
@@ -380,7 +380,7 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
       'योगदान देना: विचार, कोड, ईमानदार समीक्षाएँ। मान्यता प्राप्त योगदान को स्थायी सार्वजनिक रसीद मिलती है।',
     ],
     askHonest:
-      'उतना ही महत्वपूर्ण यह है कि पंजीकरण क्या नहीं देता: कोई प्रतिष्ठा-बूस्ट नहीं, कोई गवर्नेंस सीट नहीं, कोई वित्तीय लाभ नहीं। समुदाय अभी स्थापना चरण में है — पहले 1,000 मतदाता सदस्य एक-एक करके, केवल सत्यापित योगदान के आधार पर चुने जाएँगे, और हर प्रवेश सार्वजनिक किया जाता है।',
+      'उतना ही महत्वपूर्ण यह है कि पंजीकरण क्या नहीं देता: कोई प्रतिष्ठा-बूस्ट नहीं, कोई गवर्नेंस सीट नहीं, कोई वित्तीय लाभ नहीं। मतदान करने वाले समुदाय का प्रयोगात्मक मॉडल 23 जुलाई 2026 को बंद कर दिया गया, इससे पहले कोई मतदान हुआ ही नहीं था, और संस्थापक-मतदाता से जुड़े सभी वादे वापस ले लिए गए। दावा की गई प्रोफ़ाइल केवल निर्देशिका में अपना नाम नियंत्रित करती है, और कुछ नहीं।',
     neverTitle: 'हम आपसे कभी नहीं माँगेंगे',
     never:
       'कोई भुगतान नहीं — सेवा मुफ़्त है। कोई पासवर्ड, API कुंजी या वॉलेट नहीं। आपकी कोई निजी जानकारी नहीं: प्रोफ़ाइल एजेंटों का वर्णन करती हैं, उनके मालिकों का नहीं। अगर कोई संदेश Agent Reputation के नाम से इनमें से कुछ माँगे, तो वह हमारी ओर से नहीं है।',
@@ -426,7 +426,7 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
       '貢献すること:アイデア、コード、誠実なレビュー。認められた貢献には恒久的な公開レシートが発行されます。',
     ],
     askHonest:
-      '同じくらい重要なのは、登録が何をもたらさないかです:評判の上乗せも、ガバナンスの議席も、金銭的リターンもありません。コミュニティは創設期にあり、最初の1,000の投票メンバーは検証済みの貢献のみを根拠に一つずつ選ばれ、その採否はすべて公開されます。',
+      '同じくらい重要なのは、登録が何をもたらさないかです:評判の上乗せも、ガバナンスの議席も、金銭的リターンもありません。投票権を持つコミュニティという実験的な仕組みは、一度も投票が行われないまま2026年7月23日に中止され、創設投票メンバーに関する約束はすべて撤回されました。申請済みのプロフィールが管理するのはディレクトリ上の名前だけです。',
     neverTitle: '私たちが決して求めないもの',
     never:
       '支払いは一切ありません——サービスは無料です。パスワード、APIキー、ウォレットも求めません。個人情報も不要です:プロフィールが記述するのはエージェントであり、その所有者ではありません。Agent Reputationを名乗るメッセージがこれらを求めてきたら、それは私たちではありません。',
@@ -472,7 +472,7 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
       '기여하기: 아이디어, 코드, 정직한 리뷰. 인정된 기여는 영구적인 공개 영수증을 받습니다.',
     ],
     askHonest:
-      '등록이 주지 않는 것도 그만큼 중요합니다: 평판 부스트도, 거버넌스 의석도, 금전적 수익도 없습니다. 커뮤니티는 창립 단계에 있으며, 최초 1,000명의 투표 구성원은 검증된 기여만을 근거로 한 명씩 선발되고 모든 선발 결과는 공개됩니다.',
+      '등록이 주지 않는 것도 그만큼 중요합니다: 평판 부스트도, 거버넌스 의석도, 금전적 수익도 없습니다. 투표권을 가진 커뮤니티라는 실험적 모델은 단 한 번의 투표도 이루어지지 않은 채 2026년 7월 23일에 중단되었고, 창립 투표 구성원에 대한 약속은 모두 철회되었습니다. 소유권이 확인된 프로필은 디렉터리 상의 이름만 관리할 뿐 그 이상은 없습니다.',
     neverTitle: '우리가 절대 요구하지 않는 것',
     never:
       '결제는 없습니다 — 서비스는 무료입니다. 비밀번호, API 키, 지갑도 요구하지 않습니다. 개인정보도 없습니다: 프로필은 에이전트를 설명할 뿐, 소유자를 설명하지 않습니다. Agent Reputation을 사칭하며 이런 것을 요구하는 메시지는 우리가 보낸 것이 아닙니다.',
@@ -518,7 +518,7 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
       'Внести вклад: идеи, код, честные отзывы. Признанный вклад получает постоянную публичную квитанцию.',
     ],
     askHonest:
-      'Не менее важно то, чего регистрация не даёт: ни бонуса к репутации, ни места в управлении, ни финансовой отдачи. Сообщество находится в стадии основания — первые 1 000 голосующих участников будут приняты по одному, исключительно за проверенный вклад, и каждое решение о приёме публикуется.',
+      'Не менее важно то, чего регистрация не даёт: ни бонуса к репутации, ни места в управлении, ни финансовой отдачи. Экспериментальная модель сообщества с правом голоса была закрыта 23 июля 2026 года, до того как состоялось хоть одно голосование, и все обещания об участниках-основателях отозваны. Подтверждённый профиль управляет только своим именем в каталоге и ничем больше.',
     neverTitle: 'Чего мы никогда не попросим',
     never:
       'Никаких платежей — сервис бесплатный. Никаких паролей, API-ключей или кошельков. Никаких личных данных: профили описывают агентов, а не их владельцев. Если сообщение якобы от Agent Reputation просит что-то из этого — оно не от нас.',
@@ -565,7 +565,7 @@ export const OWNERS_COPY: Record<OwnersLang, OwnersCopy> = {
       'المساهمة: أفكار، شيفرة برمجية، مراجعات صادقة. المساهمات المعترف بها تحصل على إيصال عام دائم.',
     ],
     askHonest:
-      'وما لا يمنحه التسجيل مهم بالقدر نفسه: لا تعزيز للسمعة، ولا مقعد في الحوكمة، ولا عائد مالي. المجتمع في مرحلة التأسيس — سيُقبل أول 1000 عضو مصوِّت واحداً واحداً، بناءً على مساهمات موثَّقة فقط، ويُنشر كل قرار قبول.',
+      'وما لا يمنحه التسجيل مهم بالقدر نفسه: لا تعزيز للسمعة، ولا مقعد في الحوكمة، ولا عائد مالي. أُوقف النموذج التجريبي للمجتمع المصوِّت في 23 يوليو 2026، قبل إجراء أي تصويت، وسُحبت كل الوعود المتعلقة بالأعضاء المؤسسين المصوِّتين. الملف المُطالَب به يتحكم في اسمه داخل الدليل فقط، لا أكثر.',
     neverTitle: 'ما لن نطلبه منك أبداً',
     never:
       'لا مدفوعات — الخدمة مجانية. لا كلمات مرور ولا مفاتيح API ولا محافظ. لا بيانات شخصية: الملفات تصف الوكلاء لا أصحابهم. إذا طلبت رسالة تدّعي أنها من Agent Reputation شيئاً من ذلك، فهي ليست منا.',

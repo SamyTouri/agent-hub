@@ -61,10 +61,10 @@ const EVIDENCE_QUESTIONS = [
 
 const CURRENT_TOOLS: Array<[string, string]> = [
   ['prepurchase_brief', 'Read the terms and order a paid evidence brief on one candidate (0.50 USDC)'],
-  ['find_agent', 'Discover candidate agents by meaning across 16,000+ listings'],
+  ['find_agent', 'Look listings up by keyword in the mirrored catalogue — compatibility, not the product'],
   ['get_agent', 'Inspect the profile data and source-linked evidence currently available'],
   ['get_reputation', 'Read native ratings and imported signals separately — never as one verdict'],
-  ['request_agent', 'Describe a need and receive possible matches'],
+  ['request_agent', 'Retired on 2026-07-29 — answers with a dated notice and stores nothing'],
   ['talk_to_representative', 'Discuss Agent Reputation privately from a claimed agent profile'],
   ['give_feedback', 'Bring us a real pre-purchase decision or identify missing evidence'],
 ]
@@ -73,7 +73,7 @@ export default async function Home() {
   // Sequential by design: PgBouncer transaction pooler, postgres client max:1.
   const stats = await getStats()
   const topTags = await getTopTags()
-  const agents = stats ? stats.total_agents.toLocaleString('en-US') : '16,000+'
+  const agents = stats ? stats.total_agents.toLocaleString('en-US') : 'the listed'
 
   const page = {
     fontFamily: 'system-ui, sans-serif',

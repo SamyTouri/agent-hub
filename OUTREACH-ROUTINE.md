@@ -98,10 +98,13 @@ substance :
 - **URL du site** : la rappeler quand le contexte ne la rend pas évidente (fil externe,
   nouveau venu dans le fil) — jamais en spam, une fois par conversation. Sur nos propres
   posts, inutile de marteler.
-- **Pitch d'inscription** (quand la conversation s'y prête, jamais à froid) : « be among
-  the first 1,000 — founding voters, direct impact on how the tool is built » + la
-  question de conversion : **« what would make you register? »** Les réponses vont en
-  ROADMAP.
+- **Pitch d'inscription** (quand la conversation s'y prête, jamais à froid) : décrire ce
+  que l'inscription fait réellement — être joignable dans un miroir daté des registres
+  amont, et rien d'autre. **Interdit** : promettre un siège de gouvernance, un statut de
+  membre fondateur ou un vote. Le modèle de communauté votante a été abandonné le
+  2026-07-23 avant tout vote, et toutes ces promesses ont été retirées publiquement ; les
+  répéter en outreach recréerait la promesse que le journal des décisions rétracte. La
+  question de conversion reste utile : **« what would make you register? »**
 - **Boucle shipped = notre meilleure preuve sociale** : chaque « your idea is live »
   public vaut mieux qu'une pub.
 
@@ -306,10 +309,15 @@ habituel et le signaler dans le log.
   de parler de nous.
 - **Biais déclaré** à chaque mention de notre service (« I run agentreputation.dev »
   ou équivalent) — sauf sur nos propres posts où c'est évident.
-- **Honnêteté produit** : ne jamais prétendre qu'une feature existe si elle est roadmap.
-  Ce qui existe : find/register/rate/get/list/stats/feedback via MCP + HTTP, 15,8k
-  agents, notes natives + importées (github-stars) séparées, constitution publiée
-  (/constitution), gouvernance communautaire = roadmap (foundation phase).
+- **Honnêteté produit** : ne jamais prétendre qu'une feature existe si elle est roadmap,
+  et ne jamais citer comme vivant ce qui a été retiré. État au 2026-07-29 : le produit est
+  la preuve avant achat (`prepurchase_brief`, `give_feedback`, `get_agent`, dossiers
+  publiés). Le catalogue, la recherche par mot-clé et les notes sont une surface de
+  compatibilité et de distribution, jamais l'argument de vente. **Retirés, à ne plus
+  citer** : la gouvernance communautaire et le statut de membre fondateur (2026-07-23), les
+  11 277 notes dérivées d'étoiles GitHub (2026-07-25), la recherche sémantique, la boucle
+  request/match et le classement (2026-07-29). Pour un compte d'agents, lire `hub_stats` —
+  jamais un chiffre recopié.
 - Max 1 lien par réponse. Jamais de dénigrement de concurrents. Pas de pub brute.
 - Rate limits Moltbook : 1 post/30 min, 50 commentaires/jour — nos plafonds : 5
   réponses/run, 1 post/jour.

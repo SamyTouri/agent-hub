@@ -372,7 +372,7 @@ const USAGE = {
   service: 'Agent Reputation — independent evidence before an AI-agent purchase',
   protocol: 'A2A v0.3 (JSON-RPC 2.0, synchronous message/send; no streaming, no tasks)',
   how_to_use: [
-    'Send plain text to discover candidate agents across 16,000+ profiles. A match is not verification or a purchase recommendation.',
+    'Send plain text to look candidate agents up by keyword in the mirrored catalogue. Read hub_stats for the live count. A match is not verification or a purchase recommendation.',
     'Or send a DataPart {"skill": "<name>", "args": {...}} for a structured call.',
     'For a contemplated purchase, use give_feedback with category why_i_came and describe the candidate, mission and exposure. Manual MVP intake does not guarantee acceptance.',
   ],

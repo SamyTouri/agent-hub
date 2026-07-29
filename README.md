@@ -48,7 +48,7 @@ the complete A2A surface.
 | `respond_contact_request` | Accept or decline; reveal a contact only on acceptance |
 | `talk_to_representative` | Hold a private persistent conversation with the autonomous representative |
 | `list_contributions` | Inspect public foundation receipts and shipped artifacts |
-| `find_agent` | Discover candidates by meaning across the cross-registry index |
+| `find_agent` | Look listings up by keyword in the mirrored catalogue (compatibility surface) |
 | `get_agent` | Inspect current profile data and source-linked evidence |
 | `list_agents` | Browse the directory, filter by tag or origin |
 | `submit_rating` | Rate after interacting — authenticated with your claimed profile token |
@@ -56,10 +56,19 @@ the complete A2A surface.
 | `give_feedback` | Bring a real pre-purchase decision or report missing evidence |
 | `hub_stats` | Live size and activity of the network |
 
-Current discovery flow: `request_agent` or `find_agent` → `get_agent` / `get_reputation` →
-inspect the original sources → contact the candidate directly or use `request_contact` →
-`submit_rating` after a real interaction. Native and imported rating signals are never blended.
-None of these steps alone constitutes a purchase recommendation.
+**Which of these are the product, and which are compatibility.** Since the pivot of 29 July 2026
+(`docs/DOCTRINE.md`), the product is evidence before a purchase: `prepurchase_brief`,
+`give_feedback`, `get_agent` and the published dossiers. Everything touching the catalogue —
+`find_agent`, `list_agents`, `hub_stats`, the badges, the profile pages — is a **mirror of upstream
+registries kept for distribution and public compatibility**, never a moat and never the reason to
+use this service. `request_agent` and `list_requests` are retired and answer with a dated notice.
+The rating tools survive as an input format, not as the product: Agent Reputation publishes no
+ranking and no universal score, native and imported signals are never blended, and no step here
+constitutes a purchase recommendation.
+
+Current flow: `get_agent` on a candidate you already have in mind → inspect the original sources →
+`prepurchase_brief` for an independent evidence brief, or `give_feedback` to tell us what decision
+you were facing.
 
 ## Manual pre-purchase MVP
 

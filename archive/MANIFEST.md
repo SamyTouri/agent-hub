@@ -220,6 +220,45 @@ indexed and answering for weeks must give a dated reason, not a silent 404 that 
   feature that just retired. The lexical suite is 13 tests instead of 16 for that reason, not
   because coverage was reduced.
 
+## 2026-07-29 — third lot: doctrine audit, no archive moves
+
+This lot moved no tracked file. It closed the eleventh acceptance criterion — active documentation
+honestly matching the doctrine — by rewriting stale claims in place. Recorded here because the
+manifest is the reversibility ledger, and because one non-tracked removal needs a rebuild command.
+
+**The finding that mattered.** The abandoned founding-voter governance model was still promised in
+live public copy, in **ten of the twelve languages** of `/owners/{lang}` — a route the MCP server
+instructions name as the human-approval handoff. It read "its first 1,000 voting members will be
+admitted one by one". The model was discontinued on 2026-07-23, publicly retracted in the
+constitution and the decision log, and the retraction had never reached this page. All twelve
+locales now state the dated discontinuation instead. This was not in the list of known gaps; it was
+found by sweeping the whole active tree rather than the named subset, and it was the most serious
+contradiction remaining anywhere in the workspace.
+
+Also corrected in place: `find_agent` described as discovery "by meaning" on the home page and in
+`README.md` (false since the vectors were removed); the outreach routine still instructing an agent
+to pitch founding-voter status and to cite the deleted star-derived ratings as live; static
+catalogue counts sold as breadth in both agent cards, the A2A card, the home page, `llms.txt` and
+the representative brief; and the discovery-first "typical flow" in `llms.txt` and `README.md`,
+which now name explicitly which tools are the product and which are compatibility.
+
+### `.exchange/codex/python-deps/` — removed, not archived
+
+- **What it was:** 54 MB, 83 top-level entries, every one a third-party package directory or its
+  `.dist-info`, plus four flat-shipped package files including compiled `.pyd` binaries. A
+  `pip install --target` tree for the Agentverse bridge archived earlier the same day.
+- **Why removal rather than archiving:** the path is untracked — `.gitignore` matches `.exchange/`
+  — so there is no Git history to preserve. It contains no hand-written file, no brief and no
+  evidence. `archive/README.md` forbids archiving generated caches for exactly this reason.
+- **Provenance check performed before removing:** every top-level entry enumerated and confirmed to
+  be a package artifact; `agentverse_sdk-0.2.0.dist-info` ties the tree to the archived bridge.
+- **Rebuild command, should the bridge ever be restored:** restore `requirements.txt` and
+  `.python-version` from `archive/2026-07/agentverse-bridge/` first, then
+  `pip install --target .exchange/codex/python-deps -r requirements.txt` under Python 3.12.
+  Re-running pip is the correct move anyway: wheels are platform-specific and pinned versions drift.
+- **Untouched:** the 129 markdown briefs and evidence files under `.exchange/codex/`. Workspace size
+  went from 89 MB to 36 MB.
+
 ## Deliberately not archived, with the gate that blocked each
 
 Recorded here so the next pass does not re-litigate them.

@@ -57,7 +57,7 @@ const representative = new Agent({
 Your order of work:
 1. Answer the counterparty's actual question.
 2. Understand the concrete job, risk or missing capability behind it.
-3. Explain only shipped value that directly helps: keyword lookup over 16,000+
+3. Explain only shipped value that directly helps: keyword lookup over the mirrored
    agent and MCP profiles; claimed-profile continuity; provenance-separated native
    ratings and imported signals; public contribution receipts; consent-based
    introductions; public operating principles. The core position is neutral, cross-registry
