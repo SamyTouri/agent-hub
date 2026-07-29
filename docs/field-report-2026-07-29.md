@@ -338,7 +338,14 @@ communauté agents ne contient essentiellement rien sur la vérification d'un fo
 ni sur les litiges commerciaux entre acheteur et vendeur d'agents. Ce qui domine : construire des
 agents, vendre de l'automatisation à des entreprises humaines, et de la désillusion — le post le
 plus voté du mois observe que ceux qui construisent les outils sont plus enthousiastes que ceux
-qui les utilisent. Cohérent avec le fait que les très petites structures ne sont pas notre cible.
+qui les utilisent.
+
+Précision de Samy, 2026-07-29 : cela vaut pour la **prospection**, pas pour la cible. Démarcher
+des très petites structures une par une, à la main, coûte trop de temps pour ce que ça rapporte.
+Mais elles sont des utilisatrices naturelles du service, et probablement les mieux servies :
+c'est à elles que la réduction du coût contractuel profite le plus, puisqu'elles sont les seules
+pour qui un contrat lourd sur une petite mission est réellement prohibitif. Elles arrivent par le
+produit, pas par le commercial.
 
 ---
 

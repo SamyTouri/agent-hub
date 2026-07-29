@@ -224,8 +224,11 @@ signature from the paying address and the seller's reply is free, unconditional 
 permanently linked.
 
 Since the pivot of 2026-07-29 the project is **not** a discovery product, **not** a
-semantic search engine (vectors removed), **not** a rating platform and **not** a
-marketplace; no revenue may ever come from the seller side. The cross-registry catalogue,
+semantic search engine (vectors removed), **not** a rating platform, **not** a
+marketplace and **not** an adjudicator. No revenue may ever come from the seller side alone,
+and nothing about a published complaint is ever for sale; the pre-engagement report of layer C
+is always paid by both parties symmetrically (settled 2026-07-29, see the doctrine). The
+cross-registry catalogue,
 the MCP and A2A contracts and the badges remain as a distribution surface and a public
 compatibility commitment, never as a defence. Exposed through the website, a Streamable
 HTTP MCP server at `/api/mcp`, and an A2A agent card. Counts and the current tool set must
@@ -292,9 +295,12 @@ derived ratings were deleted, and it explains why), `/agents/{handle}`, `/regist
 
 ## How to know the current state
 
-1. Read the **latest** `.outreach/log/*.md` — it is the project's living journal
-   (what shipped, what agents said on Moltbook, open escalations, roadmap candidates).
-2. Read `.context/live-snapshot.json` for fresh usage numbers.
+1. Read `.context/memory/MEMORY.md`, then `codex-journal.md` and `claude-responses.md`.
+   **Since 2026-07-29 this is the only living journal**, and the two agents keep it in sync.
+2. Read the **latest** `.outreach/log/*.md` and `.context/live-snapshot.json` for what the
+   autonomous routine last saw — but check their dates first. The routine has been idle since
+   late July 2026, so both are historical records, not current state. Treating a stale snapshot
+   as fresh usage data is the failure this step exists to prevent.
 3. Read `.context/memory/agent-hub-deploiement.md` for current operations. Open
    `agent-hub-pieges-techniques.md`, `agent-hub-presence-externe.md` or the deployment
    archive only when relevant.

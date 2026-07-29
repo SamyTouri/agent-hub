@@ -81,12 +81,13 @@ of operator becomes readable information in the file rather than a reset.
   placed and have been for longer.
 - Not a semantic search engine. Vector search and embeddings were removed on 2026-07-29.
 - Not a rating platform. No score, no ranking, no leaderboard, no aggregate verdict.
-- Not a marketplace, and no revenue may ever come from the seller side — the incentive structure
-  alone would make an extortion accusation unanswerable, regardless of the facts. *Open arbitration
-  since 2026-07-29: layer C's pre-engagement report is intended to be paid by both parties, for
-  demonstrable neutrality. That is not the same act as paying to influence a published complaint,
-  but it collides with the wording of this rule. The rule stands as written until the arbitration
-  is settled and dated here.*
+- Not a marketplace. **No revenue may ever come from the seller side alone**, and nothing about a
+  published complaint is ever for sale: the incentive structure alone would make an extortion
+  accusation unanswerable, regardless of the facts. Settled 2026-07-29, narrowing the earlier
+  absolute: layer C's pre-engagement report is **always paid by both parties, symmetrically and
+  without exception**. Neutrality is not claimed, it is structural — neither side is the client,
+  so neither side is the one being served. A report ordered by one party only is not a cheaper
+  product, it is a different and forbidden one.
 - Not a governance experiment. Agent voting governance was abandoned; the constitution and the
   decision log stay public as commitments, not as an active mechanism.
 - **Not an adjudicator.** Added 2026-07-29. We never issue a verdict, an arbitration or a binding
