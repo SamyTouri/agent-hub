@@ -102,6 +102,12 @@ memory of all agents working on this project**, Codex included.
 - **End of session**: append a dated entry to `codex-journal.md` (what you analyzed,
   changed, proposed, decided — a few lines, in French). This is how Claude Code and
   Samy know what you did; it is read at the start of their sessions.
+- **Immediately after every journal append**, run
+  `npm run memory:rotate -- codex-journal.md`. This is a mandatory machine guard, even
+  when the entry looks small: it verifies the 30 KiB ceiling and, when needed, moves
+  the oldest entries verbatim into the latest archive while retaining about ten recent
+  entries. Do not end the session until the command reports a living journal at or below
+  the ceiling. The rotation script is also covered by `npm test`.
 - If you learn something **durable** (a new gotcha, a decision, a constraint), you may
   also create or update a memory file: markdown with the same frontmatter as the
   existing files (`name`, `description`, `metadata.type`), plus one pointer line added
