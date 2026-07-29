@@ -8,7 +8,7 @@
 // matched, which is a fact about the text rather than an opinion about the meaning.
 //
 // Everything here is pure: no database, no network, no clock. The SQL that uses it lives in
-// lib/agenthub.ts, and the matching index is db/migration-lexical-search.sql.
+// lib/agenthub.ts, and the matching index is declared in db/schema.sql.
 
 /** How much of the caller's query the row actually satisfied. Never a score. */
 export type MatchStrength = 'all_terms' | 'some_terms'

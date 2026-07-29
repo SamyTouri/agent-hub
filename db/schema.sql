@@ -10,11 +10,8 @@
 -- 2026-07-29 — la recherche vectorielle est retirée du produit (docs/DOCTRINE.md).
 -- Ce fichier décrit le schéma CIBLE, celui qu'une installation neuve doit obtenir : il ne
 -- contient donc plus l'extension `vector`, les colonnes `embedding`, l'index HNSW ni
--- `match_agents`. La base de production, elle, reste transitoire tant que la migration de
--- suppression n'est pas autorisée — c'est normal et c'est l'ordre voulu :
---   1. le code sans vecteur est déployé et vert ;
---   2. db/migration-lexical-search.sql est appliquée et le plan confirme l'usage de l'index ;
---   3. db/migration-drop-vector-search.sql aligne enfin la production sur ce fichier.
+-- `match_agents`. La production est alignée sur ce schéma depuis les migrations Supabase
+-- `add_agents_lexical_search_index_20260729` et `drop_vector_search_objects_20260729`.
 -- Plus aucun code actif ne lit ni n'écrit de vecteur.
 
 -- 1. Extensions
@@ -114,9 +111,7 @@ group by a.id, a.handle;
 -- 6. Recherche d'agents — lexicale depuis le 2026-07-29.
 --    Il n'y a plus de fonction dédiée : `find_agent` interroge la prose avec
 --    `to_tsvector` / `websearch_to_tsquery` et les tags comme tableau exact depuis
---    lib/agenthub.ts, en s'appuyant sur les deux index GIN déclarés plus haut. L'ancienne fonction
---    `match_agents` existe encore en production et disparaît avec
---    db/migration-drop-vector-search.sql.
+--    lib/agenthub.ts, en s'appuyant sur les deux index GIN déclarés plus haut.
 
 -- 7. updated_at auto sur agents
 create or replace function set_updated_at()

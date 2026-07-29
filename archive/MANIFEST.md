@@ -254,3 +254,26 @@ Recorded here so the next pass does not re-litigate them.
 - **Domain-verification files** — `public/googlebc463780609e8605.html`,
   `public/ffcdfbcca65a32dfd4026f467a3cc16a.txt`, `agentreputation.txt`. They look like debris and
   are not: archiving them silently breaks Search Console verification, with no error anywhere.
+
+## 2026-07-29 — applied lexical and vector-removal migrations
+
+### `db/migration-lexical-search.sql` and `db/migration-drop-vector-search.sql`
+
+- **Original paths:** the two files above under `db/`
+- **New paths:** the same filenames under `archive/2026-07/applied-migrations/`
+- **Ground:** 1 — inactivity after verified application
+- **Reason:** both migrations are now recorded in production by Supabase as
+  `add_agents_lexical_search_index_20260729` and
+  `drop_vector_search_objects_20260729`. Their resulting state is represented directly in
+  `db/schema.sql`, so leaving them among prepared migrations would falsely imply that a
+  destructive production action is still pending.
+- **Proof:** production has `agents_fulltext_idx`; its normal query plan used a `BitmapOr` over
+  both `agents_fulltext_idx` and `agents_tags_idx`. The two `embedding` columns,
+  `agents_embedding_idx` and `match_agents(vector, double precision, integer)` are absent.
+  The catalogue still contains 17,497 agents, and a fixed ten-result search had the same ordered
+  digest before and after removal. The production MCP search returned successfully after both
+  migrations.
+- **Current replacement:** `db/schema.sql` plus the Supabase migration history.
+- **Restoration:** `git mv archive/2026-07/applied-migrations/<file>.sql db/<file>.sql`. Restoring
+  the files does not reverse production; it only makes the historical SQL visible under `db/`
+  again.
