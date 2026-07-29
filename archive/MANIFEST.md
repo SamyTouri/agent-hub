@@ -226,14 +226,29 @@ This lot moved no tracked file. It closed the eleventh acceptance criterion — 
 honestly matching the doctrine — by rewriting stale claims in place. Recorded here because the
 manifest is the reversibility ledger, and because one non-tracked removal needs a rebuild command.
 
-**The finding that mattered.** The abandoned founding-voter governance model was still promised in
-live public copy, in **ten of the twelve languages** of `/owners/{lang}` — a route the MCP server
-instructions name as the human-approval handoff. It read "its first 1,000 voting members will be
-admitted one by one". The model was discontinued on 2026-07-23, publicly retracted in the
-constitution and the decision log, and the retraction had never reached this page. All twelve
-locales now state the dated discontinuation instead. This was not in the list of known gaps; it was
-found by sweeping the whole active tree rather than the named subset, and it was the most serious
-contradiction remaining anywhere in the workspace.
+**The finding, and its correction the same day.** The abandoned founding-voter governance model was
+still written into the `/owners` copy in all twelve languages: "its first 1,000 voting members will
+be admitted one by one". The model was discontinued on 2026-07-23 and publicly retracted in the
+constitution and the decision log; that retraction had never reached these strings. All twelve
+locales now state the dated discontinuation instead.
+
+**Correction, 2026-07-29, after the commit was already pushed.** The commit message for `64d8951`
+claims this text was being read by human operators arriving from the MCP hand-off. That is wrong,
+and a production check made after pushing is what caught it: the `askHonest` field **is not
+rendered by `app/owners/owners-page.tsx` at all**. It is typed, populated and translated, but no
+page displays it. The withdrawn promise was dead data, not live copy, and nobody read it. The
+correction was still worth making — a maintained, translated string that contradicts a published
+retraction is one render call away from being live — but the severity stated in that commit message
+was overstated and is retracted here rather than rewritten in history.
+
+**The real finding underneath, left for a decision rather than settled here.** Seven fields —
+`askHonest`, `neverTitle`, `never`, `founderTitle`, `founder`, `portraitAlt`, `constitutionLabel` —
+are declared in `OwnersCopy` and filled in twelve locales while the page renders none of them. That
+is roughly eighty-four translated strings that look maintained, drift from doctrine invisibly, and
+carry no signal that they are dead. Two of them (`never`, the anti-phishing "we will never ask for
+passwords, API keys or wallets") look like content someone deliberately wrote to be shown. Deleting
+them would destroy that intent; rendering them is a product change outside a cleanup. The choice
+belongs to Samy, not to this lot.
 
 Also corrected in place: `find_agent` described as discovery "by meaning" on the home page and in
 `README.md` (false since the vectors were removed); the outreach routine still instructing an agent
