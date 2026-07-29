@@ -4,7 +4,7 @@ import { invalidateByTag } from '@vercel/functions'
 import { agentProfileCacheTag } from './cache-tags'
 import { getSql } from './db'
 import { describeStatus, readStatus, type EndpointCheck } from './endpoint-probe'
-import { anyTermQuery, type MatchStrength } from './text-match'
+import { anyTermQuery, searchTerms, type MatchStrength } from './text-match'
 import { requestOrigin } from './request-context'
 import {
   CHALLENGE_FILENAME,
@@ -107,7 +107,9 @@ export async function registerAgent(input: RegisterInput) {
   const sql = getSql()
   const handle = input.handle.trim().slice(0, 200)
   const description = input.description.trim().slice(0, 4000)
-  const tags = cleanStrings(input.tags, 30, 64)
+  // Tags are a controlled vocabulary. Keeping them canonical makes the existing
+  // GIN array index usable for exact lexical matching without an opaque helper.
+  const tags = cleanStrings(input.tags?.map((tag) => tag.toLowerCase()), 30, 64)
   const protocols = cleanStrings(input.protocols, 10, 32)
   const endpoint = input.endpoint?.trim().slice(0, 500) || null
   const claimChannel = input.claimChannel?.trim().slice(0, 300) || null
@@ -405,33 +407,48 @@ export async function claimGithub(input: {
 export async function findAgents(input: { query: string; limit?: number }) {
   const sql = getSql()
   const limit = input.limit ?? 10
+  const terms = searchTerms(input.query)
   const anyTerms = anyTermQuery(input.query)
 
-  const search = (tsquery: string, strength: MatchStrength) => sql`
-    select
-      a.handle,
-      a.description,
-      a.endpoint,
-      ${strength}::text as "match",
-      a.tags,
-      a.protocols,
-      a.external_source as listed_from,
-      r.native_ratings::int as native_ratings,
-      r.verified_native_ratings::int as verified_native_ratings,
-      r.native_avg_score,
-      r.verified_native_avg_score,
-      r.imported_ratings::int as imported_ratings,
-      r.imported_avg_score
-    from agents a
-    left join agent_reputation r on r.agent_id = a.id
-    where to_tsvector('english', coalesce(a.display_name, '') || ' ' || coalesce(a.description, '') || ' ' || coalesce(array_to_string(a.tags, ' '), ''))
+  const search = (tsquery: string, strength: MatchStrength) => {
+    // Prose is stemmed full text; tags are an exact controlled vocabulary. Keeping
+    // the predicates separate lets Postgres use the immutable prose expression index
+    // and the existing GIN array index instead of flattening tags through the STABLE
+    // array_to_string function, which cannot appear in an index expression.
+    const tagMatch =
+      strength === 'all_terms'
+        ? sql`a.tags @> ${terms}::text[]`
+        : sql`a.tags && ${terms}::text[]`
+
+    return sql`
+      select
+        a.handle,
+        a.description,
+        a.endpoint,
+        ${strength}::text as "match",
+        a.tags,
+        a.protocols,
+        a.external_source as listed_from,
+        r.native_ratings::int as native_ratings,
+        r.verified_native_ratings::int as verified_native_ratings,
+        r.native_avg_score,
+        r.verified_native_avg_score,
+        r.imported_ratings::int as imported_ratings,
+        r.imported_avg_score
+      from agents a
+      left join agent_reputation r on r.agent_id = a.id
+      where (
+        to_tsvector('english', coalesce(a.display_name, '') || ' ' || coalesce(a.description, ''))
           @@ websearch_to_tsquery('english', ${tsquery})
-    order by ts_rank(
-               to_tsvector('english', coalesce(a.display_name, '') || ' ' || coalesce(a.description, '') || ' ' || coalesce(array_to_string(a.tags, ' '), '')),
-               websearch_to_tsquery('english', ${tsquery})
-             ) desc, a.id
-    limit ${limit}
-  `
+        or ${tagMatch}
+      )
+      order by ts_rank(
+                 to_tsvector('english', coalesce(a.display_name, '') || ' ' || coalesce(a.description, '')),
+                 websearch_to_tsquery('english', ${tsquery})
+               ) desc, a.id
+      limit ${limit}
+    `
+  }
 
   // Une requête vide de termes utilisables ne doit pas devenir un balayage du catalogue.
   let rows = anyTerms ? await search(input.query, 'all_terms') : []

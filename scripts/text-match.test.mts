@@ -46,6 +46,12 @@ test('repeated terms are counted once, whatever their case', () => {
   assert.deepEqual(searchTerms('Postgres postgres POSTGRES database'), ['postgres', 'database'])
 })
 
+test('tag operands stay exact instead of inheriting full-text stemming', () => {
+  // These values are passed unchanged to the indexed text[] operators. A controlled tag
+  // named "database" must not silently become equivalent to the distinct tag "databases".
+  assert.deepEqual(searchTerms('Database databases DATABASE'), ['database', 'databases'])
+})
+
 test('the term list is bounded, so the OR fallback cannot become a table scan', () => {
   const long = Array.from({ length: 200 }, (_, i) => `term${i}`).join(' ')
   const terms = searchTerms(long)

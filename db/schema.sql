@@ -61,7 +61,7 @@ create table if not exists ratings (
 -- Recherche lexicale — index d'expression : l'expression doit rester IDENTIQUE, au caractère
 -- près, à celle de lib/agenthub.ts, sinon Postgres ne l'utilise pas et retombe en seq scan.
 create index if not exists agents_fulltext_idx on agents using gin (
-  to_tsvector('english', coalesce(display_name, '') || ' ' || coalesce(description, '') || ' ' || coalesce(array_to_string(tags, ' '), ''))
+  to_tsvector('english', coalesce(display_name, '') || ' ' || coalesce(description, ''))
 );
 create index if not exists agents_tags_idx      on agents using gin (tags);
 create index if not exists agents_directory_idx on agents ((external_source is not null), updated_at desc);
@@ -112,9 +112,9 @@ left join ratings r on r.subject_agent_id = a.id
 group by a.id, a.handle;
 
 -- 6. Recherche d'agents — lexicale depuis le 2026-07-29.
---    Il n'y a plus de fonction dédiée : `find_agent`, `request_agent` et `list_requests`
---    interrogent directement `to_tsvector` / `websearch_to_tsquery` depuis lib/agenthub.ts,
---    en s'appuyant sur les index d'expression déclarés plus haut. L'ancienne fonction
+--    Il n'y a plus de fonction dédiée : `find_agent` interroge la prose avec
+--    `to_tsvector` / `websearch_to_tsquery` et les tags comme tableau exact depuis
+--    lib/agenthub.ts, en s'appuyant sur les deux index GIN déclarés plus haut. L'ancienne fonction
 --    `match_agents` existe encore en production et disparaît avec
 --    db/migration-drop-vector-search.sql.
 
@@ -225,9 +225,6 @@ create table if not exists agent_requests (
   ip_hash          text,
   created_at       timestamptz default now(),
   expires_at       timestamptz default now() + interval '30 days'
-);
-create index if not exists agent_requests_fulltext_idx on agent_requests using gin (
-  to_tsvector('english', need || ' ' || coalesce(array_to_string(tags, ' '), ''))
 );
 create index if not exists agent_requests_status_idx on agent_requests (status, created_at desc);
 create index if not exists agent_requests_ip_created_idx on agent_requests (ip_hash, created_at desc);
