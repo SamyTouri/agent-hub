@@ -143,5 +143,11 @@ instrument: maintained, never extended, never presented as the product corpus.
   even when it is technically sound.
 - **Every quoted sentence carries its URL and the date it was read, or it leaves the quotation
   marks.** Adopted 2026-07-28 after a citation was attributed to a source that did not contain it.
+- **A threat is published, not obeyed.** Decided by Samy 2026-07-29, before the first case
+  rather than under pressure from it. When a notified counterparty answers with a threat instead
+  of a reply, the file is published on schedule *and the threat is published with it*, verbatim
+  and dated, as part of the record. Intimidating the venue is itself a fact a buyer wants to
+  know. This is decided in advance precisely so that no future decision has to be made in the
+  hour it happens.
 - **Say "this is queryable nowhere", never "nobody keeps it".** The second claim is
   undemonstrable and probably false; the first is verifiable and survives any later revelation.
