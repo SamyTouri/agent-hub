@@ -65,3 +65,10 @@ test('root and published agent cards remain identical and contain no frozen cata
   assert.equal(rootCard, publishedCard)
   assert.ok(!/\b(?:16k|16[,.]?000|17[,.]?000|17[,.]?497)\+?\b/i.test(rootCard))
 })
+
+test('MCP Registry metadata stays inside the published schema limit', () => {
+  const metadata = JSON.parse(read('server.json')) as { description?: unknown }
+
+  assert.equal(typeof metadata.description, 'string')
+  assert.ok(metadata.description.length <= 100)
+})
