@@ -42,11 +42,27 @@ asset, payee, announced scope, promised output format, host. Written only on cha
 previous value. First corpus: **paid x402 offers only.** Expanding beyond that requires a test
 showing the missing information is genuinely unavailable elsewhere.
 
-**B — the Complaint Bureau.** Entry requires a signature from the paying address, not merely a
-transaction hash: the chain is public, so a hash proves nothing about who presents it. Every
-entry is a dated fact about one transaction, never an aggregate verdict. The seller is notified
-proactively and replies for free, always. A complaint disputed without contrary evidence stays
-published as `disputed`, with the reply linked; denial alone does not remove it.
+**B — the Complaint Bureau.** Entry requires a signature from **either address of a real
+transaction**, not merely a transaction hash: the chain is public, so a hash proves nothing
+about who presents it. Symmetry adopted 2026-07-29 — the payer signs to contest what it
+received, the payee signs to contest how its client behaved. What makes a filing admissible is
+being a proven party to a paid transaction, not being the one who paid. Every entry is a dated
+fact about one transaction, never an aggregate verdict. The counterparty is notified
+proactively and replies for free, always.
+
+**The reply window never exceeds the speed at which the counterparty bills.** Adopted
+2026-07-29, replacing a seven-day calendar window that was an enterprise habit imposed on a
+market that charges by the second. A counterparty publishing a machine contact point is
+reachable continuously and gets one hour; one exposing only a human channel gets twenty-four,
+matching the Moltbook window. One reachable through no verifiable channel is published with the
+failed notification and its trace attached — having no contact channel while taking payment is
+itself a fact about a seller. Verification, notification and publication are machine operations
+and happen in seconds; publication fires the moment a reply arrives, or when the window closes.
+Answering therefore speeds up one's own publication, and silence buys nothing.
+
+A complaint disputed without contrary evidence stays published as `disputed`, with the reply
+linked; denial alone does not remove it. A published file is never withdrawn — it is corrected
+with a date, or completed.
 
 **C — evaluator credibility.** Made possible by A and B. The output is always relative to the
 criteria supplied by the buyer, never a universal score. Its concrete form, adopted 2026-07-29:
@@ -55,8 +71,11 @@ heavier when the record of either party warrants it. Advice, never a decision, a
 delivered with the complaints and replies it rests on, so the parties can contradict it.
 Rationale in `docs/field-report-2026-07-29.md`.
 
-**D — reciprocity.** Kept functional in the data model from the start, silent in communication
-until there is volume.
+**D — reciprocity.** Activated 2026-07-29, earlier than the original "silent until there is
+volume" plan: the seller-side filing enabled in B *is* the reciprocity, so keeping it quiet
+would mean hiding half the product. It stays manual like everything else, and the first field
+gate requires at least one of the two admissible files to come from the seller side — otherwise
+symmetry is an intention that was never tested.
 
 ## Naming a seller
 
