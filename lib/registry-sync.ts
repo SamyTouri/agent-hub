@@ -1,5 +1,4 @@
 import { getSql, type Sql } from '@/lib/db'
-import { embedMany } from '@/lib/embeddings'
 import { EVIDENCE_SCHEMA_VERSION, profileFacts, type ObservationInput } from '@/lib/evidence-history'
 import { appendObservations, loadActiveCohort, type AppendOutcome } from '@/lib/evidence-store'
 
@@ -26,9 +25,13 @@ const githubRepoUrl = (value: string | undefined) => {
   }
 }
 
-// Delta-import quotidien du registre MCP officiel (même mapping que
-// scripts/import-mcp-registry.mjs, mais filtré par updated_since et borné par
-// un budget temps : la route cron Vercel Hobby plafonne à 60 s au total).
+// Delta-import quotidien du registre MCP officiel : filtré par updated_since et borné par
+// un budget temps (la route cron Vercel Hobby plafonne à 60 s au total).
+//
+// L'import COMPLET vit dans scripts/import-mcp-registry.mjs et sert à reconstruire le
+// catalogue depuis zéro. Même source et même filtrage latest/actif ; ce delta écrit en plus
+// la métadonnée `repo` et le journal de preuves, que l'import complet ne produit pas.
+// Aucun des deux n'écrit d'embedding depuis le 2026-07-29.
 export async function syncRegistryDelta(
   sinceHours = 25,
   deadlineMs = 35_000,
@@ -87,21 +90,18 @@ export async function syncRegistryDelta(
   const t1 = Date.now()
   for (let i = 0; i < servers.length && Date.now() - t1 < upsertBudgetMs; i += BATCH) {
     const chunk = servers.slice(i, i + BATCH)
-    const vectors = await embedMany(chunk.map((s) => `${s.title || s.name}: ${s.description || ''}`))
     for (let j = 0; j < chunk.length; j++) {
       const s = chunk[j]
-      const vec = `[${vectors[j].join(',')}]`
       const endpoint = s.remotes?.[0]?.url ?? null
       const repo = githubRepoUrl(s.repository?.url)
       const metadata = repo ? { repo } : {}
       try {
         await sql`
-          insert into agents (handle, display_name, description, endpoint, protocols, embedding, external_source, external_id, metadata)
-          values (${s.name}, ${s.title ?? null}, ${s.description ?? s.name}, ${endpoint}, ${['mcp']}, ${vec}::vector, 'mcp-registry', ${s.name}, ${sql.json(metadata)})
+          insert into agents (handle, display_name, description, endpoint, protocols, external_source, external_id, metadata)
+          values (${s.name}, ${s.title ?? null}, ${s.description ?? s.name}, ${endpoint}, ${['mcp']}, 'mcp-registry', ${s.name}, ${sql.json(metadata)})
           on conflict (external_source, external_id) do update set
             description = excluded.description,
             endpoint = excluded.endpoint,
-            embedding = excluded.embedding,
             metadata = agents.metadata || excluded.metadata,
             updated_at = now()
         `

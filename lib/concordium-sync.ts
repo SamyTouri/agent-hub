@@ -1,5 +1,4 @@
 import { getSql, type Sql } from '@/lib/db'
-import { embedMany } from '@/lib/embeddings'
 import { EVIDENCE_SCHEMA_VERSION, profileFacts, type ObservationInput } from '@/lib/evidence-history'
 import { appendObservations, loadActiveCohort, type AppendOutcome } from '@/lib/evidence-store'
 
@@ -162,17 +161,10 @@ export async function syncConcordiumAgents(deadlineMs = 90_000) {
       (card !== null || !existing.has(String(item.tokenId))) &&
       existing.get(String(item.tokenId)) !== description,
   )
-  const vectors = changed.length
-    ? await embedMany(changed.map(({ item, description }) => `${item.agentName}: ${description}`))
-    : []
-  const vectorByToken = new Map(
-    changed.flatMap(({ item }, index) => {
-      const vector = vectors[index]
-      return Array.isArray(vector)
-        ? [[String(item.tokenId), `[${vector.join(',')}]`] as const]
-        : []
-    }),
-  )
+  // `changed` ne sert plus qu'au compte rendu : sans vecteur à recalculer, une description
+  // inchangée ne coûte rien de plus qu'une description nouvelle, et l'upsert intégral évite
+  // la branche « mise à jour partielle » qui existait pour éviter d'écraser un embedding.
+  const changedTokens = new Set(changed.map(({ item }) => String(item.tokenId)))
 
   let upserted = 0
   for (const { item, card, description, tags } of enriched) {
@@ -206,39 +198,27 @@ export async function syncConcordiumAgents(deadlineMs = 90_000) {
         },
       ],
     }
-    const vector = vectorByToken.get(String(item.tokenId))
-    if (vector) {
-      await sql`
-        insert into agents (
-          handle, display_name, description, tags, endpoint, protocols, embedding,
-          external_source, external_id, metadata
-        )
-        values (
-          ${handle}, ${item.agentName}, ${description}, ${tags}, ${item.cardUrl}, ${['a2a-card']},
-          ${vector}::vector, ${SOURCE}, ${String(item.tokenId)}, ${sql.json(metadata)}
-        )
-        on conflict (external_source, external_id) do update set
-          display_name = excluded.display_name,
-          description = excluded.description,
-          tags = excluded.tags,
-          endpoint = excluded.endpoint,
-          protocols = excluded.protocols,
-          embedding = excluded.embedding,
-          metadata = agents.metadata || excluded.metadata,
-          updated_at = now()
-      `
-    } else {
-      await sql`
-        update agents
-        set display_name = ${item.agentName},
-            tags = ${tags},
-            endpoint = ${item.cardUrl},
-            protocols = ${['a2a-card']},
-            metadata = metadata || ${sql.json(metadata)},
-            updated_at = now()
-        where external_source = ${SOURCE} and external_id = ${String(item.tokenId)}
-      `
-    }
+    // La description n'est réécrite que si cette passe a bien lu une carte : sans elle, on
+    // garderait le texte de repli d'un échec amont transitoire par-dessus un texte riche.
+    const description_ = changedTokens.has(String(item.tokenId)) ? description : null
+    await sql`
+      insert into agents (
+        handle, display_name, description, tags, endpoint, protocols,
+        external_source, external_id, metadata
+      )
+      values (
+        ${handle}, ${item.agentName}, ${description}, ${tags}, ${item.cardUrl}, ${['a2a-card']},
+        ${SOURCE}, ${String(item.tokenId)}, ${sql.json(metadata)}
+      )
+      on conflict (external_source, external_id) do update set
+        display_name = excluded.display_name,
+        description = coalesce(${description_}, agents.description),
+        tags = excluded.tags,
+        endpoint = excluded.endpoint,
+        protocols = excluded.protocols,
+        metadata = agents.metadata || excluded.metadata,
+        updated_at = now()
+    `
     upserted++
   }
   const observations = await recordCohortProfiles(sql, enriched)

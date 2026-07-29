@@ -11,19 +11,28 @@
 // et c'est pour cette raison que la qualification prend des signaux DÉCLARÉS par un
 // humain ou un agent identifié, jamais une heuristique sur le texte : une machine qui
 // devine « il a l'air intéressé » finirait par prouver ce qu'on espère.
+//
+// 2026-07-29 — l'horloge passe de deux portes (48 h puis 72 h) à une seule fenêtre de
+// 24 h. Le bénéfice n'est pas la vitesse : c'est de supprimer une catégorie entière de
+// décisions en attente. Deux portes obligeaient à revenir deux fois sur la même vague
+// sans rien apprendre entre-temps, et une échéance gardée par acquit de conscience
+// réintroduit exactement ce qu'elle devait éliminer.
 
-export const MOLTBOOK_GATE_VERSION = 1
+export const MOLTBOOK_GATE_VERSION = 2
 
-/** Fin de la première vague, telle qu'enregistrée. Point zéro de l'horloge. */
+/** Durée de la fenêtre de réponse. Une seule, volontairement. */
+export const RESPONSE_WINDOW_HOURS = 24
+
+/** Fin de la première vague, telle qu'enregistrée. Point zéro de l'horloge par défaut. */
 export const BATCH_1_COMPLETED_AT = '2026-07-26T16:47:42.798Z'
 
-/** Prix public, inchangé aux deux portes. Une absence de réponse n'est pas un refus de
- *  prix, donc elle n'autorise pas à baisser le prix. */
+/** Prix public, inchangé à la porte. Une absence de réponse n'est pas un refus de prix,
+ *  donc elle n'autorise pas à baisser le prix. */
 export const PUBLIC_PRICE = '0.50 USDC'
 
 const HOUR_MS = 3_600_000
 
-export type GateName = 'new_wave_48h' | 'final_assessment_72h'
+export type GateName = 'response_window_24h'
 
 export type Gate = {
   name: GateName
@@ -32,44 +41,55 @@ export type Gate = {
   question: string
 }
 
-export function moltbookGates(batchCompletedAt: string = BATCH_1_COMPLETED_AT): Gate[] {
+/**
+ * L'unique porte de la vague.
+ *
+ * Elle pose une question fermée, pas une invitation à réévaluer : ce que cette vague
+ * permet de conclure, et ce qu'elle ne permet pas. Il n'y a plus de « seconde porte pour
+ * voir si quelque chose arrive » — c'était le mécanisme par lequel une vague morte
+ * restait ouverte.
+ */
+export function moltbookGate(batchCompletedAt: string = BATCH_1_COMPLETED_AT): Gate {
   const zero = Date.parse(batchCompletedAt)
   if (!Number.isFinite(zero)) throw new Error(`unusable batch completion time: ${batchCompletedAt}`)
-  const at = (hours: number) => new Date(zero + hours * HOUR_MS).toISOString()
-  return [
-    {
-      name: 'new_wave_48h',
-      hoursAfterBatch: 48,
-      opensAt: at(48),
-      question:
-        'Do the three original threads contain a qualified reply? If not, a new wave may be sourced only from ' +
-        'explicit in-progress purchase signals — same public price, same targeting and message variables, and ' +
-        'without reactivating the old hourly routine.',
-    },
-    {
-      name: 'final_assessment_72h',
-      hoursAfterBatch: 72,
-      opensAt: at(72),
-      question: 'What does this batch actually allow us to conclude, and what does it not?',
-    },
-  ]
+  return {
+    name: 'response_window_24h',
+    hoursAfterBatch: RESPONSE_WINDOW_HOURS,
+    opensAt: new Date(zero + RESPONSE_WINDOW_HOURS * HOUR_MS).toISOString(),
+    question:
+      'Does any thread contain a qualified reply? Classify, record, move to the next qualified context. ' +
+      'Silence is neutral, not a rejection. Do not reopen the sequence, do not resend, do not reword.',
+  }
 }
 
 export type GateStatus = { gate: Gate; open: boolean; opensInHours: number }
 
 /** Où en est l'horloge. `now` est fourni : rien ici ne lit l'heure tout seul, pour que le
  *  même instant produise toujours le même verdict. */
-export function moltbookGateStatus(now: string, batchCompletedAt: string = BATCH_1_COMPLETED_AT): GateStatus[] {
+export function moltbookGateStatus(now: string, batchCompletedAt: string = BATCH_1_COMPLETED_AT): GateStatus {
   const nowMs = Date.parse(now)
   if (!Number.isFinite(nowMs)) throw new Error(`unusable current time: ${now}`)
-  return moltbookGates(batchCompletedAt).map((gate) => {
-    const opensMs = Date.parse(gate.opensAt)
-    return {
-      gate,
-      open: nowMs >= opensMs,
-      opensInHours: Math.round(((opensMs - nowMs) / HOUR_MS) * 100) / 100,
-    }
-  })
+  const gate = moltbookGate(batchCompletedAt)
+  const opensMs = Date.parse(gate.opensAt)
+  return {
+    gate,
+    open: nowMs >= opensMs,
+    opensInHours: Math.round(((opensMs - nowMs) / HOUR_MS) * 100) / 100,
+  }
+}
+
+/**
+ * Une réponse arrivée après la fermeture de la fenêtre.
+ *
+ * Elle n'est ni ignorée ni motif de rouvrir la séquence : elle s'ajoute au dossier de la
+ * vague, datée, et se juge sur les mêmes trois signaux. Sans cette règle écrite, la
+ * tentation est de traiter le premier signe de vie tardif comme la preuve que la vague
+ * « commençait à marcher ».
+ */
+export function isLateReply(replyAt: string, batchCompletedAt: string = BATCH_1_COMPLETED_AT): boolean {
+  const replyMs = Date.parse(replyAt)
+  if (!Number.isFinite(replyMs)) throw new Error(`unusable reply time: ${replyAt}`)
+  return replyMs >= Date.parse(moltbookGate(batchCompletedAt).opensAt)
 }
 
 /**
@@ -142,7 +162,6 @@ export type WaveAssessment = {
  * pas un marché, ils mesurent trois fils.
  */
 export function assessWave(input: {
-  gate: GateName
   assessedAt: string
   replies: readonly ReplySignals[]
   threadsReviewed: number
@@ -152,7 +171,7 @@ export function assessWave(input: {
   const decision: WaveDecision = qualified.length > 0 ? 'qualified_demand' : 'no_qualified_demand'
   return {
     version: MOLTBOOK_GATE_VERSION,
-    gate: input.gate,
+    gate: 'response_window_24h',
     assessed_at: input.assessedAt,
     threads_reviewed: input.threadsReviewed,
     qualified: qualified.map((verdict) => verdict.threadId),
@@ -161,17 +180,17 @@ export function assessWave(input: {
     next_action:
       decision === 'qualified_demand'
         ? 'Answer the qualified thread first. A wave is not needed to chase what already arrived.'
-        : input.gate === 'new_wave_48h'
-          ? 'A new wave may be sourced ONLY from explicit in-progress purchase signals, at the same public price ' +
-            'and with the same targeting and message variables. Do not reactivate the hourly routine.'
-          : 'Close the batch with a bounded statement of what it did and did not test. Do not restate it as a ' +
-            'market conclusion, and do not change the price on the strength of silence.',
+        : 'Close the wave with a bounded statement of what it did and did not test, then move to the next ' +
+          'qualified context. Silence is neutral: do not restate it as a market conclusion, do not change the ' +
+          'price on the strength of it, and do not reactivate the hourly routine. A later reply is appended to ' +
+          'this record retrospectively and never reopens the sequence.',
     price_unchanged: PUBLIC_PRICE,
     not_buyer_demand: NOT_BUYER_DEMAND,
     limits: [
       'Three threads measure three threads. This is not a market test and cannot support a demand conclusion.',
       'An unread or unanswered message tests neither the offer nor the price.',
       'Qualification is declared by a reviewer, never inferred from tone or enthusiasm.',
+      'The 24-hour window bounds when we decide, not when the market is allowed to answer.',
     ],
   }
 }

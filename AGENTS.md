@@ -2,25 +2,30 @@
 
 Guidance for AI coding agents (Codex and others) working in this workspace.
 
-**Claude Code and Codex are peer collaborators with equal operational authority.**
-Claude Code is Samy's central coordination and consolidation point (memory, outreach
-routine, session continuity); Codex has the same freedom to analyze, build, test,
-commit and deploy. Since 2026-07-26, bounded delegation may run in parallel when the
-work is read-only or the file scopes cannot overlap; keep the overall workstream
-linear and never let two agents edit or build the same tree concurrently. Coordination
-is a responsibility, not a rank.
+**Claude Code and OpenAI (ChatGPT Work / Codex) are peer collaborators with equal
+operational authority.** ChatGPT Work is Samy's preferred conversational cockpit:
+Samy directs the project in business language while the agents translate that direction
+into analysis, code, tests, reviews and operations. The OpenAI agent should tell Samy
+when a large construction phase would materially benefit from moving the conversation
+to Codex's code-centric interface; do not recommend a switch merely because code is
+involved. Claude Code remains a central coordination and consolidation point (memory,
+outreach routine, session continuity), not a superior rank. Since 2026-07-26, bounded
+delegation may run in parallel when the work is read-only or the file scopes cannot
+overlap; keep the overall workstream linear and never let two agents edit or build the
+same tree concurrently.
 
 ## Your role: read everything, build, deploy through tested pushes
 
 - Read any file in this workspace, including dotfolders. Analyze, critique, propose,
   **and write code directly in the working tree** when the human asks for changes.
 - **You may commit AND push.** Know what it means: every push to `main` deploys to
-  production instantly (Vercel auto-deploy). So, before any push: run `npx next build`
-  locally and make sure it passes; prefix your commits with `[codex]`; after pushing,
-  log what you shipped in `codex-journal.md`. If a deploy looks wrong, write it in the
-  journal and stop — Claude Code or Samy handles the rollback. Never work at the same
-  time as Claude Code (Samy guarantees the alternation; the hourly routine never
-  touches code).
+  production instantly (Vercel auto-deploy). A capability to push is not blanket
+  authorization for an external action: the task or Samy must explicitly include the
+  push/deploy. Before any push, run `npx next build` locally and make sure it passes.
+  Prefix OpenAI commits with `[codex]` and Claude commits with `[claude]`; log what
+  shipped in the coordinating agent's journal. If a deploy looks wrong, record it and
+  stop for review or rollback. Never let OpenAI and Claude edit or build the same tree
+  concurrently (the hourly routine never touches code).
 - Do **not** touch `.outreach/` (state and logs of the autonomous routine) or
   scheduled-task configs. The hourly routine only answers on Moltbook and writes
   `.outreach/` + `.context/live-snapshot.json` — it never edits code, so it cannot
@@ -104,6 +109,13 @@ memory of all agents working on this project**, Codex included.
 - Never delete or rewrite existing memories wholesale — append or correct precisely.
   Exception: the dedicated current-state/archive migration required by
   `memory-structure.md`, after a verified verbatim archive exists.
+- **How to write these files.** They are UTF-8 **without BOM**, LF-only, and their
+  first line must stay the `---` frontmatter opener. Append new entries at the end of
+  the file, never above the frontmatter; keep the file's existing line endings; never
+  re-encode a file you are only adding a paragraph to. In a shell, prefer
+  `[System.IO.File]::AppendAllText($path, $text, (New-Object System.Text.UTF8Encoding($false)))`
+  over `Add-Content -Encoding UTF8`, which writes a BOM under Windows PowerShell 5.1
+  and CRLF under both hosts. Read the file back after an unusual write.
 
 ## Delegation protocol (orchestrator ↔ delegate)
 
@@ -143,12 +155,14 @@ Samy to relay. Codex → Claude Code is the canonical direction today:
   opinion is a protocol violation — the delegate flags it in its report. Both
   agents' opinions count; disagreement is signal, not friction.
 - **Division of labor (Samy, updated 2026-07-26).** Use Claude Code's `opus`
-  alias (the latest Opus available) in MAX effort for delegation; do not pin a
-  stale or unavailable model name. The
-  orchestrator should actively route code work to the Claude delegate — have it
-  pre-build, prepare implementations, and above all **review and correct code**
-  before it ships. Do not keep substantial code work solo out of convenience: a
-  reviewed diff beats an unreviewed solo diff.
+  alias (the latest Opus available, currently Opus 5) in MAX effort for delegation;
+  do not pin a stale or unavailable model name. Opus is particularly strong at
+  development: use it often, including to design and construct features, not only as
+  a final reviewer. The OpenAI orchestrator must not hesitate to launch the approved
+  CLI delegation whenever Opus can materially improve a development result. Have it
+  pre-build, implement, review and correct code. Do not keep substantial code work
+  solo out of convenience: a reviewed or jointly constructed diff beats an
+  unreviewed solo diff.
 - **Mandatory report format** — the delegate ends with these sections: `SUMMARY` ·
   `OPINIONS & DISAGREEMENTS` (write "none" if none) · `REFUSED ACTIONS` (every
   permission refusal, with the hook's verbatim reason) · `FILES TOUCHED` ·
@@ -177,9 +191,13 @@ Samy to relay. Codex → Claude Code is the canonical direction today:
   (`gh issue create`), suppress, or hold+escalate. The DB status is the single
   source of truth — re-check an item is still `approved` right before sending so
   the two reviewers never double-post.
-- **The delegate never pushes.** The orchestrator reviews the diff, runs
-  `npx next build`, then commits and pushes under the existing rules. The delegate
-  may work in parallel with the orchestrator on bounded read-only analysis or a
+- **The delegate may commit and push when the brief or Samy explicitly authorizes
+  publication/deployment.** This replaces the former blanket rule that the delegate
+  never pushes. Opus must then apply the same release gate as OpenAI: review the real
+  diff, run the relevant tests and `npx next build`, use a `[claude]` commit prefix,
+  push only the intended state and record the outcome. Without explicit push/deploy
+  scope, the delegate stops after a validated implementation or review. The delegate
+  may work in parallel with the orchestrator only on bounded read-only analysis or a
   non-overlapping file scope. Any shared-tree implementation or build remains
   serialized: never run parallel builders or overlapping editors on the same tree.
 - **Delegation log.** Every run appends to `.context/memory/delegation-log.md`
@@ -192,19 +210,28 @@ Samy to relay. Codex → Claude Code is the canonical direction today:
 
 ## The project in 30 seconds
 
+**`docs/DOCTRINE.md` is the source of truth for what this project currently is.** Read it
+before changing any active document or public claim; when a file contradicts it, that
+file is stale. The summary below is a pointer, not a second authority.
+
 **Agent Reputation** (public identity) / **Agent Hub** (technical name) —
-https://agentreputation.dev — is an independent evidence and pre-purchase analysis
-layer for agents and humans choosing whether to buy an AI-agent service. It combines
-what a candidate claims, observed work, source provenance, payment and delivery facts,
-contradictions and missing information into an evidence dossier and a contextual
-decision memo. The existing cross-registry catalogue and separated raw signals are
-inputs, never a universal reliability score. The service is not a marketplace and a
-provider cannot buy a favorable verdict. It is exposed through the website, a
-Streamable HTTP MCP server at `/api/mcp`, and an A2A agent card. Counts and the current
-tool set must be read from the live product, not copied into this file. The company is
-founder-led and independent; agent voting governance was abandoned. Solo founder:
-Samy Touri, Belgium. Free-tier infrastructure and radical transparency remain part of
-the operating model.
+https://agentreputation.dev — helps an entity decide whether to buy an online service,
+mainly agents, MCP servers, services and platforms, by holding evidence the seller
+cannot write about itself and nobody else keeps. Two axes: preserve commercial facts the
+large platforms erase over time, and elicit evidence that exists nowhere else through the
+**Complaint Bureau** (*Registry of payment-verified complaints*), where entry requires a
+signature from the paying address and the seller's reply is free, unconditional and
+permanently linked.
+
+Since the pivot of 2026-07-29 the project is **not** a discovery product, **not** a
+semantic search engine (vectors removed), **not** a rating platform and **not** a
+marketplace; no revenue may ever come from the seller side. The cross-registry catalogue,
+the MCP and A2A contracts and the badges remain as a distribution surface and a public
+compatibility commitment, never as a defence. Exposed through the website, a Streamable
+HTTP MCP server at `/api/mcp`, and an A2A agent card. Counts and the current tool set must
+be read from the live product, not copied into this file. Founder-led and independent;
+agent voting governance was abandoned. Solo founder: Samy Touri, Belgium. Free-tier
+infrastructure and radical transparency remain part of the operating model.
 
 ## Map — where everything lives
 
@@ -213,7 +240,10 @@ the operating model.
 | App code | `app/` (Next.js App Router), `lib/` (DB + domain logic) |
 | MCP server (current tools + instructions) | `app/api/[transport]/route.ts` |
 | Domain logic, profiles, claims, evidence inputs, requests and receipts | `lib/agenthub.ts` |
-| DB schema (Supabase pgvector) | `db/schema.sql` |
+| Current product doctrine (**source of truth**) | `docs/DOCTRINE.md` |
+| DB schema (Supabase / Postgres) | `db/schema.sql` |
+| Prepared, unapplied migrations | `db/migration-*.sql` — read the header before running one |
+| Archived material (**not read by default**) | `archive/` — open only when a task names it; see `archive/README.md` |
 | Outreach routine doctrine (Moltbook PR bot) | `OUTREACH-ROUTINE.md` |
 | Routine daily action logs (what the bot saw/did) | `.outreach/log/*.md` (local only) |
 | Routine idempotence state + API gotchas | `.outreach/state.json` |
@@ -226,8 +256,9 @@ the operating model.
 | Agent-facing docs | `public/llms.txt` |
 | One-off scripts (imports, seeds) | `scripts/` |
 
-Live surfaces worth checking: `/dashboard` (activity), `/top` (leaderboard),
-`/agents/{handle}` (15.8k profiles), `/register`, `/.well-known/agent-card.json`.
+Live surfaces worth checking: `/dashboard` (activity), `/top` (empty by design since the
+derived ratings were deleted, and it explains why), `/agents/{handle}`, `/register`,
+`/.well-known/agent-card.json`. Read live counts from `hub_stats`, never from this file.
 
 ## Hard-won conventions (do not regress these)
 
@@ -238,6 +269,14 @@ Live surfaces worth checking: `/dashboard` (activity), `/top` (leaderboard),
   full version — otherwise Vercel pins an empty PRERENDER after each deploy.
 - **Native vs imported reputation stays structurally separate** — never merge them
   into a single opaque score. Provenance is a feature, not noise.
+- **Store only what was observed, never what was computed.** Two invented numbers have
+  already been removed for this reason: the star-derived rating (2026-07-25) and the
+  description embedding (2026-07-29). A proposal to store a score, a rank, a similarity or
+  a confidence we calculated is refused by default — see `docs/DOCTRINE.md`.
+- **`archive/` is never read by default and never imported.** It is excluded from the
+  typecheck (`tsconfig.json`) and from deployment (`.vercelignore`) but stays tracked by
+  Git so every move is reversible. An import reaching into it means the move was wrong:
+  restore the file instead.
 - **Profiles are claimed, not open** (since 2026-07-17): register_agent generates a
   one-time owner_token on first claim (sha256 hash stored, token never logged);
   updating a claimed handle requires it (or the same proven channel, e.g.
@@ -261,8 +300,9 @@ Live surfaces worth checking: `/dashboard` (activity), `/top` (leaderboard),
    archive only when relevant.
 4. `git log --oneline -30` for the build cadence.
 
-Key open problem (updated 2026-07-26): the first external x402 purchase has now been
-paid, delivered and independently reproduced. The next bottleneck is to turn that one
-bounded result into a credible public proof asset and then into real conversations,
-buyer requests and native post-service evidence — without generalizing one successful
-micro-test into a seller-wide endorsement.
+Key open problem (updated 2026-07-29): the pivot is now in the tree but the product it
+describes does not exist yet. Nothing captures the dated commercial terms of paid x402
+offers, and the Complaint Bureau has neither a method page nor an intake. The upstream
+source removes resources after thirty days of inactivity, so every day without capture is
+data destroyed rather than delayed. Until repeated usage exists, at least 60% of effort
+goes to field learning and conversations and at most 40% to construction.

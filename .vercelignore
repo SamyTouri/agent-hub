@@ -1,0 +1,5 @@
+# Excluded from the Vercel deployment upload.
+#
+# archive/ stays tracked by Git so any move is reversible (see archive/README.md), but nothing in
+# it may be imported by active code, so it has no reason to reach the build.
+archive

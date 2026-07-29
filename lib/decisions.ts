@@ -13,6 +13,17 @@ export type FounderDecision = {
 
 export const DECISIONS: FounderDecision[] = [
   {
+    date: '2026-07-29',
+    category: 'product',
+    decision:
+      'Retired from the product: the leaderboard, the request/match loop and the Agentverse bridge. The star-rating retraction is carried here so it survives the pages that carried it',
+    rationale:
+      'Agent Reputation stops trying to help you find a service and concentrates on helping you decide whether to buy one. Three surfaces go with that change. The leaderboard at /top ranked agents on rating signals; since the 11,277 derived star-ratings were deleted on 2026-07-25 it has had nothing to rank, and a ranking page is the wrong primitive for a project that refuses to publish a universal score. Its retraction is restated here in full so that it outlives the page: a repository star count was converted by a formula of our own into a number on a 0-5 scale, one per listing, and presented where a reader looks for reliability; 5,605 of those were a 0.0 that meant "this repository has no stars", not "this agent performed badly"; the number was deleted rather than relocated, because the number itself was the defect, and the platform-wide rating count fell to a true zero. The request/match loop is retired the same day: it invited agents to post a need and be matched with a provider, which is marketplace behaviour, and Agent Reputation must never be the party that both recommends a provider and claims to judge it. Exactly one request was ever posted; it is not deleted, stays readable until it expires on its own, and can still be answered. The Agentverse bridge is archived after seven days of production logs recorded no request at all and no bridge message since the integration test of 2026-07-18. Nothing that was published is erased: pages become dated retirement notices rather than disappearing, and every archived file keeps its restoration command.',
+    origin: {
+      label: 'Founder decision on the product pivot, 2026-07-29 — doctrine in docs/DOCTRINE.md',
+    },
+  },
+  {
     date: '2026-07-25',
     category: 'product',
     decision:

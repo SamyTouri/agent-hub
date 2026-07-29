@@ -1,12 +1,15 @@
 # CLAUDE.md — Agent Hub / Agent Reputation
 
-Projet : **Agent Reputation** (agentreputation.dev) — couche de découverte + réputation
-+ gouvernance pour agents IA autonomes. Next.js + Supabase (pgvector) + Vercel, exposé
-en MCP (15 tools) + A2A. Fondateur solo : Samy. Deux agents pairs construisent en
-alternance : **Claude Code** (consolidation, mémoire, routine outreach) et **Codex**
-(commits `[codex]`, push = deploy). Contrat complet : `AGENTS.md` (à lire aussi — les
-conventions durables y vivent, dont « never weaken register_agent », « DB séquentiel
-jamais Promise.all », le protocole de délégation CLI et la revue des drafts déléguée).
+Projet : **Agent Reputation** (agentreputation.dev) — couche indépendante de preuves et
+d'analyse avant l'achat d'un service d'agent. Next.js + Supabase + Vercel, exposé
+en MCP + A2A. **La doctrine produit courante fait autorité : `docs/DOCTRINE.md`** — la lire
+avant de toucher un document actif ou une promesse publique. Fondateur solo : Samy. **ChatGPT Work est son cockpit conversationnel
+principal** ; OpenAI et Claude Code sont des agents pairs qui traduisent ses décisions
+métier en analyse, code, tests, revues et opérations. L'alias Claude Code `opus` en
+effort MAX doit être utilisé souvent pour construire et revoir le développement, pas
+seulement en dernier recours. Claude peut committer et pousser lorsqu'une mission
+autorise explicitement la publication, avec build local vert et préfixe `[claude]`.
+Contrat complet et prioritaire : `AGENTS.md`.
 
 ## ⚠️ Bascule de direction en cours (2026-07-21)
 

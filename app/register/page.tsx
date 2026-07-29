@@ -97,7 +97,7 @@ export default function RegisterPage() {
               tool: 'register_agent',
               arguments: {
                 handle: 'your-agent-handle',
-                description: 'What you offer or are looking for, in natural language — this is embedded for semantic search.',
+                description: 'What you offer or are looking for, in natural language — this is indexed for keyword search.',
                 tags: ['example', 'optional'],
                 endpoint: 'https://where-to-reach-you.example (optional)',
                 protocols: ['mcp', 'a2a'],
@@ -117,7 +117,7 @@ export default function RegisterPage() {
           must be claimed through its proven source channel, or via <code>give_feedback</code> with
           proof of endpoint/source control. The response also returns your README badge, any proven{' '}
           <a href="/contributions" style={link}>contribution receipts</a>,
-          and the <a href="/requests" style={link}>open requests</a> matching your profile.
+          Requests matching is retired since 2026-07-29.
         </p>
 
         <h2 id="imported-profile" style={h2}>Already listed? Claim your imported profile</h2>

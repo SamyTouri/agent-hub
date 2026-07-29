@@ -23,10 +23,12 @@ import {
   MOLTBOOK_GATE_VERSION,
   NOT_BUYER_DEMAND,
   PUBLIC_PRICE,
+  RESPONSE_WINDOW_HOURS,
   assessWave,
   classifyReply,
+  isLateReply,
+  moltbookGate,
   moltbookGateStatus,
-  moltbookGates,
 } from '../lib/moltbook-gate.ts'
 import type { CohortPick } from '../lib/evidence-cohort.ts'
 
@@ -150,27 +152,32 @@ test('a duplicated subject inside a manifest is caught before it is written', ()
 // The Moltbook gate: the bar is written before the replies are read
 // ---------------------------------------------------------------------------
 
-test('the two gates open exactly 48 and 72 hours after the batch', () => {
-  const gates = moltbookGates()
-  assert.deepEqual(
-    gates.map((gate) => [gate.name, gate.hoursAfterBatch]),
-    [
-      ['new_wave_48h', 48],
-      ['final_assessment_72h', 72],
-    ],
-  )
-  assert.equal(gates[0].opensAt, '2026-07-28T16:47:42.798Z')
-  assert.equal(gates[1].opensAt, '2026-07-29T16:47:42.798Z')
+test('there is exactly one gate, and it opens 24 hours after the batch', () => {
+  // La règle des 48 h/72 h laissait une vague morte ouverte pendant trois jours et
+  // obligeait à y revenir deux fois sans rien apprendre entre-temps. Une seule porte.
+  const gate = moltbookGate()
+  assert.equal(gate.name, 'response_window_24h')
+  assert.equal(gate.hoursAfterBatch, 24)
+  assert.equal(RESPONSE_WINDOW_HOURS, 24)
+  assert.equal(gate.opensAt, '2026-07-27T16:47:42.798Z')
   assert.equal(BATCH_1_COMPLETED_AT, '2026-07-26T16:47:42.798Z')
+  assert.match(gate.question, /Silence is neutral/)
 })
 
 test('the clock is read from a supplied instant, never from the wall', () => {
-  const before = moltbookGateStatus('2026-07-28T10:00:00.000Z')
-  assert.equal(before[0].open, false)
-  assert.ok(before[0].opensInHours > 0)
-  const after = moltbookGateStatus('2026-07-29T17:00:00.000Z')
-  assert.equal(after[0].open, true)
-  assert.equal(after[1].open, true)
+  const before = moltbookGateStatus('2026-07-27T10:00:00.000Z')
+  assert.equal(before.open, false)
+  assert.ok(before.opensInHours > 0)
+  const after = moltbookGateStatus('2026-07-27T17:00:00.000Z')
+  assert.equal(after.open, true)
+  assert.ok(after.opensInHours < 0)
+})
+
+test('a reply after the window is late, and lateness never reopens the sequence', () => {
+  assert.equal(isLateReply('2026-07-27T10:00:00.000Z'), false)
+  assert.equal(isLateReply('2026-07-28T09:00:00.000Z'), true)
+  const assessment = assessWave({ assessedAt: '2026-07-27T17:00:00.000Z', replies: [], threadsReviewed: 3 })
+  assert.match(assessment.next_action, /appended to this record retrospectively and never reopens the sequence/)
 })
 
 test('a qualified reply needs all three signals, not two', () => {
@@ -186,16 +193,17 @@ test('a qualified reply needs all three signals, not two', () => {
 
 test('silence produces no demand and no price rejection', () => {
   const assessment = assessWave({
-    gate: 'final_assessment_72h',
-    assessedAt: '2026-07-29T17:00:00.000Z',
+    assessedAt: '2026-07-27T17:00:00.000Z',
     replies: [],
     threadsReviewed: 3,
   })
   assert.equal(assessment.decision, 'no_qualified_demand')
+  assert.equal(assessment.gate, 'response_window_24h')
   assert.equal(assessment.price_unchanged, PUBLIC_PRICE)
   assert.ok(assessment.not_buyer_demand.some((line) => /Silence is not a rejection of the price/.test(line)))
   assert.ok(assessment.limits.some((line) => /Three threads measure three threads/.test(line)))
-  assert.match(assessment.next_action, /do not change the price on the strength of silence/)
+  assert.ok(assessment.limits.some((line) => /bounds when we decide/.test(line)))
+  assert.match(assessment.next_action, /do not change the\s+price on the strength of it/)
 })
 
 test('seller interest and compliments are named as what they are not', () => {
@@ -208,8 +216,7 @@ test('seller interest and compliments are named as what they are not', () => {
 
 test('one qualified reply changes the next action, and is named', () => {
   const assessment = assessWave({
-    gate: 'new_wave_48h',
-    assessedAt: '2026-07-28T17:00:00.000Z',
+    assessedAt: '2026-07-27T17:00:00.000Z',
     threadsReviewed: 3,
     replies: [
       { threadId: 'thread-a', namesPurchaseInProgress: true, namesSpecificCandidate: true, namesConsequenceOfFailure: true },
@@ -222,20 +229,21 @@ test('one qualified reply changes the next action, and is named', () => {
   assert.match(assessment.next_action, /Answer the qualified thread first/)
 })
 
-test('with no qualified reply, a new wave is allowed only from purchase signals', () => {
+test('with no qualified reply, the wave closes and the work moves on', () => {
   const assessment = assessWave({
-    gate: 'new_wave_48h',
-    assessedAt: '2026-07-28T17:00:00.000Z',
+    assessedAt: '2026-07-27T17:00:00.000Z',
     threadsReviewed: 3,
     replies: [{ threadId: 'thread-b', namesPurchaseInProgress: false, namesSpecificCandidate: true, namesConsequenceOfFailure: false }],
   })
   assert.equal(assessment.decision, 'no_qualified_demand')
-  assert.match(assessment.next_action, /ONLY from explicit in-progress purchase signals/)
-  assert.match(assessment.next_action, /Do not reactivate the hourly routine/)
+  assert.match(assessment.next_action, /move to the next\s+qualified context/)
+  assert.match(assessment.next_action, /do not reactivate the hourly routine/)
   assert.equal(assessment.version, MOLTBOOK_GATE_VERSION)
+  assert.equal(MOLTBOOK_GATE_VERSION, 2)
 })
 
 test('an unusable instant is refused rather than silently defaulted', () => {
   assert.throws(() => moltbookGateStatus('soon'), /unusable current time/)
-  assert.throws(() => moltbookGates('whenever'), /unusable batch completion time/)
+  assert.throws(() => moltbookGate('whenever'), /unusable batch completion time/)
+  assert.throws(() => isLateReply('eventually'), /unusable reply time/)
 })

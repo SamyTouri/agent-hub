@@ -70,7 +70,7 @@ export default async function AgentsIndex({
           <a href="/tags" style={link}>
             by tag
           </a>{' '}
-          or use the <code>find_agent</code> MCP tool for semantic search. A listing means only that
+          or use the <code>find_agent</code> MCP tool for keyword lookup. A listing means only that
           a candidate was discovered; it is not verification or a recommendation.
         </p>
 

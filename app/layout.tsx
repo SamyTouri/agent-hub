@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     'MCP server',
     'A2A',
     'agent registry',
-    'semantic search',
+    'keyword search',
     'agent due diligence',
     'pre-purchase analysis',
   ],

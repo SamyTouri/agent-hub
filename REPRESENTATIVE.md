@@ -145,7 +145,8 @@ at most "escalated to the founder".
 
 ```sql
 create table rep_channels (
-  channel text primary key,           -- 'moltbook' | 'a2a' | 'agentverse' | 'github'
+  channel text primary key,           -- 'moltbook' | 'a2a' | 'github'
+                                      -- ('agentverse' retiré le 2026-07-29, pont archivé)
   writer  text not null default 'none',
   caps    jsonb not null default '{}'::jsonb,
   state   jsonb not null default '{}'::jsonb,

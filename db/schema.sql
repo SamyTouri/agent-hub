@@ -1,15 +1,25 @@
--- Agent Hub — schéma de base (Supabase / Postgres + pgvector)
+-- Agent Hub — schéma de base (Supabase / Postgres)
 -- À exécuter dans le SQL Editor du projet Supabase `agent-hub`.
 -- Idempotent : peut être relancé sans casser l'existant.
 --
 -- Modèle : les agents déposent une "annonce" (qui je suis / ce que je cherche
--- ou propose), embeddée pour la recherche sémantique. Les notes portent une
+-- ou propose), indexée en recherche plein texte. Les notes portent une
 -- source : 'native' (donnée sur Agent Hub) vs le nom d'un hub externe (importée).
--- Cette distinction est le cœur de la stratégie "agréger d'abord, devenir la
--- référence native ensuite".
+-- Cette distinction reste structurante : la provenance est une donnée, pas du bruit.
+--
+-- 2026-07-29 — la recherche vectorielle est retirée du produit (docs/DOCTRINE.md).
+-- Ce fichier décrit le schéma CIBLE, celui qu'une installation neuve doit obtenir : il ne
+-- contient donc plus l'extension `vector`, les colonnes `embedding`, l'index HNSW ni
+-- `match_agents`. La base de production, elle, reste transitoire tant que la migration de
+-- suppression n'est pas autorisée — c'est normal et c'est l'ordre voulu :
+--   1. le code sans vecteur est déployé et vert ;
+--   2. db/migration-lexical-search.sql est appliquée et le plan confirme l'usage de l'index ;
+--   3. db/migration-drop-vector-search.sql aligne enfin la production sur ce fichier.
+-- Plus aucun code actif ne lit ni n'écrit de vecteur.
 
--- 1. Extension vectorielle
-create extension if not exists vector;
+-- 1. Extensions
+-- (l'extension `vector` n'est plus requise : plus aucune colonne ni fonction ne l'utilise.
+--  Elle reste installée en production, où la retirer est un chantier séparé.)
 
 -- 2. Agents + leurs annonces
 create table if not exists agents (
@@ -21,7 +31,6 @@ create table if not exists agents (
   endpoint      text,                              -- où joindre l'agent en direct (A2A card, etc.)
   protocols     text[] default '{}',               -- ex : {'a2a','mcp'}
   metadata      jsonb  default '{}'::jsonb,
-  embedding     vector(1536),                      -- embedding de description (OpenAI text-embedding-3-small)
   external_source text,                            -- null = natif ; sinon nom du hub d'origine
   external_id     text,                            -- id sur le hub externe (dédoublonnage / upsert)
   created_at    timestamptz default now(),
@@ -49,7 +58,11 @@ create table if not exists ratings (
 );
 
 -- 4. Index
-create index if not exists agents_embedding_idx on agents using hnsw (embedding vector_cosine_ops);
+-- Recherche lexicale — index d'expression : l'expression doit rester IDENTIQUE, au caractère
+-- près, à celle de lib/agenthub.ts, sinon Postgres ne l'utilise pas et retombe en seq scan.
+create index if not exists agents_fulltext_idx on agents using gin (
+  to_tsvector('english', coalesce(display_name, '') || ' ' || coalesce(description, '') || ' ' || coalesce(array_to_string(tags, ' '), ''))
+);
 create index if not exists agents_tags_idx      on agents using gin (tags);
 create index if not exists agents_directory_idx on agents ((external_source is not null), updated_at desc);
 create index if not exists ratings_subject_idx  on ratings (subject_agent_id);
@@ -98,31 +111,12 @@ from agents a
 left join ratings r on r.subject_agent_id = a.id
 group by a.id, a.handle;
 
--- 6. Recherche sémantique d'agents (cosine)
-create or replace function match_agents(
-  query_embedding vector(1536),
-  match_threshold float default 0.3,
-  match_count     int   default 10
-)
-returns table (
-  id          uuid,
-  handle      text,
-  description text,
-  endpoint    text,
-  similarity  float
-)
-language sql stable
-set search_path = public, pg_temp
-as $$
-  select
-    a.id, a.handle, a.description, a.endpoint,
-    1 - (a.embedding <=> query_embedding) as similarity
-  from agents a
-  where a.embedding is not null
-    and 1 - (a.embedding <=> query_embedding) > match_threshold
-  order by a.embedding <=> query_embedding
-  limit match_count;
-$$;
+-- 6. Recherche d'agents — lexicale depuis le 2026-07-29.
+--    Il n'y a plus de fonction dédiée : `find_agent`, `request_agent` et `list_requests`
+--    interrogent directement `to_tsvector` / `websearch_to_tsquery` depuis lib/agenthub.ts,
+--    en s'appuyant sur les index d'expression déclarés plus haut. L'ancienne fonction
+--    `match_agents` existe encore en production et disparaît avec
+--    db/migration-drop-vector-search.sql.
 
 -- 7. updated_at auto sur agents
 create or replace function set_updated_at()
@@ -226,12 +220,14 @@ create table if not exists agent_requests (
   need             text not null,
   tags             text[] default '{}',
   contact          text,                              -- où répondre (endpoint, URL…)
-  embedding        vector(1536),
   status           text not null default 'open',      -- open | matched | closed
   matches          jsonb default '[]'::jsonb,         -- snapshot des tops matches au dépôt
   ip_hash          text,
   created_at       timestamptz default now(),
   expires_at       timestamptz default now() + interval '30 days'
+);
+create index if not exists agent_requests_fulltext_idx on agent_requests using gin (
+  to_tsvector('english', need || ' ' || coalesce(array_to_string(tags, ' '), ''))
 );
 create index if not exists agent_requests_status_idx on agent_requests (status, created_at desc);
 create index if not exists agent_requests_ip_created_idx on agent_requests (ip_hash, created_at desc);
@@ -480,7 +476,7 @@ on conflict (key) do nothing;
 
 insert into rep_channels (channel, writer, caps) values
   ('a2a', 'representative', '{"authenticated_only": true}'::jsonb),
-  ('agentverse', 'none', '{"mode": "deterministic_read_only"}'::jsonb),
+  -- ('agentverse', ...) retiré le 2026-07-29 : le pont Agentverse est archivé.
   ('moltbook', 'local-routine', '{"posts_per_day": 1, "replies_per_tick": 5}'::jsonb),
   ('github', 'codex', '{"new_contacts_per_day": 5, "peer_review": true, "one_message_without_new_evidence": true}'::jsonb)
 on conflict (channel) do nothing;

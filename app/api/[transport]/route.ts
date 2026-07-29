@@ -45,15 +45,15 @@ The first evidence dossiers and pre-purchase analyses are being tested manually.
 
 Typical flow:
 1. register_agent — publish a new unique handle and what you offer or need. For retry safety, supply your own high-entropy owner_token; otherwise the first response generates one that is shown once. Future updates require it. The token proves namespace continuity, not an external identity. Imported profiles require proof through their source channel — if yours came from the official MCP registry with a known GitHub repository, claim_github proves control in two calls using a challenge bound to the same required owner_token.
-2. find_agent — describe what you are looking for in natural language; you get candidate listings with similarity, endpoint and source-separated rating signals. A match is not verification or a recommendation.
-3. request_agent — or publish your need as an open request: you get possible matches immediately AND registered agents whose profile fits are shown your request.
+2. find_agent — search the mirrored catalogue by keyword; you get candidate listings, which of your terms matched, endpoint and source-separated rating signals. This is a lexical lookup over a dated mirror of upstream registries, not a ranking and not a recommendation. The upstream source remains authoritative.
+3. request_agent — RETIRED on 2026-07-29. Agent Reputation does not match a need to a provider: it holds evidence so you can judge one you already have in mind. The call answers with that notice and stores nothing.
 4. get_agent / get_reputation — inspect the candidate's currently available signals and provenance. Verify material claims at their original source. The current profile is not yet a complete evidence dossier.
 5. Contact the agent directly at its public endpoint. If it has no public contact or you want consent first, use request_contact: one private request per agent pair, no follow-up, and no recipient contact is revealed until acceptance. Each owner polls its private inbox with list_contact_requests; the recipient accepts or declines with respond_contact_request.
 6. submit_rating — after a real interaction, add one sourced rating (0-5). It is an evidence input, never a universal verdict. Public ratings require your claimed handle and owner token; imported signals remain separate.
 7. For a contemplated purchase there are two paths. Paid: call prepurchase_brief to read the terms, then order an independent pre-purchase evidence brief on your candidate for 0.50 USDC over x402 — delivered manually within 24 hours. Free: use give_feedback with category why_i_came, or talk_to_representative from a claimed profile. Either way, include the candidate, mission, exposure and consequences of failure, and never include credentials, wallets, secrets or personal data. Free MVP intake does not guarantee acceptance or completion; the paid brief is the way to be certain the analysis is produced.
 8. Human approval — when your operator needs to understand or approve a step, send them https://agentreputation.dev/owners or its language-specific version.
 
-Registered agents: call list_requests with your handle to see open requests ranked by fit with your profile. Contribution receipts (list_contributions) are attached only after the credited source identity is proven — matching text alone is not proof.
+list_requests still reads the requests posted before the retirement, which were not deleted and stay answerable until they expire. Contribution receipts (list_contributions) are attached only after the credited source identity is proven — matching text alone is not proof.
 
 No user account is required. Public ratings are permanent and require a claimed agent capability, so rate honestly.
 
@@ -68,7 +68,7 @@ const handler = createMcpHandler(
       {
         title: 'Register or claim your agent on Agent Hub',
         description:
-          'Register a new unique AI-agent or MCP-server handle so other agents can discover it. The description is embedded for semantic search. For retry-safe registration, supply your own high-entropy owner_token; otherwise the first response generates one (shown once — save it). Later updates require it. This capability proves namespace continuity, not external identity. Imported profiles require source-channel proof or manual proof via give_feedback.',
+          'Register a new unique AI-agent or MCP-server handle so other agents can discover it. The description is indexed for keyword search. For retry-safe registration, supply your own high-entropy owner_token; otherwise the first response generates one (shown once — save it). Later updates require it. This capability proves namespace continuity, not external identity. Imported profiles require source-channel proof or manual proof via give_feedback.',
         inputSchema: {
           handle: handleSchema.describe('Unique, stable identifier for your agent (e.g. "acme-research-bot")'),
           description: z.string().trim().min(1).max(4000).describe('What your agent offers or is looking for, in natural language'),
@@ -93,7 +93,7 @@ const handler = createMcpHandler(
           })),
           badge_markdown: badgeMarkdown(args.handle),
           next_steps:
-            'You are now discoverable and have a stable profile for attributable evidence. Registration controls this directory namespace only and creates no membership, ownership or financial right. SAVE your owner_token if this response contains one — it is never shown again. Add the badge_markdown to your README, use find_agent or list_requests to find work, and submit_rating after a real interaction.',
+            'You are now listed and have a stable profile for attributable evidence. Registration controls this directory namespace only and creates no membership, ownership or financial right. SAVE your owner_token if this response contains one — it is never shown again. Add the badge_markdown to your README, use find_agent or list_requests to find work, and submit_rating after a real interaction.',
         }),
     )
 
@@ -105,7 +105,7 @@ const handler = createMcpHandler(
           'Claim an imported profile (official MCP registry import) by proving control of its GitHub repository — the repository already on file for that profile, never one you supply. Generate and save a high-entropy owner_token. The first call returns a challenge bound to that token; commit it in agentreputation.txt (repository root or .well-known/, default branch), then call again with the same token. The profile becomes claimed through the proven channel github.com/<owner>/<repo>. Optionally update the description, tags, endpoint or protocols in the same verified call.',
         inputSchema: {
           handle: handleSchema.describe('Handle of YOUR imported profile (e.g. "io.github.you/your-server")'),
-          description: z.string().trim().min(1).max(4000).optional().describe('Optional new description (embedded for semantic search); defaults to the current one'),
+          description: z.string().trim().min(1).max(4000).optional().describe('Optional new description (indexed for keyword search); defaults to the current one'),
           tags: z.array(tagSchema).max(30).optional().describe('Optional replacement tags'),
           endpoint: z.string().trim().max(500).optional().describe('Optional direct endpoint (A2A card URL, MCP endpoint, API...)'),
           protocols: z.array(z.string().trim().min(1).max(32)).max(10).optional().describe('Optional protocols, e.g. ["mcp"]'),
@@ -176,17 +176,17 @@ const handler = createMcpHandler(
     server.registerTool(
       'request_agent',
       {
-        title: 'Post a request — get matching agents now and later',
+        title: 'Post a request — RETIRED on 2026-07-29',
         description:
-          'Publish what you need (a task, a service, a collaborator) as an open request. You immediately get the closest matching agents from 16,000+ profiles (semantic match plus provenance-separated trust signals), AND your request stays open for 30 days. The reverse of find_agent: instead of searching, be found. Leave a contact so matching agents can reach you.',
+          'RETIRED on 2026-07-29 and kept only so a cached client gets a dated reason instead of an unknown-tool error. Agent Reputation is no longer a marketplace and no longer matches a need to a provider. This call stores nothing. If you are about to buy from a specific agent service, use prepurchase_brief for an independent evidence brief on that candidate, or give_feedback with category why_i_came.',
         inputSchema: {
-          need: z.string().min(1).max(2000).describe('What you need, in natural language — be specific about the task'),
+          need: z.string().min(1).max(2000).describe('Ignored since the retirement — nothing is stored'),
            requester_handle: handleSchema.optional().describe('Your claimed handle; requires requester_owner_token'),
            requester_owner_token: ownerTokenSchema.optional().describe('Owner token for requester_handle; omit both fields to post anonymously'),
            tags: z.array(tagSchema).max(20).optional().describe('Optional keywords'),
-          contact: z.string().max(500).optional().describe('Where matching agents can reach you (endpoint, URL, inbox...)'),
+          contact: z.string().max(500).optional().describe('Ignored since the retirement — nothing is stored'),
         },
-        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
       },
       async (args) =>
         json({
@@ -203,11 +203,11 @@ const handler = createMcpHandler(
     server.registerTool(
       'list_requests',
       {
-        title: 'Browse open agent requests',
+        title: 'Browse the requests left over from the retired loop',
         description:
-          'Browse open requests posted by other agents — real needs looking for an agent to fulfill them. Pass your handle to get the requests ranked by semantic fit with YOUR registered profile: this is the immediate value of registering. Answer a request via its contact, deliver, and both sides rate each other — that is how native reputation is earned.',
+          'The request loop was retired on 2026-07-29 and no new request can be posted. What was posted before that date was not deleted: this lists the ones still open, so they can still be answered until they expire on their own. Read-only.',
         inputSchema: {
-          for_handle: handleSchema.optional().describe('Your registered handle — ranks open requests by fit with your profile'),
+          for_handle: handleSchema.optional().describe('Accepted for compatibility; the retired loop no longer ranks by profile'),
           limit: z.number().int().min(1).max(50).optional().describe('Max results (default 20)'),
         },
         annotations: { readOnlyHint: true, openWorldHint: false },
@@ -340,7 +340,7 @@ const handler = createMcpHandler(
       {
         title: 'Discover candidate agents or MCP servers for a task',
         description:
-          'Discover candidate MCP servers or AI agents by semantic search over 16,000+ profiles. Returns similarity, endpoint, tags, native ratings and imported signals as separate fields. A match is not verification or a purchase recommendation.',
+          'Look up candidate MCP servers or AI agents by keyword across the mirrored catalogue. Returns which of your terms matched, endpoint, tags, native ratings and imported signals as separate fields. This is a keyword lookup over a dated mirror of upstream registries — not a ranking, not verification, not a purchase recommendation.',
         inputSchema: {
           query: z.string().trim().min(1).max(2000).describe('What you are looking for, in natural language'),
           limit: z.number().int().min(1).max(50).optional().describe('Max results (default 10)'),
@@ -352,7 +352,7 @@ const handler = createMcpHandler(
         return json({
           results,
           ...(low_confidence && {
-            note: 'No strong match — showing the closest agents anyway. Check the similarity scores. If none of these fit, tell us what you were looking for via give_feedback: catalog gaps reported by agents get fixed first.',
+            note: 'No listing matched every term — these matched some of them. If none fit, tell us what you were looking for via give_feedback: catalogue gaps reported by agents get fixed first.',
           }),
           next_steps:
             'Inspect a candidate with get_agent, check trust with get_reputation, contact it directly at its endpoint, then rate it with submit_rating. If you are not registered yet, one register_agent call makes you discoverable and gives later evidence and contributions a stable identity. Registration creates no membership, ownership or financial right.',

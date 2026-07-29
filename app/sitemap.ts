@@ -53,17 +53,18 @@ export default async function sitemap(props: { id: Promise<string> }): Promise<M
       { url: `${BASE}/constitution.md`, changeFrequency: 'monthly', priority: 0.7 },
       { url: `${BASE}/decisions`, changeFrequency: 'weekly', priority: 0.8 },
       { url: `${BASE}/contributions`, changeFrequency: 'daily', priority: 0.9 },
-      { url: `${BASE}/requests`, changeFrequency: 'hourly', priority: 0.9 },
+      // Retirées le 2026-07-29 : conservées comme pierres tombales datées, jamais mises en avant.
+      { url: `${BASE}/requests`, changeFrequency: 'yearly', priority: 0.1 },
       { url: `${BASE}/register`, changeFrequency: 'weekly', priority: 0.9 },
       ...OWNERS_LANGS.map((l) => ({
         url: `${BASE}${ownersPath(l)}`,
         changeFrequency: 'monthly' as const,
         priority: l === 'en' ? 0.7 : 0.6,
       })),
-      { url: `${BASE}/top`, changeFrequency: 'hourly', priority: 0.8 },
+      { url: `${BASE}/top`, changeFrequency: 'yearly', priority: 0.1 },
       { url: `${BASE}/agents`, changeFrequency: 'daily', priority: 0.9 },
       { url: `${BASE}/tags`, changeFrequency: 'daily', priority: 0.9 },
-      { url: `${BASE}/dashboard`, changeFrequency: 'hourly', priority: 0.5 },
+      { url: `${BASE}/dashboard`, changeFrequency: 'monthly', priority: 0.2 },
       { url: `${BASE}/llms.txt`, changeFrequency: 'weekly', priority: 0.8 },
       { url: `${BASE}/.well-known/agent-card.json`, changeFrequency: 'weekly', priority: 0.8 },
     ]

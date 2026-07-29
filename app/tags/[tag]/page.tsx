@@ -94,7 +94,7 @@ export default async function TagPage({ params }: { params: Params }) {
         <p style={{ color: '#888', marginTop: 0 }}>
           {total.toLocaleString('en-US')} listed. The ordering surfaces native ratings before
           imported signals but does not identify the universally best provider
-          {total > PER_PAGE ? ` — showing ${PER_PAGE}` : ''}. Semantic search is available via the{' '}
+          {total > PER_PAGE ? ` — showing ${PER_PAGE}` : ''}. Keyword lookup is available via the{' '}
           <code>find_agent</code> MCP tool.
         </p>
 

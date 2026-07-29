@@ -5,7 +5,7 @@ import { CATALOGUE_LEASE_NAME, CATALOGUE_LEASE_TTL_MS, withLease } from '@/lib/s
 
 export const runtime = 'nodejs'
 // Fluid compute : Hobby autorise jusqu'à 300 s — l'import delta (fetch registre
-// lent + embeddings + upserts) ne tient pas dans les 60 s du cron daily.
+// lent + upserts) ne tient pas dans les 60 s du cron daily.
 //
 // Littéral obligatoire : Next analyse cette valeur statiquement. Un test relit les deux
 // routes protégées pour que la durée du bail ne puisse pas se désynchroniser d'elles.
@@ -50,7 +50,7 @@ export async function GET(req: Request) {
 
   if (run.status === 'busy') {
     // L'autre tâche du catalogue travaille : on repart sans fetcher le registre amont,
-    // sans embeddings et sans un seul upsert. HTTP 200 — c'est un résultat prévu, pas une
+    // sans un seul upsert. HTTP 200 — c'est un résultat prévu, pas une
     // panne, et marquer le cron en échec ici apprendrait à ignorer ses propres alertes.
     return Response.json({
       ok: true,
@@ -71,7 +71,7 @@ export async function GET(req: Request) {
 async function runImports() {
   const registry = await syncRegistryDelta(26, 120_000)
   // Sequential on purpose: the Supabase transaction pool is max:1, and the
-  // two imports both write embeddings and profiles.
+  // two imports both write catalogue rows and profiles.
   let concordium
   try {
     concordium = await syncConcordiumAgents(120_000)

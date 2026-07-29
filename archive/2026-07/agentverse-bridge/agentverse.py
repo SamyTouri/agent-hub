@@ -63,7 +63,7 @@ GENERIC_FAILURE = (
 
 
 def _normalize_query(value: str) -> str:
-    """Keep Agentverse input inert, bounded and suitable for semantic search."""
+    """Keep Agentverse input inert and bounded before it reaches the lookup."""
 
     return value.strip()[:MAX_QUERY_CHARS]
 

@@ -4,7 +4,7 @@ import { invalidateByTag } from '@vercel/functions'
 import { agentProfileCacheTag } from './cache-tags'
 import { getSql } from './db'
 import { describeStatus, readStatus, type EndpointCheck } from './endpoint-probe'
-import { embed } from './embeddings'
+import { anyTermQuery, type MatchStrength } from './text-match'
 import { requestOrigin } from './request-context'
 import {
   CHALLENGE_FILENAME,
@@ -13,8 +13,6 @@ import {
   fetchChallengeProof,
   parseGithubRepo,
 } from './github-claim'
-
-const toVector = (embedding: number[]): string => `[${embedding.join(',')}]`
 
 // Capability token d'ownership : seul le hash sha256 est stocké, jamais le token.
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex')
@@ -116,7 +114,7 @@ export async function registerAgent(input: RegisterInput) {
   const claimPermalink = input.claimPermalink?.trim().slice(0, 1000) || null
   if (!handle || !description) throw new Error('handle and description are required')
 
-  // Préflight économique : bloque les rafales avant le calcul d'embedding. Le
+  // Préflight économique : bloque les rafales avant le travail d'écriture. Le
   // contrôle d'ownership est répété sous verrou transactionnel plus bas.
   const [preflight] = await sql`
     select status, external_source, owner_token_hash, metadata->>'claim_channel' as claim_channel
@@ -170,7 +168,6 @@ export async function registerAgent(input: RegisterInput) {
     throw error
   }
 
-  const vec = toVector(await embed(description))
   let ownerToken: string | null = null
   let usedSuppliedToken = false
   const row = await sql.begin(async (tx) => {
@@ -219,14 +216,13 @@ export async function registerAgent(input: RegisterInput) {
     }
 
     const [registered] = await tx`
-      insert into agents (handle, description, tags, endpoint, protocols, embedding, status, owner_token_hash, claimed_at, metadata)
+      insert into agents (handle, description, tags, endpoint, protocols, status, owner_token_hash, claimed_at, metadata)
       values (
         ${handle},
         ${description},
         ${tags},
         ${endpoint},
         ${protocols},
-        ${vec}::vector,
         'claimed',
         ${tokenHash},
         now(),
@@ -237,7 +233,6 @@ export async function registerAgent(input: RegisterInput) {
         tags        = excluded.tags,
         endpoint    = excluded.endpoint,
         protocols   = excluded.protocols,
-        embedding   = excluded.embedding,
         status      = case when agents.status = 'contributor'
                            then agents.status else 'claimed' end,
         -- tokenHash is either the unchanged authenticated token, a first binding,
@@ -268,15 +263,6 @@ export async function registerAgent(input: RegisterInput) {
     where agent_id = ${row.id}
     order by seq
   `
-  // Valeur immédiate de l'inscription : les demandes ouvertes qui matchent le profil.
-  const matchedRequests = await sql`
-    select request_ref, left(need, 240) as need, requester_handle, contact, created_at
-    from agent_requests
-    where status = 'open' and expires_at > now() and embedding is not null
-    order by embedding <=> ${vec}::vector
-    limit 3
-  `
-
   await logActivity('register_agent', { handle }, `registered ${row?.handle ?? handle}`)
   await invalidateAgentProfile(handle)
   return {
@@ -299,12 +285,6 @@ export async function registerAgent(input: RegisterInput) {
           contribution_receipts: receipts,
           contribution_note:
             'Contribution receipts proven for this identity are attached to the profile. They are separate from reputation and create no membership, governance or financial right. Public registry: https://agentreputation.dev/contributions',
-        }
-      : {}),
-    ...(matchedRequests.length
-      ? {
-          open_requests_matching_you: matchedRequests,
-          requests_note: 'Open agent requests semantically close to your profile — answer via their contact, then both sides rate each other.',
         }
       : {}),
   }
@@ -415,21 +395,24 @@ export async function claimGithub(input: {
 }
 
 /**
- * Recherche sémantique d'agents, enrichie : tags, protocols, origine et réputation
- * jointes aux résultats. Si rien ne passe le seuil, fallback sans seuil pour
- * toujours renvoyer les plus proches (similarité faible visible).
+ * Recherche lexicale d'agents — remplace la recherche vectorielle retirée le 2026-07-29.
+ *
+ * Deux passes seulement : tous les termes, puis n'importe lequel. Il n'y a pas de troisième
+ * passe « le plus proche quand même », parce que sans vecteurs il n'existe pas de voisinage, et
+ * qu'en fabriquer un reviendrait à réintroduire exactement le chiffre inventé qu'on vient de
+ * supprimer. Le résultat porte `match`, un fait sur le texte, jamais un score de pertinence.
  */
 export async function findAgents(input: { query: string; limit?: number }) {
   const sql = getSql()
-  const vec = toVector(await embed(input.query))
   const limit = input.limit ?? 10
+  const anyTerms = anyTermQuery(input.query)
 
-  const search = (threshold: number) => sql`
+  const search = (tsquery: string, strength: MatchStrength) => sql`
     select
-      m.handle,
-      m.description,
-      m.endpoint,
-      round(m.similarity::numeric, 3) as similarity,
+      a.handle,
+      a.description,
+      a.endpoint,
+      ${strength}::text as "match",
       a.tags,
       a.protocols,
       a.external_source as listed_from,
@@ -439,16 +422,22 @@ export async function findAgents(input: { query: string; limit?: number }) {
       r.verified_native_avg_score,
       r.imported_ratings::int as imported_ratings,
       r.imported_avg_score
-    from match_agents(${vec}::vector, ${threshold}, ${limit}) m
-    join agents a on a.id = m.id
-    left join agent_reputation r on r.agent_id = m.id
-    order by m.similarity desc
+    from agents a
+    left join agent_reputation r on r.agent_id = a.id
+    where to_tsvector('english', coalesce(a.display_name, '') || ' ' || coalesce(a.description, '') || ' ' || coalesce(array_to_string(a.tags, ' '), ''))
+          @@ websearch_to_tsquery('english', ${tsquery})
+    order by ts_rank(
+               to_tsvector('english', coalesce(a.display_name, '') || ' ' || coalesce(a.description, '') || ' ' || coalesce(array_to_string(a.tags, ' '), '')),
+               websearch_to_tsquery('english', ${tsquery})
+             ) desc, a.id
+    limit ${limit}
   `
 
-  let rows = await search(0.3)
+  // Une requête vide de termes utilisables ne doit pas devenir un balayage du catalogue.
+  let rows = anyTerms ? await search(input.query, 'all_terms') : []
   let lowConfidence = false
-  if (rows.length === 0) {
-    rows = await search(0)
+  if (rows.length === 0 && anyTerms) {
+    rows = await search(anyTerms, 'some_terms')
     lowConfidence = rows.length > 0
   }
 
@@ -744,10 +733,23 @@ export async function getReputation(input: { handle: string }) {
   )
 }
 
+/** Date à laquelle la boucle de demandes cesse d'accepter de nouvelles entrées. */
+export const REQUEST_LOOP_RETIRED_ON = '2026-07-29'
+
+export const REQUEST_LOOP_RETIREMENT_NOTICE =
+  `The request/match loop was retired on ${REQUEST_LOOP_RETIRED_ON}. Agent Reputation is no longer a ` +
+  'marketplace and no longer matches needs to providers: it holds evidence about paid offers so a buyer ' +
+  'can decide. New requests are not accepted. Requests already posted were not deleted and stay readable ' +
+  'through list_requests and https://agentreputation.dev/requests until they expire on their own. See ' +
+  'https://agentreputation.dev/decisions for the dated decision.'
+
 /**
- * Publie un besoin (boucle request/match) : matching sémantique immédiat contre le
- * catalogue + la demande devient visible des agents inscrits. La valeur immédiate
- * de l'inscription : recevoir des demandes qualifiées.
+ * Boucle request/match — RETIRÉE le 2026-07-29.
+ *
+ * L'outil reste enregistré et répond, plutôt que de disparaître de la liste : un client qui a
+ * mis la surface en cache doit recevoir une raison datée, pas une erreur « outil inconnu » qui
+ * ressemble à une panne. Rien n'est écrit, et aucune ligne existante n'est touchée — la seule
+ * demande réellement déposée reste lisible jusqu'à son expiration naturelle.
  */
 export async function requestAgent(input: {
   need: string
@@ -756,102 +758,30 @@ export async function requestAgent(input: {
   tags?: string[]
   contact?: string
 }) {
-  const sql = getSql()
-  const origin = requestOrigin.getStore()
-  if (origin?.ipHash) {
-    const [{ n }] = await sql`
-      select count(*)::int as n from agent_requests
-      where ip_hash = ${origin.ipHash} and created_at > now() - interval '24 hours'
-    `
-    if (n >= 5) throw new Error('Rate limited: max 5 requests per origin per day.')
-  }
-  const need = input.need.trim().slice(0, 2000)
-  const requesterHandle = input.requesterHandle?.trim().slice(0, 200) || null
-  let requesterVerified = false
-  if (requesterHandle) {
-    const [requester] = await sql`
-      select status, owner_token_hash from agents where handle = ${requesterHandle}
-    `
-    if (
-      !requester ||
-      requester.status === 'listed' ||
-      !tokenMatches(input.requesterOwnerToken, requester.owner_token_hash)
-    ) {
-      throw new Error(
-        'Linking a request to a handle requires requester_owner_token for that claimed handle. Omit requester_handle to post anonymously.',
-      )
-    }
-    requesterVerified = true
-  }
-  const vec = toVector(await embed(need))
-
-  const search = (threshold: number, limit: number) => sql`
-    select m.handle, round(m.similarity::numeric, 3) as similarity, m.endpoint,
-           r.native_ratings::int as native_ratings, r.native_avg_score,
-           r.verified_native_ratings::int as verified_native_ratings,
-           r.verified_native_avg_score,
-           r.imported_ratings::int as imported_ratings, r.imported_avg_score
-    from match_agents(${vec}::vector, ${threshold}, ${limit}) m
-    left join agent_reputation r on r.agent_id = m.id
-    order by m.similarity desc
-  `
-  let matches = await search(0.25, 5)
-  let lowConfidence = false
-  if (matches.length === 0) {
-    matches = await search(0, 3)
-    lowConfidence = matches.length > 0
-  }
-
-  const [inserted] = await sql`
-    insert into agent_requests (requester_handle, need, tags, contact, embedding, matches, ip_hash)
-    values (
-      ${requesterHandle},
-      ${need},
-      ${cleanStrings(input.tags, 20, 64)},
-      ${input.contact?.slice(0, 500) ?? null},
-      ${vec}::vector,
-      ${sql.json(matches)},
-      ${origin?.ipHash ?? null}
-    )
-    returning id, seq, created_at
-  `
-  const ref = `REQ-${String(inserted.seq).padStart(4, '0')}`
-  await sql`update agent_requests set request_ref = ${ref} where id = ${inserted.id}`
-
-  await logActivity('request_agent', { ref }, need.slice(0, 120))
+  await logActivity('request_agent', { retired: true }, input.need.slice(0, 120))
   return {
-    request_ref: ref,
-    status: 'open',
-    requester_verified: requesterVerified,
-    expires: 'in 30 days',
-    matches,
-    ...(lowConfidence && { note: 'No strong match — showing the closest profiles anyway; check similarity scores.' }),
-    next_steps:
-      'Contact a match directly at its endpoint, then rate it with submit_rating after interacting. Your request stays listed at https://agentreputation.dev/requests and is shown to registered agents whose profile matches it. Leave a contact if you want them to reach you.',
+    status: 'retired' as const,
+    retired_on: REQUEST_LOOP_RETIRED_ON,
+    notice: REQUEST_LOOP_RETIREMENT_NOTICE,
+    your_need_was_not_stored: true,
+    what_to_do_instead:
+      'If you are about to buy from a specific agent service, use give_feedback with category ' +
+      'why_i_came, or prepurchase_brief to order an independent evidence brief on that candidate. ' +
+      'Both go to a human; neither matches you with a provider.',
   }
 }
 
-/** Demandes ouvertes — classées par pertinence sémantique pour un handle si fourni. */
+/**
+ * Demandes ouvertes — lecture seule depuis la retraite de la boucle le 2026-07-29.
+ *
+ * L'outil continue de lire parce qu'une demande réelle a été déposée avant la retraite et
+ * qu'elle reste valable jusqu'à son expiration : la cacher priverait son auteur d'une réponse
+ * pour rien. Le classement par recoupement de termes a disparu avec la boucle — il ne restait
+ * qu'une entrée à classer, et un tri sur un seul élément est un habillage, pas une fonction.
+ */
 export async function listRequests(input: { forHandle?: string; limit?: number }) {
   const sql = getSql()
   const limit = Math.min(input.limit ?? 20, 50)
-  if (input.forHandle) {
-    const [me] = await sql`
-      select (embedding is not null) as has_embedding from agents where handle = ${input.forHandle}
-    `
-    if (me?.has_embedding) {
-      const rows = await sql`
-        select request_ref, left(need, 400) as need, requester_handle, tags, contact, created_at,
-               round((1 - (embedding <=> (select embedding from agents where handle = ${input.forHandle})))::numeric, 3) as relevance
-        from agent_requests
-        where status = 'open' and expires_at > now() and embedding is not null
-        order by embedding <=> (select embedding from agents where handle = ${input.forHandle})
-        limit ${limit}
-      `
-      await logActivity('list_requests', { forHandle: input.forHandle }, `${rows.length} open (ranked)`)
-      return { ranked_for: input.forHandle, results: rows }
-    }
-  }
   const rows = await sql`
     select request_ref, left(need, 400) as need, requester_handle, tags, contact, created_at
     from agent_requests
@@ -859,8 +789,13 @@ export async function listRequests(input: { forHandle?: string; limit?: number }
     order by created_at desc
     limit ${limit}
   `
-  await logActivity('list_requests', {}, `${rows.length} open`)
-  return { results: rows }
+  await logActivity('list_requests', {}, `${rows.length} open (retired loop)`)
+  return {
+    status: 'retired' as const,
+    retired_on: REQUEST_LOOP_RETIRED_ON,
+    notice: REQUEST_LOOP_RETIREMENT_NOTICE,
+    results: rows,
+  }
 }
 
 type ContactPurpose = 'collaboration' | 'feedback' | 'service' | 'research' | 'other'

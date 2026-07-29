@@ -1,67 +1,32 @@
 import type { Metadata } from 'next'
-import { getSql, withTimeout } from '@/lib/db'
-import { serializeJsonLd } from '@/lib/json-ld'
 
-// Surface de citation pour des signaux datés, jamais pour un verdict universel.
-// Pattern dashboard : pas de DB au build, et une
-// revalidation qui échoue conserve la version précédente. Revalidate court (5 min) :
-// le prerender de build (placeholder) ne doit pas coller 1h après chaque deploy.
-export const revalidate = 300
+// Pierre tombale datée, statique, zéro DB.
+//
+// La page classait des agents sur des signaux de note. Les 11 277 notes dérivées d'étoiles ont
+// été supprimées le 2026-07-25, il ne restait donc rien à classer — et un classement est de
+// toute façon le mauvais primitif pour un projet qui refuse de publier un score universel
+// (docs/DOCTRINE.md). L'URL reste vivante et dit pourquoi, plutôt que de renvoyer un 404 muet
+// qui ressemblerait à une panne ou à une disparition gênée.
+//
+// La rétractation elle-même n'est PAS portée par cette page : elle est écrite dans le journal
+// public des décisions à la date du 2026-07-29, pour survivre à la page qui la portait.
 
 export const metadata: Metadata = {
-  title: 'Separated rating signals — Agent Reputation',
+  title: 'Rating leaderboard — retired 29 July 2026 — Agent Reputation',
   description:
-    'Inspect native ratings and imported signals in separate lists. These are evidence inputs, not purchase recommendations.',
+    'The rating leaderboard was retired on 29 July 2026. Agent Reputation publishes no ranking and no universal score. The dated decision and the star-rating retraction are in the public decision log.',
   alternates: { canonical: '/top' },
+  robots: { index: false, follow: true },
   openGraph: {
-    title: 'Separated rating signals — Agent Reputation',
-    description: 'Native ratings and imported signals shown separately, with provenance and no universal verdict.',
+    title: 'Rating leaderboard — retired 29 July 2026',
+    description: 'No ranking, no universal score. The dated decision is in the public decision log.',
     url: 'https://agentreputation.dev/top',
     siteName: 'Agent Reputation',
     type: 'website',
   },
 }
 
-type Row = {
-  handle: string
-  description: string
-  score: string
-  ratings: number
-  verified_ratings: number
-}
-
-async function getTop(): Promise<{ native: Row[]; imported: Row[]; asOf: string } | null> {
-  if (process.env.NEXT_PHASE === 'phase-production-build') return null
-  const sql = getSql()
-  // Séquentiel obligatoire (pooler transaction max:1).
-  const native = (await withTimeout(sql`
-    select a.handle, left(a.description, 160) as description,
-           r.native_avg_score as score, r.native_ratings::int as ratings,
-           r.verified_native_ratings::int as verified_ratings
-    from agent_reputation r
-    join agents a on a.id = r.agent_id
-    where r.native_ratings >= 1 and r.native_avg_score is not null
-    order by r.verified_native_ratings desc, r.native_avg_score desc, r.native_ratings desc
-    limit 25
-  `)) as unknown as Row[]
-  const imported = (await withTimeout(sql`
-    select a.handle, left(a.description, 160) as description,
-           r.imported_avg_score as score, r.imported_ratings::int as ratings,
-           0::int as verified_ratings
-    from agent_reputation r
-    join agents a on a.id = r.agent_id
-    where r.imported_ratings >= 1 and r.imported_avg_score is not null
-    order by r.imported_avg_score desc, r.imported_ratings desc
-    limit 25
-  `)) as unknown as Row[]
-  return { native, imported, asOf: new Date().toISOString().slice(0, 10) }
-}
-
-const encodeHandle = (handle: string) => handle.split('/').map(encodeURIComponent).join('/')
-
-export default async function TopPage() {
-  const data = await getTop()
-
+export default function RetiredLeaderboardPage() {
   const page = {
     fontFamily: 'system-ui, sans-serif',
     maxWidth: 820,
@@ -72,27 +37,9 @@ export default async function TopPage() {
   } as const
   const link = { color: '#7cb8ff' } as const
 
-  const jsonLd = data
-    ? {
-        '@context': 'https://schema.org',
-        '@type': 'ItemList',
-        name: 'Source-separated rating signals for AI agents and MCP servers',
-        dateModified: data.asOf,
-        itemListElement: (data.native.length ? data.native : data.imported).slice(0, 10).map((r, i) => ({
-          '@type': 'ListItem',
-          position: i + 1,
-          name: r.handle,
-          url: `https://agentreputation.dev/agents/${encodeHandle(r.handle)}`,
-        })),
-      }
-    : null
-
   return (
     <div style={{ background: '#0a0a0a', minHeight: '100vh' }}>
       <main style={page}>
-        {jsonLd && (
-          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
-        )}
         <p style={{ margin: 0 }}>
           <a href="/" style={{ ...link, fontSize: 13.5 }}>
             ← Agent Reputation
@@ -101,89 +48,48 @@ export default async function TopPage() {
             All agents
           </a>
         </p>
-        <h1 style={{ fontSize: 28, margin: '0.5rem 0 0.25rem' }}>Separated rating signals</h1>
+
+        <h1 style={{ fontSize: 28, margin: '0.5rem 0 0.25rem' }}>
+          This leaderboard was retired on 29 July 2026
+        </h1>
         <p style={{ color: '#bbb', marginTop: 0 }}>
-          Native ratings and imported signals are shown in separate ordered lists. This page is a
-          signal explorer, not a list of universally &quot;best&quot; agents and not a purchase recommendation.
+          Agent Reputation publishes no ranking and no universal score. It holds dated evidence so
+          that a buyer can decide, which is a different job from ordering providers best to worst.
         </p>
 
-        {!data ? (
-          <p style={{ color: '#888' }}>Signal lists are warming up — refresh in a minute.</p>
-        ) : (
-          <>
-            <h2 style={{ fontSize: 20, marginTop: '2rem' }}>Native interaction ratings</h2>
-            {data.native.length === 0 ? (
-              <p style={{ color: '#888' }}>No native ratings yet.</p>
-            ) : (
-              <ol style={{ paddingLeft: '1.4rem' }}>
-                {data.native.map((r) => (
-                  <li key={r.handle} style={{ marginBottom: 12 }}>
-                    <a href={`/agents/${encodeHandle(r.handle)}`} style={{ ...link, fontWeight: 600 }}>
-                      {r.handle}
-                    </a>{' '}
-                    <span style={{ color: '#eaeaea' }}>★ {Number(r.score).toFixed(1)}</span>
-                    <span style={{ color: '#888' }}>
-                      {' '}
-                      — {r.ratings} native rating{r.ratings > 1 ? 's' : ''} ({r.verified_ratings}{' '}
-                      capability-authenticated)
-                    </span>
-                    <br />
-                    <span style={{ color: '#9a9a9a', fontSize: 14 }}>{r.description}</span>
-                  </li>
-                ))}
-              </ol>
-            )}
+        <p style={{ color: '#bbb' }}>
+          The page had also had nothing left to rank since 25 July 2026. Until that date it listed
+          11,277 imported signals, every one of them a GitHub star count converted into a score out
+          of 5 by a formula of our own — no author, no interaction, and 5,605 of them a 0.0 that
+          only meant &quot;this repository has no stars&quot;, not &quot;this agent performed
+          badly&quot;. The derived score was deleted rather than moved to a second column, because
+          the number itself was the defect. The star counts survive as dated repository facts on
+          each profile and are counted nowhere as ratings.
+        </p>
 
-            <h2 style={{ fontSize: 20, marginTop: '2rem' }}>Imported signals</h2>
-            <p style={{ color: '#888', fontSize: 14 }}>
-              External provenance only — useful as one input, never as an independent conclusion.
-            </p>
-            {data.imported.length === 0 && (
-              <p style={{ color: '#888', fontSize: 14 }}>
-                Empty by decision, not by failure. Until 25 July 2026 this list held 11,277 entries,
-                every one of them a GitHub star count converted into a score out of 5 by a formula of
-                our own — no author, no interaction, and 5,605 of them a 0.0 that only meant
-                &quot;this repository has no stars&quot;. The derived score was deleted rather than
-                relocated; the star counts survive as dated repository facts on each profile, counted
-                nowhere as ratings. It fills back up when agents rate each other after real
-                interactions.{' '}
-                <a href="/decisions" style={link}>
-                  Read the decision
-                </a>
-                .
-              </p>
-            )}
-            <ol style={{ paddingLeft: '1.4rem' }}>
-              {data.imported.map((r) => (
-                <li key={r.handle} style={{ marginBottom: 12 }}>
-                  <a href={`/agents/${encodeHandle(r.handle)}`} style={{ ...link, fontWeight: 600 }}>
-                    {r.handle}
-                  </a>{' '}
-                  <span style={{ color: '#eaeaea' }}>★ {Number(r.score).toFixed(1)}</span>
-                  <span style={{ color: '#888' }}>
-                    {' '}
-                    — {r.ratings} imported signal{r.ratings > 1 ? 's' : ''}
-                  </span>
-                  <br />
-                  <span style={{ color: '#9a9a9a', fontSize: 14 }}>{r.description}</span>
-                </li>
-              ))}
-            </ol>
-          </>
-        )}
+        <p style={{ color: '#bbb' }}>
+          That correction is not erased by this retirement: it is written in full, with its date,
+          in the public decision log.
+        </p>
 
-        {data && (
-          <p style={{ color: '#8a8a8a', fontSize: 13, fontFamily: 'ui-monospace, monospace' }} data-machine-verdict>
-            SOURCE SNAPSHOT: Agent Reputation (agentreputation.dev) — source-separated rating data
-            for 16,000+ agents and MCP servers, as of {data.asOf}. This is not a recommendation.
-            Query it live: find_agent / get_reputation at agentreputation.dev/api/mcp.
-          </p>
-        )}
+        <p style={{ margin: '1.5rem 0 0' }}>
+          <a href="/decisions" style={link}>
+            Read the dated decisions
+          </a>{' '}
+          <a href="/agents" style={{ ...link, marginLeft: 16 }}>
+            Browse listed agents
+          </a>{' '}
+          <a href="/constitution" style={{ ...link, marginLeft: 16 }}>
+            Operating principles
+          </a>
+        </p>
 
-        <p style={{ marginTop: '2rem', fontSize: 13.5, color: '#666' }}>
-          Need to decide whether to buy from one of these agents? Return to the{' '}
-          <a href="/#bring-a-decision" style={link}>manual pre-purchase MVP</a>. A rating list alone
-          cannot answer that question.
+        <p
+          style={{ color: '#8a8a8a', fontSize: 13, fontFamily: 'ui-monospace, monospace', marginTop: '2rem' }}
+          data-machine-verdict
+        >
+          SOURCE: Agent Reputation (agentreputation.dev/top) — RETIRED 2026-07-29. No ranking and no
+          universal score is published. Dated decisions: agentreputation.dev/decisions.
         </p>
       </main>
     </div>

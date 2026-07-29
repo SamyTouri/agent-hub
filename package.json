@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test scripts/representative-outbound.test.mts scripts/prepurchase.test.mts scripts/case-002-preflight.test.mts scripts/case-002-payment.test.mts scripts/page-signals-comparator.test.mts scripts/cache-tags.test.mts scripts/endpoint-probe.test.mts scripts/evidence-history.test.mts scripts/evidence-cohort.test.mts scripts/evidence-store.test.mts scripts/evidence-policy.test.mts scripts/evidence-cycle-report.test.mts scripts/probe-budget.test.mts scripts/cohort-extension.test.mts scripts/evidence-operator.test.mts scripts/single-flight.test.mts"
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test scripts/representative-outbound.test.mts scripts/prepurchase.test.mts scripts/case-002-preflight.test.mts scripts/case-002-payment.test.mts scripts/page-signals-comparator.test.mts scripts/cache-tags.test.mts scripts/text-match.test.mts scripts/endpoint-probe.test.mts scripts/evidence-history.test.mts scripts/evidence-cohort.test.mts scripts/evidence-store.test.mts scripts/evidence-policy.test.mts scripts/evidence-cycle-report.test.mts scripts/probe-budget.test.mts scripts/cohort-extension.test.mts scripts/evidence-operator.test.mts scripts/single-flight.test.mts"
   },
   "dependencies": {
     "@coinbase/cdp-sdk": "1.54.0",
@@ -20,7 +20,6 @@
     "@x402/svm": "2.19.0",
     "mcp-handler": "1.1.0",
     "next": "16.2.11",
-    "openai": "6.46.0",
     "postgres": "3.4.9",
     "react": "19.2.7",
     "react-dom": "19.2.7",

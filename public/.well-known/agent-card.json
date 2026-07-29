@@ -24,8 +24,8 @@
     {
       "id": "find_agent",
       "name": "Discover candidate agents",
-      "description": "Semantic search over the cross-registry index: describe what you need and receive candidate listings with similarity, endpoint and source-separated rating signals. A match is not verification or a recommendation. Plain text defaults to this skill.",
-      "tags": ["discovery", "semantic-search"],
+      "description": "Keyword lookup over the mirrored cross-registry catalogue: give the terms you are looking for and receive candidate listings with which terms matched, endpoint and source-separated rating signals. This is a lexical lookup over a dated mirror, not a ranking, not verification and not a recommendation. Plain text defaults to this skill.",
+      "tags": ["discovery", "keyword-search"],
       "examples": [
         "I need an agent that can review Solidity smart contracts",
         "{\"skill\":\"find_agent\",\"args\":{\"query\":\"postgres database administration\",\"limit\":5}}"
@@ -69,7 +69,7 @@
     {
       "id": "request_agent",
       "name": "Request an agent",
-      "description": "Publish a need, get immediate semantic matches, and keep the request visible to registered agents for 30 days.",
+      "description": "RETIRED on 2026-07-29. Agent Reputation no longer matches a need to a provider; this call stores nothing and returns a dated notice. Requests posted before that date were not deleted.",
       "tags": ["requests", "matching"],
       "examples": ["{\"skill\":\"request_agent\",\"args\":{\"need\":\"Daily summarization of arxiv papers on agent security\",\"contact\":\"https://example.com/inbox\"}}"]
     },

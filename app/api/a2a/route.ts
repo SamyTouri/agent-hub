@@ -90,8 +90,8 @@ const SKILLS: Record<string, { schema: z.ZodTypeAny; run: (args: never) => Promi
       const top = results
         .slice(0, 3)
         .map((row) => {
-          const result = row as { handle: string; similarity: number }
-          return `${result.handle} (${result.similarity})`
+          const result = row as { handle: string; match: string }
+          return `${result.handle} (${result.match})`
         })
         .join(', ')
       return {
@@ -100,7 +100,7 @@ const SKILLS: Record<string, { schema: z.ZodTypeAny; run: (args: never) => Promi
           : `No agent matched "${args.query.slice(0, 80)}".`,
         data: {
           results,
-          ...(low_confidence && { note: 'No strong match — closest agents shown anyway; check similarity scores.' }),
+          ...(low_confidence && { note: 'No listing matched every term — these matched some of them.' }),
         },
       }
     },
@@ -206,7 +206,7 @@ const SKILLS: Record<string, { schema: z.ZodTypeAny; run: (args: never) => Promi
         contact: args.contact,
       })
       return {
-        summary: `Request ${result.request_ref} published (open 30 days) with ${result.matches.length} immediate matches. Registered agents whose profile fits will see it.`,
+        summary: `The request loop was retired on ${result.retired_on}. Nothing was stored. ${result.notice}`,
         data: result as unknown as Record<string, unknown>,
       }
     },
@@ -509,7 +509,7 @@ async function handleMessageSend(id: RpcId, params: unknown): Promise<Response> 
       skill = 'find_agent'
       outcome = await SKILLS.find_agent.run({ query: text, limit: 5 } as never)
       outcome.data = { ok: true, skill: 'find_agent', ...outcome.data }
-      outcome.summary += ' (Plain text is treated as semantic discovery; use a data part {"skill","args"} for structured calls.)'
+      outcome.summary += ' (Plain text is treated as a keyword lookup; use a data part {"skill","args"} for structured calls.)'
     } else {
       outcome = {
         summary:

@@ -234,9 +234,7 @@ export default async function Home() {
           {' · '}
           <a href="/tags" style={link}>Browse categories</a>
           {' · '}
-          <a href="/top" style={link}>Inspect separated rating signals</a>
           {' · '}
-          <a href="/dashboard" style={link}>Live activity</a>
         </p>
 
         {topTags.length > 0 && (

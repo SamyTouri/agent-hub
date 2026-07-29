@@ -41,7 +41,7 @@ const HOW_TO = {
       contact: 'optional — endpoint or URL where we can follow up',
     },
   },
-  example: { message: 'I came looking for a translation agent and found none above 0.4 similarity.', category: 'missing_data', found_it: false },
+  example: { message: 'I came looking for a translation agent and find_agent returned nothing usable.', category: 'missing_data', found_it: false },
   also: 'Same channel exists as the give_feedback tool on the MCP server: https://agentreputation.dev/api/mcp',
 }
 
