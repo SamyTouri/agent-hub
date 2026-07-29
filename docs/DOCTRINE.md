@@ -49,7 +49,11 @@ proactively and replies for free, always. A complaint disputed without contrary 
 published as `disputed`, with the reply linked; denial alone does not remove it.
 
 **C — evaluator credibility.** Made possible by A and B. The output is always relative to the
-criteria supplied by the buyer, never a universal score.
+criteria supplied by the buyer, never a universal score. Its concrete form, adopted 2026-07-29:
+a **pre-engagement advice on how much contract a given deal needs** — light for a small task,
+heavier when the record of either party warrants it. Advice, never a decision, and always
+delivered with the complaints and replies it rests on, so the parties can contradict it.
+Rationale in `docs/field-report-2026-07-29.md`.
 
 **D — reciprocity.** Kept functional in the data model from the start, silent in communication
 until there is volume.
@@ -63,6 +67,14 @@ we want — and an ERC-8004 token is transferable while its reputation stays att
 rather than the owner. Identity is therefore modelled as dated links between observations, never
 as a merge. A wrong grouping is corrected by removing a link, never by rewriting an observation.
 
+Sharpened 2026-07-29: transferability is now standardised for the agent's own contents, not only
+for its token. ERC-7857 makes the model, memory and character definition an owned, sellable and
+clonable asset. Any history attached to an agent is therefore purchasable — a spotless agent can
+be built and sold, and the buyer inherits the record. **We attach the record to the paid
+transaction, never to the agent.** A complaint and a reply bound to a payment describe a dated
+event between two parties: it does not transfer with the asset, it does not clone, and a change
+of operator becomes readable information in the file rather than a reset.
+
 ## What the project no longer is
 
 - Not a discovery product. Catalogue breadth is not a moat; the upstream registries are better
@@ -70,9 +82,18 @@ as a merge. A wrong grouping is corrected by removing a link, never by rewriting
 - Not a semantic search engine. Vector search and embeddings were removed on 2026-07-29.
 - Not a rating platform. No score, no ranking, no leaderboard, no aggregate verdict.
 - Not a marketplace, and no revenue may ever come from the seller side — the incentive structure
-  alone would make an extortion accusation unanswerable, regardless of the facts.
+  alone would make an extortion accusation unanswerable, regardless of the facts. *Open arbitration
+  since 2026-07-29: layer C's pre-engagement report is intended to be paid by both parties, for
+  demonstrable neutrality. That is not the same act as paying to influence a published complaint,
+  but it collides with the wording of this rule. The rule stands as written until the arbitration
+  is settled and dated here.*
 - Not a governance experiment. Agent voting governance was abandoned; the constitution and the
   decision log stay public as commitments, not as an active mechanism.
+- **Not an adjudicator.** Added 2026-07-29. We never issue a verdict, an arbitration or a binding
+  ruling. That layer is being taken by a 29-member consortium (Internet Court, launched
+  2026-07-10, mainnet targeted Q4 2026) and cannot be won frontally. Their published stack also
+  has no layer after the verdict and delegates reputation to ERC-8004: our place is the loop
+  between their last layer and their first, not a rival to either.
 
 ## What remains, and why
 
@@ -93,6 +114,13 @@ instrument: maintained, never extended, never presented as the product corpus.
   not a rejection; the project moves on and a late reply is appended retrospectively.
 - **Corrections are dated, never silent rewrites.** This applies to internal documents as well as
   public ones.
+- **Every advice ships with the material it rests on.** Adopted 2026-07-29. We advise, the parties
+  decide. Withholding the underlying complaints and replies would make the advice unfalsifiable by
+  the very people it is addressed to — the failure mode we exist to expose, applied to ourselves.
+- **We reduce the cost of a relationship; we never add a layer to it.** Adopted 2026-07-29. Every
+  other actor in this market adds an escrow, a score, a court or an attestation. Saying when *not*
+  to add one is the position. A feature that raises the cost of a small transaction is off-doctrine
+  even when it is technically sound.
 - **Every quoted sentence carries its URL and the date it was read, or it leaves the quotation
   marks.** Adopted 2026-07-28 after a citation was attributed to a source that did not contain it.
 - **Say "this is queryable nowhere", never "nobody keeps it".** The second claim is
