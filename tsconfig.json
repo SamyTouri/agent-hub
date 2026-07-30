@@ -34,6 +34,7 @@
     "**/*.ts",
     "**/*.tsx",
     "scripts/evidence-cycle-check.mts",
+    "scripts/complaint-desk.mts",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],

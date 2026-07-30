@@ -237,13 +237,32 @@ export function checkAdmissibility(input: FilingInput, now: Date): Admissibility
 // ---------------------------------------------------------------------------
 
 /**
+ * Les seuls champs qui entrent dans la déclaration signée. Type dédié plutôt que
+ * `FilingInput` complet, pour qu'un appelant qui reconstruit la déclaration depuis la
+ * base (l'outil opérateur) ne puisse pas en oublier un derrière un transtypage : le
+ * compilateur exige les huit, et une déclaration reconstruite de travers ferait échouer
+ * la vérification d'un dossier authentique.
+ */
+export type SignableFiling = Pick<
+  FilingInput,
+  | 'role'
+  | 'address'
+  | 'counterparty_address'
+  | 'network'
+  | 'matter_reference'
+  | 'settled_basis'
+  | 'account'
+  | 'filed_on'
+>
+
+/**
  * Le texte exact que le déposant signe (personal_sign / EIP-191). Il lie la
  * signature à CETTE affaire et à CE récit : une signature qui fuiterait ne
  * permettrait donc pas de déposer une autre version des faits, ni un autre
  * dossier. Le serveur reconstruit cette chaîne à partir des champs reçus et
  * refuse tout ce qui ne retombe pas sur l'adresse revendiquée.
  */
-export function canonicalFilingStatement(input: FilingInput): string {
+export function canonicalFilingStatement(input: SignableFiling): string {
   return [
     'Agent Reputation — Complaint Bureau',
     `Filing statement v${FILING_STATEMENT_VERSION}`,

@@ -87,12 +87,16 @@ same tree concurrently.
   placed side by side with nothing connecting them.
 - **Context before detail.** Never describe a mechanism before saying, in one plain sentence,
   which problem it solves. The reader must know why he is reading a sentence before reading it.
-- **A technical term is translated inside the sentence, or it is not written.** There is no
-  third option, and "Samy is a developer" is not one — he steers the project in business
-  language and does not have the code in his head. Say what the thing DOES in ordinary
-  language ("the web address where a complainant files a case", "the database change needed
-  before anything can be stored"), never its implementation name: no endpoint, migration,
-  index, build, typecheck, schema, commit or remote left bare.
+- **An implementation term is translated inside the sentence, or it is not written.** What this
+  targets is vocabulary internal to our code and infrastructure — the name of a constraint, an
+  index, a file, a compilation step. Say what the thing DOES, not what we call it.
+- **Its symmetric rule, equally binding: never explain what Samy already knows** (guard added
+  2026-07-30 after an overcorrection — he replied that the rewrite explained things "as if I were
+  an idiot"). He is a seasoned developer. A database, a cryptographic signature, an address, a
+  wallet, an API, a deployment, a test are his daily tools; defining them is condescending. No
+  teaching analogies, no "imagine someone who…", no restating the obvious. The line is clean:
+  explain ecosystem-specific vocabulary, project-specific business rules, and the REASON for a
+  choice; never explain general computing; never mention our internal implementation detail.
 - **Ideas must connect.** If two paragraphs could be swapped without anyone noticing, there is
   no thread, and without a thread there is no understanding. One flowing explanation of a
   single subject beats six subjects correctly described.
@@ -270,6 +274,7 @@ infrastructure and radical transparency remain part of the operating model.
 | MCP server (current tools + instructions) | `app/api/[transport]/route.ts` |
 | Domain logic, profiles, claims, evidence inputs, requests and receipts | `lib/agenthub.ts` |
 | Complaint Bureau — admissibility, signed statements, reply windows | `lib/complaints.ts` (pure), `lib/complaints-store.ts` (DB), `app/complaints/`, `app/api/complaints/` |
+| **Publishing, notifying, correcting or rejecting a complaint** | `scripts/complaint-desk.mts` ONLY — the website cannot perform these verbs by design. Run it through `scripts/with-agenthub-db.ps1` (blind secret, port 5432 for schema work, 6543 otherwise) |
 | Current product doctrine (**source of truth**) | `docs/DOCTRINE.md` |
 | DB schema (Supabase / Postgres) | `db/schema.sql` |
 | Prepared, unapplied migrations | `db/migration-*.sql` — read the header before running one |
@@ -333,13 +338,11 @@ derived ratings were deleted, and it explains why), `/agents/{handle}`, `/regist
    archive only when relevant.
 4. `git log --oneline -30` for the build cadence.
 
-Key open problem (updated 2026-07-30): the Complaint Bureau now has a public method page
-(`/complaints`), a signature-verified intake (`/api/complaints`) and a free reply channel for
-the counterparty (`/api/complaints/reply`) — but **no file has been filed or published, and
-its two tables are a prepared migration that has NOT been applied to production**
-(`db/migration-complaint-bureau.sql`). Until that migration runs, the intake compiles and
-answers but cannot store anything. Layer A is still missing entirely: nothing captures the
-dated commercial terms of paid x402 offers, and the upstream source removes resources after
-thirty days of inactivity, so every day without capture is data destroyed rather than
-delayed. Until repeated usage exists, at least 60% of effort goes to field learning and
-conversations and at most 40% to construction.
+Key open problem (updated 2026-07-30): the Complaint Bureau is complete and live — public
+method page, signature-verified intake, free counterparty reply channel, public file page,
+tables applied to production, and an operator desk for the verbs the website deliberately
+cannot perform. **No complaint has been filed yet**, so nothing about real demand is proven.
+Layer A is still missing entirely: nothing captures the dated commercial terms of paid x402
+offers, and the upstream source removes resources after thirty days of inactivity, so every
+day without capture is data destroyed rather than delayed. Until repeated usage exists, at
+least 60% of effort goes to field learning and conversations and at most 40% to construction.
