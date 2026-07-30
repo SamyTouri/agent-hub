@@ -137,9 +137,14 @@ create table if not exists complaint_events (
 );
 
 -- Idempotence d'une réponse rejouée : même dossier, même texte, une seule ligne.
+-- Index NON partiel volontairement. Un index partiel serait plus « propre » mais
+-- casserait `on conflict (filing_id, kind, body_digest)` côté application : Postgres
+-- refuse d'inférer un index partiel comme arbitre sans répéter son prédicat. Et il est
+-- inutile ici, puisque les valeurs NULL sont distinctes dans un index unique — les
+-- événements sans empreinte (notification, correction, publication) peuvent donc
+-- coexister sans limite.
 create unique index if not exists complaint_events_reply_unique_idx
-  on complaint_events (filing_id, kind, body_digest)
-  where body_digest is not null;
+  on complaint_events (filing_id, kind, body_digest);
 create index if not exists complaint_events_filing_idx
   on complaint_events (filing_id, seq);
 

@@ -844,9 +844,11 @@ create table if not exists complaint_events (
     check (kind <> 'reply' or (actor = 'counterparty' and body_digest is not null))
 );
 
+-- Index NON partiel volontairement : Postgres refuse d'inférer un index partiel comme
+-- arbitre d'un `on conflict (...)`, et les NULL étant distincts dans un index unique, les
+-- événements sans empreinte peuvent coexister sans limite. Détail : db/migration-complaint-bureau.sql.
 create unique index if not exists complaint_events_reply_unique_idx
-  on complaint_events (filing_id, kind, body_digest)
-  where body_digest is not null;
+  on complaint_events (filing_id, kind, body_digest);
 create index if not exists complaint_events_filing_idx
   on complaint_events (filing_id, seq);
 

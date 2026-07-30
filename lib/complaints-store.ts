@@ -65,17 +65,18 @@ const toRecord = (row: FilingRow): FilingRecord => ({
   replyDeadline: row.reply_deadline.toISOString(),
 })
 
-const SELECT_FILING = `
-  id, status, created_at, claimant_role, claimant_address, counterparty_address, network,
-  matter_reference, matter_url, settled_basis, terminal_state, announced_deadline,
-  settled_evidence, subject_label, account, account_digest, signed_statement, signature,
-  counterparty_channel_kind, counterparty_channel, reply_window_hours, reply_deadline
-`
-
+// Les colonnes sont écrites en clair dans chaque requête plutôt qu'assemblées depuis
+// une constante : le dépôt n'interpole nulle part de fragment SQL brut dans un
+// template, et ce n'est pas ici qu'il faut inaugurer le motif.
 export async function findFiling(id: string): Promise<FilingRecord | null> {
   const sql = getSql()
   const rows = (await sql`
-    select ${sql.unsafe(SELECT_FILING)} from complaint_filings where id = ${id}
+    select id, status, created_at, claimant_role, claimant_address, counterparty_address,
+           network, matter_reference, matter_url, settled_basis, terminal_state,
+           announced_deadline, settled_evidence, subject_label, account, account_digest,
+           signed_statement, signature, counterparty_channel_kind, counterparty_channel,
+           reply_window_hours, reply_deadline
+    from complaint_filings where id = ${id}
   `) as unknown as FilingRow[]
   return rows[0] ? toRecord(rows[0]) : null
 }
@@ -227,7 +228,11 @@ export type PublicFiling = {
 export async function getPublishedFiling(id: string): Promise<PublicFiling | null> {
   const sql = getSql()
   const rows = (await withTimeout(sql`
-    select ${sql.unsafe(SELECT_FILING)}, published_at
+    select id, status, created_at, claimant_role, claimant_address, counterparty_address,
+           network, matter_reference, matter_url, settled_basis, terminal_state,
+           announced_deadline, settled_evidence, subject_label, account, account_digest,
+           signed_statement, signature, counterparty_channel_kind, counterparty_channel,
+           reply_window_hours, reply_deadline, published_at
     from complaint_filings
     where id = ${id} and status = 'published'
   `)) as unknown as Array<FilingRow & { published_at: Date }>
