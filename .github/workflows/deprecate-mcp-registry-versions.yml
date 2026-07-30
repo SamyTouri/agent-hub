@@ -55,10 +55,17 @@ jobs:
           oidc=$(curl --fail --silent --show-error \
             -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
             "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https%3A%2F%2Fregistry.modelcontextprotocol.io" | jq -r '.value')
+          # Le champ s'appelle `registry_token`. Lire `.token` renvoie la chaîne "null", que
+          # le masquage transforme en *** dans les journaux : on part alors avec un jeton
+          # invalide et le PATCH répond 401 sans que rien ne laisse voir la vraie cause.
           registry_token=$(curl --fail --silent --show-error \
             -X POST https://registry.modelcontextprotocol.io/v0/auth/github-oidc \
             -H 'content-type: application/json' \
-            -d "$(jq -nc --arg t "$oidc" '{oidc_token: $t}')" | jq -r '.token')
+            -d "$(jq -nc --arg t "$oidc" '{oidc_token: $t}')" | jq -r '.registry_token')
+          if [ -z "$registry_token" ] || [ "$registry_token" = "null" ]; then
+            echo "Échange OIDC sans jeton exploitable — on s'arrête ici plutôt que d'envoyer un 401 illisible." >&2
+            exit 1
+          fi
           # Jamais journalisé : masqué auprès du runner avant toute autre étape.
           echo "::add-mask::$registry_token"
           echo "token=$registry_token" >> "$GITHUB_OUTPUT"
