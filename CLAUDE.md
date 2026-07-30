@@ -6,7 +6,7 @@ en MCP + A2A. **La doctrine produit courante fait autorité : `docs/DOCTRINE.md`
 avant de toucher un document actif ou une promesse publique. Fondateur solo : Samy. **ChatGPT Work est son cockpit conversationnel
 principal** ; OpenAI et Claude Code sont des agents pairs qui traduisent ses décisions
 métier en analyse, code, tests, revues et opérations. L'alias Claude Code `opus` en
-effort MAX doit être utilisé souvent pour construire et revoir le développement, pas
+effort HIGH doit être utilisé souvent pour construire et revoir le développement, pas
 seulement en dernier recours. Claude peut committer et pousser lorsqu'une mission
 autorise explicitement la publication, avec build local vert et préfixe `[claude]`.
 Contrat complet et prioritaire : `AGENTS.md`.

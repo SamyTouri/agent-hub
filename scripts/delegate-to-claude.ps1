@@ -23,7 +23,7 @@ param(
     [int]$MaxTurns = 40,
     [string]$Model = 'opus',
     [ValidateSet('low', 'medium', 'high', 'xhigh', 'max')]
-    [string]$Effort = 'max',
+    [string]$Effort = 'high',
     [string]$ClaudePath,
     [ValidateSet('acceptEdits', 'bypassPermissions', 'default')]
     [string]$PermissionMode = 'acceptEdits'

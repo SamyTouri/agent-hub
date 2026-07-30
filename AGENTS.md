@@ -130,7 +130,7 @@ Samy to relay. Codex → Claude Code is the canonical direction today:
 
     pwsh -File scripts/delegate-to-claude.ps1 -Thread <workstream> -BriefFile <path>
     # wraps: claude -p --resume <thread session_id> --permission-mode acceptEdits
-    #        --model opus --effort max --max-turns 40 --output-format json
+    #        --model opus --effort high --max-turns 40 --output-format json
 
 - **Standing authorization to transmit project information to Claude (Samy,
   2026-07-26).** Claude Code and Codex are trusted peer collaborators with no
@@ -160,8 +160,8 @@ Samy to relay. Codex → Claude Code is the canonical direction today:
   IS the work. A brief written so the delegate can only mirror the orchestrator's
   opinion is a protocol violation — the delegate flags it in its report. Both
   agents' opinions count; disagreement is signal, not friction.
-- **Division of labor (Samy, updated 2026-07-26).** Use Claude Code's `opus`
-  alias (the latest Opus available, currently Opus 5) in MAX effort for delegation;
+- **Division of labor (Samy, updated 2026-07-29).** Use Claude Code's `opus`
+  alias (the latest Opus available, currently Opus 5) in HIGH effort for delegation;
   do not pin a stale or unavailable model name. Opus is particularly strong at
   development: use it often, including to design and construct features, not only as
   a final reviewer. The OpenAI orchestrator must not hesitate to launch the approved
