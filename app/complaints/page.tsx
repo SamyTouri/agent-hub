@@ -26,6 +26,13 @@ export const metadata: Metadata = {
   },
 }
 
+/**
+ * Renvoie null quand la liste n'a PAS pu être lue — au build, ou sur échec base.
+ * On avale l'erreur ici, contrairement aux pages de catalogue, parce que la méthode
+ * et les règles d'éligibilité sont l'essentiel de cette page et doivent rester
+ * servies même si la base est injoignable. Le rendu dit alors qu'il s'agit d'un
+ * échec de lecture de notre côté, et n'affirme AUCUN compte de dossiers.
+ */
 async function getPublished(): Promise<PublicFilingSummary[] | null> {
   if (process.env.NEXT_PHASE === 'phase-production-build') return null
   try {
@@ -207,7 +214,11 @@ export default async function ComplaintsPage() {
 
         <h2 style={h2}>Published files</h2>
         {published === null ? (
-          <p style={{ color: '#888' }}>Registry is warming up — refresh in a minute.</p>
+          <p style={{ color: '#888' }}>
+            The list of published files could not be read just now. That is a failure on our side,
+            not a statement about what the registry contains — the dated limits below say what has
+            and has not been published so far.
+          </p>
         ) : published.length === 0 ? (
           <p style={{ color: '#888' }}>
             None yet. This page describes a venue and its rules; it is not a claim that a registry

@@ -53,12 +53,11 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function ComplaintFilePage({ params }: { params: Params }) {
   const id = (await params).id
-  let filing: PublicFiling | null = null
-  try {
-    filing = await getPublishedFiling(id)
-  } catch {
-    filing = null
-  }
+  // Volontairement SANS try/catch : convention du dépôt — une revalidation qui échoue
+  // doit THROW pour que Next continue de servir la version précédente. Avaler l'erreur
+  // ici transformerait une base injoignable en « ce dossier n'existe pas », ce qui est
+  // faux et, sur un registre de plaintes, précisément le mensonge à ne pas produire.
+  const filing: PublicFiling | null = await getPublishedFiling(id)
   if (!filing) notFound()
 
   const page = {
