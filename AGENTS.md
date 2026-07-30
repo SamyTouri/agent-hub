@@ -249,6 +249,7 @@ infrastructure and radical transparency remain part of the operating model.
 | App code | `app/` (Next.js App Router), `lib/` (DB + domain logic) |
 | MCP server (current tools + instructions) | `app/api/[transport]/route.ts` |
 | Domain logic, profiles, claims, evidence inputs, requests and receipts | `lib/agenthub.ts` |
+| Complaint Bureau — admissibility, signed statements, reply windows | `lib/complaints.ts` (pure), `lib/complaints-store.ts` (DB), `app/complaints/`, `app/api/complaints/` |
 | Current product doctrine (**source of truth**) | `docs/DOCTRINE.md` |
 | DB schema (Supabase / Postgres) | `db/schema.sql` |
 | Prepared, unapplied migrations | `db/migration-*.sql` — read the header before running one |
@@ -312,9 +313,13 @@ derived ratings were deleted, and it explains why), `/agents/{handle}`, `/regist
    archive only when relevant.
 4. `git log --oneline -30` for the build cadence.
 
-Key open problem (updated 2026-07-29): the pivot is now in the tree but the product it
-describes does not exist yet. Nothing captures the dated commercial terms of paid x402
-offers, and the Complaint Bureau has neither a method page nor an intake. The upstream
-source removes resources after thirty days of inactivity, so every day without capture is
-data destroyed rather than delayed. Until repeated usage exists, at least 60% of effort
-goes to field learning and conversations and at most 40% to construction.
+Key open problem (updated 2026-07-30): the Complaint Bureau now has a public method page
+(`/complaints`), a signature-verified intake (`/api/complaints`) and a free reply channel for
+the counterparty (`/api/complaints/reply`) — but **no file has been filed or published, and
+its two tables are a prepared migration that has NOT been applied to production**
+(`db/migration-complaint-bureau.sql`). Until that migration runs, the intake compiles and
+answers but cannot store anything. Layer A is still missing entirely: nothing captures the
+dated commercial terms of paid x402 offers, and the upstream source removes resources after
+thirty days of inactivity, so every day without capture is data destroyed rather than
+delayed. Until repeated usage exists, at least 60% of effort goes to field learning and
+conversations and at most 40% to construction.

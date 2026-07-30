@@ -144,6 +144,19 @@ export default async function Home() {
           </a>
         </div>
 
+        <div style={{ ...card, marginTop: '0.8rem', borderColor: '#4a3a5c' }}>
+          <strong>The Complaint Bureau is open.</strong>{' '}
+          <span style={{ color: '#bbb' }}>
+            A registry of complaints where entry requires a signature from one of the two addresses
+            of a settled transaction — so a buyer can find out how a seller behaved after being paid.
+            Both sides may file, the counterparty is notified and replies for free and permanently,
+            and no file has been published yet: the page states the rules, not a stock of cases.
+          </span>{' '}
+          <a href="/complaints" style={link}>
+            Who may file, and how fast we publish →
+          </a>
+        </div>
+
         <h2 style={h2}>Two outputs, not a universal score</h2>
         <div
           style={{

@@ -757,3 +757,109 @@ create table if not exists cron_locks (
 
 alter table cron_locks enable row level security;
 revoke all on table public.cron_locks from anon, authenticated;
+
+-- 23. Complaint Bureau — registre privé des dépôts vérifiés par signature (2026-07-30).
+--
+--     Un dépôt est recevable seulement si son auteur est partie PROUVÉE à une affaire
+--     TERMINÉE (docs/DOCTRINE.md, section B). La signature établit le contrôle d'une des
+--     deux adresses de la transaction, et rien d'autre : ni la véracité du récit, ni une
+--     identité d'opérateur. Elle est conservée avec le texte exact signé pour qu'un tiers
+--     refasse la vérification sans nous croire.
+--
+--     `complaint_events` est le journal append-only du dossier — notification, réponse de
+--     la contrepartie, correction datée, publication. Un dossier publié n'est jamais
+--     retiré ; il est corrigé avec une date, d'où le `on delete restrict` et le retrait
+--     d'UPDATE/DELETE sur le corps des événements.
+--
+--     Détail commenté, raisons de chaque contrainte et procédure : db/migration-complaint-bureau.sql.
+create table if not exists complaint_filings (
+  id                        text primary key,          -- cb-<sha256(network|matter|address|role) tronqué>
+  seq                       bigint generated always as identity,
+  created_at                timestamptz not null default now(),
+  status                    text not null default 'received'
+                            check (status in ('received', 'verified', 'published', 'rejected')),
+  claimant_role             text not null check (claimant_role in ('payer', 'payee')),
+  claimant_address          text not null check (claimant_address ~ '^0x[0-9a-f]{40}$'),
+  counterparty_address      text not null check (counterparty_address ~ '^0x[0-9a-f]{40}$'),
+  network                   text not null check (char_length(network) between 5 and 41),
+  matter_reference          text not null check (char_length(matter_reference) between 6 and 200),
+  matter_url                text check (matter_url is null or char_length(matter_url) <= 2000),
+  settled_basis             text not null check (settled_basis in (
+                              'payment_reached_payee',
+                              'terminal_onchain_state',
+                              'frozen_past_deadline'
+                            )),
+  terminal_state            text check (terminal_state in ('paid', 'refunded', 'expired', 'arbitrated')),
+  announced_deadline        date,
+  settled_evidence          text not null check (char_length(settled_evidence) between 20 and 1000),
+  subject_label             text not null check (char_length(subject_label) between 2 and 300),
+  account                   text not null check (char_length(account) between 80 and 6000),
+  account_digest            text not null check (account_digest ~ '^[a-f0-9]{64}$'),
+  signed_statement          text not null,
+  signature                 text not null check (signature ~ '^0x[0-9a-fA-F]{130}$'),
+  counterparty_channel_kind text not null check (counterparty_channel_kind in ('machine', 'human', 'none')),
+  counterparty_channel      text check (counterparty_channel is null or char_length(counterparty_channel) <= 500),
+  reply_window_hours        int not null check (reply_window_hours between 0 and 24),
+  reply_deadline            timestamptz not null,
+  filer_contact             text not null check (char_length(filer_contact) between 5 and 320),
+  published_at              timestamptz,
+  rejected_reason           text,
+  constraint complaint_filings_distinct_parties
+    check (claimant_address <> counterparty_address),
+  constraint complaint_filings_publication_shape
+    check ((status = 'published') = (published_at is not null)),
+  constraint complaint_filings_rejection_shape
+    check ((status = 'rejected') = (rejected_reason is not null)),
+  constraint complaint_filings_terminal_state_shape
+    check ((settled_basis = 'terminal_onchain_state') = (terminal_state is not null)),
+  constraint complaint_filings_freeze_shape
+    check ((settled_basis = 'frozen_past_deadline') = (announced_deadline is not null))
+);
+
+create index if not exists complaint_filings_matter_idx
+  on complaint_filings (network, lower(matter_reference));
+create index if not exists complaint_filings_published_idx
+  on complaint_filings (published_at desc) where status = 'published';
+create index if not exists complaint_filings_claimant_recent_idx
+  on complaint_filings (claimant_address, created_at desc);
+
+create table if not exists complaint_events (
+  id               uuid primary key default gen_random_uuid(),
+  seq              bigint generated always as identity,
+  filing_id        text not null references complaint_filings(id) on delete restrict,
+  kind             text not null check (kind in (
+                     'notification_attempt', 'reply', 'correction', 'publication'
+                   )),
+  occurred_at      timestamptz not null default now(),
+  actor            text not null check (actor in ('bureau', 'claimant', 'counterparty')),
+  actor_address    text check (actor_address is null or actor_address ~ '^0x[0-9a-f]{40}$'),
+  channel          text check (channel is null or char_length(channel) <= 500),
+  body             text not null check (char_length(body) between 1 and 6000),
+  body_digest      text check (body_digest is null or body_digest ~ '^[a-f0-9]{64}$'),
+  signed_statement text,
+  signature        text check (signature is null or signature ~ '^0x[0-9a-fA-F]{130}$'),
+  visible          boolean not null default false,
+  created_at       timestamptz not null default now(),
+  constraint complaint_events_reply_shape
+    check (kind <> 'reply' or (actor = 'counterparty' and body_digest is not null))
+);
+
+create unique index if not exists complaint_events_reply_unique_idx
+  on complaint_events (filing_id, kind, body_digest)
+  where body_digest is not null;
+create index if not exists complaint_events_filing_idx
+  on complaint_events (filing_id, seq);
+
+alter table complaint_filings enable row level security;
+alter table complaint_events  enable row level security;
+revoke all on table public.complaint_filings from anon, authenticated;
+revoke all on table public.complaint_events  from anon, authenticated;
+revoke all on sequence public.complaint_filings_seq_seq from anon, authenticated;
+revoke all on sequence public.complaint_events_seq_seq  from anon, authenticated;
+grant select, insert, update on table public.complaint_filings to service_role;
+grant select, insert         on table public.complaint_events  to service_role;
+grant usage, select on sequence public.complaint_filings_seq_seq to service_role;
+grant usage, select on sequence public.complaint_events_seq_seq  to service_role;
+revoke update, delete, truncate on table public.complaint_events from public, service_role;
+grant update (visible) on table public.complaint_events to service_role;
+revoke delete, truncate on table public.complaint_filings from public, service_role;

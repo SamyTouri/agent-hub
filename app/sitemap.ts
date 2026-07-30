@@ -49,6 +49,7 @@ export default async function sitemap(props: { id: Promise<string> }): Promise<M
   if (id === 0) {
     const staticUrls: MetadataRoute.Sitemap = [
       { url: `${BASE}/`, changeFrequency: 'daily', priority: 1 },
+      { url: `${BASE}/complaints`, changeFrequency: 'weekly', priority: 0.95 },
       { url: `${BASE}/constitution`, changeFrequency: 'monthly', priority: 0.9 },
       { url: `${BASE}/constitution.md`, changeFrequency: 'monthly', priority: 0.7 },
       { url: `${BASE}/decisions`, changeFrequency: 'weekly', priority: 0.8 },
