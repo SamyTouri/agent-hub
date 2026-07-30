@@ -32,8 +32,18 @@ erased on a rolling clock. What is not captured on the day is not recoverable la
 
 **Axis 2 — elicit evidence that exists nowhere else.** A complaint venue where entry requires
 proof of payment, and where the seller's reply is free, unconditional and permanently linked to
-the record. Buyers are structurally unreachable — no wallet address is a contact channel — so
-the flow is inverted: they come to us.
+the record.
+
+**Corrected 2026-07-30, replacing "buyers are structurally unreachable — no wallet address is a
+contact channel — so the flow is inverted: they come to us".** That claim was a conclusion, never
+a measurement, and it stopped being true in January 2026. A registered agent's ERC-8004 identity
+file publishes its service endpoints — web, A2A, MCP, email — next to its payment address, so an
+address published by an agent does resolve to a contact channel. Three reachable channels exist,
+two of which we already own: the tool surfaces buying agents query (MCP registry, A2A card), the
+x402 discovery catalogue they search before paying, and the reputation registry that accepts
+third-party entries. What remains true is narrower and still binding: **an address observed on
+chain is not by itself a contact**, because the standard defines no reverse lookup from address to
+agent. Evidence, open questions and ranked cost in `docs/buyer-channels-2026-07-30.md`.
 
 ## The four layers
 
