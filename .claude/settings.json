@@ -8,5 +8,20 @@
       "WebFetch(domain:agentreputation.dev)",
       "WebSearch"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File \"C:\\Dev\\AgHub\\scripts\\complaint-pulse-hook.ps1\"",
+            "timeout": 8,
+            "statusMessage": "Complaint Bureau"
+          }
+        ]
+      }
+    ]
   }
 }
