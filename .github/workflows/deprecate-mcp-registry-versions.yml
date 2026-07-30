@@ -1,0 +1,92 @@
+name: Deprecate MCP Registry versions
+
+# Marque d'anciennes versions publiées comme `deprecated`, avec un message de rétractation.
+#
+# Pourquoi ce workflow existe : le registre officiel conserve toutes les versions publiées et
+# les sert avec le statut `active` par défaut. Plusieurs des nôtres annoncent encore de la
+# recherche sémantique et un catalogue de « 15k+ / 16k+ » profils — deux promesses retirées du
+# produit, la seconde étant exactement le chiffre gonflé qui nous a été reproché publiquement
+# le 2026-07-25. On ne peut pas réécrire une version publiée, et on ne le voudrait pas : la
+# règle du projet est de corriger avec une date, jamais d'effacer.
+#
+# D'où le choix de `deprecated` et NON de `deleted` : `deleted` cache la version des listes,
+# `deprecated` la laisse visible en l'accompagnant d'un avertissement. La correction reste donc
+# lisible par quiconque irait vérifier ce que nous avons annoncé par le passé.
+#
+# Déclenchement manuel uniquement. L'authentification passe par l'OIDC de GitHub Actions,
+# comme la publication : aucun secret n'est stocké ni transmis.
+
+on:
+  workflow_dispatch:
+    inputs:
+      versions:
+        description: 'Versions à déprécier, séparées par des espaces (ex. "1.0.0 1.1.0")'
+        required: true
+        type: string
+      message:
+        description: "Message de rétractation affiché avec la version (max 500 caractères)"
+        required: true
+        type: string
+
+concurrency:
+  group: deprecate-mcp-registry
+  cancel-in-progress: false
+
+jobs:
+  deprecate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Exchange the GitHub OIDC token for a registry token
+        id: auth
+        env:
+          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
+          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          oidc=$(curl --fail --silent --show-error \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=mcp-registry" | jq -r '.value')
+          registry_token=$(curl --fail --silent --show-error \
+            -X POST https://registry.modelcontextprotocol.io/v0/auth/github-oidc \
+            -H 'content-type: application/json' \
+            -d "$(jq -nc --arg t "$oidc" '{oidc_token: $t}')" | jq -r '.token')
+          # Jamais journalisé : masqué auprès du runner avant toute autre étape.
+          echo "::add-mask::$registry_token"
+          echo "token=$registry_token" >> "$GITHUB_OUTPUT"
+
+      - name: Mark each version deprecated
+        env:
+          REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+          VERSIONS: ${{ inputs.versions }}
+          MESSAGE: ${{ inputs.message }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          server="io.github.SamyTouri%2Fagent-hub"
+          if [ "${#MESSAGE}" -gt 500 ]; then
+            echo "Le message fait ${#MESSAGE} caractères, le registre en accepte 500." >&2
+            exit 1
+          fi
+          for version in $VERSIONS; do
+            echo "--- $version"
+            curl --fail --silent --show-error \
+              -X PATCH "https://registry.modelcontextprotocol.io/v0/servers/$server/versions/$version/status" \
+              -H "Authorization: Bearer $REGISTRY_TOKEN" \
+              -H 'content-type: application/json' \
+              -d "$(jq -nc --arg s deprecated --arg m "$MESSAGE" '{status: $s, statusMessage: $m}')"
+            echo
+          done
+
+      - name: Show the resulting statuses
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            'https://registry.modelcontextprotocol.io/v0/servers?search=io.github.SamyTouri/agent-hub' |
+            jq -r '.servers[] | "\(.server.version)\t\(._meta["io.modelcontextprotocol.registry/official"].status)\t\(._meta["io.modelcontextprotocol.registry/official"].isLatest)"' |
+            sort -V
