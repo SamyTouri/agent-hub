@@ -45,10 +45,34 @@ showing the missing information is genuinely unavailable elsewhere.
 **B — the Complaint Bureau.** Entry requires a signature from **either address of a real
 transaction**, not merely a transaction hash: the chain is public, so a hash proves nothing
 about who presents it. Symmetry adopted 2026-07-29 — the payer signs to contest what it
-received, the payee signs to contest how its client behaved. What makes a filing admissible is
-being a proven party to a paid transaction, not being the one who paid. Every entry is a dated
-fact about one transaction, never an aggregate verdict. The counterparty is notified
-proactively and replies for free, always.
+received, the payee signs to contest how its client behaved. Every entry is a dated fact about
+one transaction, never an aggregate verdict. The counterparty is notified proactively and
+replies for free, always.
+
+**What makes a filing admissible is being a proven party to a settled matter.** Adopted
+2026-07-30, widening "a paid transaction" without touching what counts as proof. The field test
+of that day found the earlier wording excluded the market's most common dispute pattern: where
+disputes are numerous the money sits in escrow, so nothing was ever *paid*, and the
+best-documented operators were barred at the door. The signature requirement is unchanged — it
+proves control of one of the two addresses, which stays true wherever the funds sit. Only the
+timing moved.
+
+A matter is settled in exactly three cases, each verifiable without believing anyone:
+
+- **the payment reached the payee** — the pay-first case, where the matter closes in its first
+  second and only the account of what followed is in dispute;
+- **the exchange reached a terminal on-chain state** — paid, refunded, expired or arbitrated.
+  Protocol escrows are built to guarantee this: Boson expires an untouched dispute and completes
+  the exchange precisely to prevent indefinite lockup, and an ACP job that misses its signed SLA
+  expires and refunds the client automatically. Windows run in minutes to days, never months;
+- **the funds have not moved for thirty days past the deadline the seller or the platform itself
+  announced.** This is the case nobody else covers. Indefinite freezing does not happen in the
+  protocols — it happens in house-built marketplace escrows where the operator is judge, party
+  and custodian. One closed its paid bounties overnight, leaving open ones to require a manual
+  on-chain cancel from a poster who may never return. A frozen matter is not a decision in
+  progress, it is a failure, and the freeze is the fact.
+
+Nothing is admissible while the funds are genuinely in play: we never publish during an instance.
 
 **The reply window never exceeds the speed at which the counterparty bills.** Adopted
 2026-07-29, replacing a seven-day calendar window that was an enterprise habit imposed on a
