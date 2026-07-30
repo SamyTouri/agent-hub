@@ -191,6 +191,64 @@ export async function listPublishedFilings(): Promise<PublicFilingSummary[]> {
   }))
 }
 
+/**
+ * Ce qu'un acheteur interroge AVANT de payer : existe-t-il un dossier publié sur cette
+ * adresse, ou sur ce sujet tel qu'il est publié ? On renvoie des faits datés, jamais un
+ * compte présenté comme une note — et surtout, l'appelant doit recevoir avec la réponse
+ * que zéro dossier ne dit rien de la fiabilité de personne. Sans cette phrase, l'absence
+ * deviendrait un label, ce qui est exactement le défaut que ce projet existe pour exposer.
+ */
+export async function findPublishedAbout(query: string): Promise<PublicFilingSummary[]> {
+  const term = query.trim()
+  if (term.length < 2) return []
+  const isAddress = /^0x[0-9a-fA-F]{40}$/.test(term)
+  const sql = getSql()
+  const rows = (await withTimeout(
+    isAddress
+      ? sql`
+          select f.id, f.published_at, f.subject_label, f.network, f.settled_basis, f.claimant_role,
+                 exists (
+                   select 1 from complaint_events e
+                   where e.filing_id = f.id and e.kind = 'reply' and e.visible
+                 ) as has_reply
+          from complaint_filings f
+          where f.status = 'published'
+            and (f.counterparty_address = ${term.toLowerCase()} or f.claimant_address = ${term.toLowerCase()})
+          order by f.published_at desc
+          limit 50
+        `
+      : sql`
+          select f.id, f.published_at, f.subject_label, f.network, f.settled_basis, f.claimant_role,
+                 exists (
+                   select 1 from complaint_events e
+                   where e.filing_id = f.id and e.kind = 'reply' and e.visible
+                 ) as has_reply
+          from complaint_filings f
+          where f.status = 'published'
+            and (f.subject_label ilike ${'%' + term + '%'} or f.matter_reference ilike ${'%' + term + '%'})
+          order by f.published_at desc
+          limit 50
+        `,
+  )) as unknown as Array<{
+    id: string
+    published_at: Date
+    subject_label: string
+    network: string
+    settled_basis: SettledBasis
+    claimant_role: ClaimantRole
+    has_reply: boolean
+  }>
+  return rows.map((r) => ({
+    id: r.id,
+    publishedAt: r.published_at.toISOString(),
+    subjectLabel: r.subject_label,
+    network: r.network,
+    settledBasis: r.settled_basis,
+    claimantRole: r.claimant_role,
+    hasReply: r.has_reply,
+  }))
+}
+
 export type PublicEvent = {
   kind: 'notification_attempt' | 'reply' | 'correction' | 'publication'
   occurredAt: string

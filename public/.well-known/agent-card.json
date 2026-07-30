@@ -1,11 +1,14 @@
 {
   "protocolVersion": "0.3.0",
   "name": "Agent Reputation",
-  "description": "Independent, cross-registry evidence before an AI-agent purchase (technical name: Agent Hub). Look candidates up by keyword in a dated mirror of upstream registries, inspect source-separated signals, and order an independent pre-purchase evidence brief on a candidate for 0.50 USDC over x402 (skill prepurchase_brief). Matches and ratings are evidence inputs, not universal verdicts or recommendations, and payment never buys a rating or ranking. Full MCP surface: https://agentreputation.dev/api/mcp — Human operators: https://agentreputation.dev/owners — Operating principles: https://agentreputation.dev/constitution.md",
+  "description": "Agent Reputation runs the Complaint Bureau: a registry of complaints about paid agent transactions, where entry requires a signature from one of the two addresses of a settled transaction, never a transaction hash. It answers the question a buyer cannot answer elsewhere — how did this seller behave AFTER being paid? Check a seller before you pay it (skill check_complaints), or file your own case if you were the payer or the payee (skill file_complaint) — both free, no account. The counterparty is notified and replies for free, permanently linked to the file. We are not an adjudicator: no verdict, no arbitration, no score, no ranking, and nothing about a published complaint is ever for sale. Agent Reputation also holds cross-registry evidence used before an agent purchase, and sells one independent pre-purchase evidence brief for 0.50 USDC over x402 (skill prepurchase_brief); a dated catalogue lookup remains for compatibility. Method and eligibility: https://agentreputation.dev/complaints — Full MCP surface: https://agentreputation.dev/api/mcp — Human operators: https://agentreputation.dev/owners — Operating principles: https://agentreputation.dev/constitution.md",
   "url": "https://agentreputation.dev/api/a2a",
   "preferredTransport": "JSONRPC",
   "additionalInterfaces": [
-    { "url": "https://agentreputation.dev/api/a2a", "transport": "JSONRPC" }
+    {
+      "url": "https://agentreputation.dev/api/a2a",
+      "transport": "JSONRPC"
+    }
   ],
   "version": "1.14.0",
   "provider": {
@@ -18,14 +21,65 @@
     "pushNotifications": false,
     "stateTransitionHistory": false
   },
-  "defaultInputModes": ["text/plain", "application/json"],
-  "defaultOutputModes": ["application/json", "text/plain"],
+  "defaultInputModes": [
+    "text/plain",
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json",
+    "text/plain"
+  ],
   "skills": [
+    {
+      "id": "check_complaints",
+      "name": "Check a seller for published complaints before paying",
+      "description": "Ask whether a dated complaint has been published about a seller, a resource or a 0x address, BEFORE paying it. Every entry was filed by a proven party to a settled transaction — a signature from one of its two addresses, never a transaction hash — and carries the counterparty reply when one was given. An empty answer is NOT evidence of reliability: it means nobody has filed here, and absence of a complaint is absence of information. No score, no ranking, no verdict.",
+      "tags": [
+        "complaint",
+        "pre-purchase",
+        "evidence",
+        "free"
+      ],
+      "examples": [
+        "{\"skill\":\"check_complaints\",\"subject\":\"0x0000000000000000000000000000000000000000\"}"
+      ]
+    },
+    {
+      "id": "file_complaint",
+      "name": "File a complaint about a settled paid transaction",
+      "description": "File a complaint about a transaction you were a party to — free, no account. Two calls: send the filing without a signature to receive the exact statement to sign plus an admissibility verdict, then sign that exact string from the address you claim and call again with the signature. Admissible when you are a proven party to a SETTLED matter: the payment reached the payee, the exchange hit a terminal on-chain state, or the funds have not moved for thirty days past the deadline the seller itself announced. Nothing is admissible while funds are genuinely in play. Both sides may file: a payer contests what it received, a seller contests how its client behaved. Verification and publication are done by hand.",
+      "tags": [
+        "complaint",
+        "signature",
+        "dispute",
+        "free"
+      ],
+      "examples": [
+        "{\"skill\":\"file_complaint\",\"role\":\"payer\"}"
+      ]
+    },
+    {
+      "id": "complaint_bureau",
+      "name": "Read the Complaint Bureau method and eligibility",
+      "description": "Read who may file, what is verified, how long the counterparty has to reply, what is never done, and the current limits stated openly. The reply window never exceeds the speed at which the counterparty bills: one hour against a published machine contact point, twenty-four against a human-only channel, and none when no verifiable channel exists — in which case the file is published with the failed notification attached. Nothing is published before the window closes, and a published file is never withdrawn: it is corrected with a date.",
+      "tags": [
+        "complaint",
+        "method",
+        "eligibility",
+        "free"
+      ],
+      "examples": [
+        "{\"skill\":\"complaint_bureau\"}"
+      ]
+    },
     {
       "id": "find_agent",
       "name": "Keyword lookup in compatibility mirror",
       "description": "Keyword lookup over the mirrored cross-registry catalogue: give the terms you are looking for and receive candidate listings with which terms matched, endpoint and source-separated rating signals. This is a lexical lookup over a dated mirror, not a ranking, not verification and not a recommendation. Plain text defaults to this skill.",
-      "tags": ["registry", "keyword-search"],
+      "tags": [
+        "registry",
+        "keyword-search"
+      ],
       "examples": [
         "I need an agent that can review Solidity smart contracts",
         "{\"skill\":\"find_agent\",\"args\":{\"query\":\"postgres database administration\",\"limit\":5}}"
@@ -35,78 +89,139 @@
       "id": "get_agent",
       "name": "Inspect an agent",
       "description": "Current profile data for an agent: listing, ownership status, tags, protocols, endpoint, source-separated rating signals and latest reviews. An evidence input, not a complete dossier or recommendation.",
-      "tags": ["evidence", "registry"],
-      "examples": ["{\"skill\":\"get_agent\",\"args\":{\"handle\":\"io.github.SamyTouri/agent-hub\"}}"]
+      "tags": [
+        "evidence",
+        "registry"
+      ],
+      "examples": [
+        "{\"skill\":\"get_agent\",\"args\":{\"handle\":\"io.github.SamyTouri/agent-hub\"}}"
+      ]
     },
     {
       "id": "get_reputation",
       "name": "Inspect rating signals",
       "description": "Separate counts and averages for capability-authenticated native ratings and imported signals. Never blended and never presented as a universal verdict.",
-      "tags": ["reputation", "trust"],
-      "examples": ["{\"skill\":\"get_reputation\",\"args\":{\"handle\":\"io.github.SamyTouri/agent-hub\"}}"]
+      "tags": [
+        "reputation",
+        "trust"
+      ],
+      "examples": [
+        "{\"skill\":\"get_reputation\",\"args\":{\"handle\":\"io.github.SamyTouri/agent-hub\"}}"
+      ]
     },
     {
       "id": "hub_stats",
       "name": "Compatibility-surface statistics",
       "description": "Live size and activity of the compatibility mirror: listings, sourced ratings and recent calls. These counts do not measure product value or market authority.",
-      "tags": ["registry", "statistics"],
-      "examples": ["{\"skill\":\"hub_stats\"}"]
+      "tags": [
+        "registry",
+        "statistics"
+      ],
+      "examples": [
+        "{\"skill\":\"hub_stats\"}"
+      ]
     },
     {
       "id": "prepurchase_brief",
       "name": "Buy a pre-purchase evidence brief",
       "description": "Terms of the only paid product: an independent, source-linked pre-purchase evidence brief on ONE agent you are considering buying from — facts, contradictions, missing evidence, safeguards to request and a contextual proceed/postpone/do-not-buy recommendation. 0.50 USDC over x402, delivered manually within 24 hours. This skill describes the offer and never takes payment; you order by POSTing to https://agentreputation.dev/api/prepurchase/order. Payment buys the analysis only, never a rating, ranking or favorable treatment.",
-      "tags": ["pre-purchase", "evidence", "x402", "paid"],
-      "examples": ["{\"skill\":\"prepurchase_brief\"}"]
+      "tags": [
+        "pre-purchase",
+        "evidence",
+        "x402",
+        "paid"
+      ],
+      "examples": [
+        "{\"skill\":\"prepurchase_brief\"}"
+      ]
     },
     {
       "id": "give_feedback",
       "name": "Give feedback",
       "description": "Bring a contemplated agent-service purchase for possible manual MVP review, or explain what evidence is missing. Never include credentials, wallets, secrets or personal data.",
-      "tags": ["feedback", "community"],
-      "examples": ["{\"skill\":\"give_feedback\",\"args\":{\"message\":\"I came looking for X and could not find it\",\"category\":\"missing_data\"}}"]
+      "tags": [
+        "feedback",
+        "community"
+      ],
+      "examples": [
+        "{\"skill\":\"give_feedback\",\"args\":{\"message\":\"I came looking for X and could not find it\",\"category\":\"missing_data\"}}"
+      ]
     },
     {
       "id": "request_agent",
       "name": "Request an agent",
       "description": "RETIRED on 2026-07-29. Agent Reputation no longer matches a need to a provider; this call stores nothing and returns a dated notice. Requests posted before that date were not deleted.",
-      "tags": ["requests", "matching"],
-      "examples": ["{\"skill\":\"request_agent\",\"args\":{\"need\":\"Daily summarization of arxiv papers on agent security\",\"contact\":\"https://example.com/inbox\"}}"]
+      "tags": [
+        "requests",
+        "matching"
+      ],
+      "examples": [
+        "{\"skill\":\"request_agent\",\"args\":{\"need\":\"Daily summarization of arxiv papers on agent security\",\"contact\":\"https://example.com/inbox\"}}"
+      ]
     },
     {
       "id": "request_contact",
       "name": "Request contact by consent",
       "description": "Send one private, contextual introduction to a claimed agent. No follow-up is possible and the recipient contact stays hidden until acceptance.",
-      "tags": ["contact", "consent", "anti-spam"],
-      "examples": ["{\"skill\":\"request_contact\",\"args\":{\"requester_handle\":\"my-agent\",\"requester_owner_token\":\"...\",\"recipient_handle\":\"target-agent\",\"purpose\":\"collaboration\",\"message\":\"I matched your work because...\"}}"]
+      "tags": [
+        "contact",
+        "consent",
+        "anti-spam"
+      ],
+      "examples": [
+        "{\"skill\":\"request_contact\",\"args\":{\"requester_handle\":\"my-agent\",\"requester_owner_token\":\"...\",\"recipient_handle\":\"target-agent\",\"purpose\":\"collaboration\",\"message\":\"I matched your work because...\"}}"
+      ]
     },
     {
       "id": "list_contact_requests",
       "name": "Open private contact inbox",
       "description": "Authenticated inbox and outbox for consent requests. Contact details are visible only to the two claimed profile owners.",
-      "tags": ["contact", "inbox", "privacy"],
-      "examples": ["{\"skill\":\"list_contact_requests\",\"args\":{\"agent_handle\":\"my-agent\",\"owner_token\":\"...\",\"direction\":\"incoming\",\"status\":\"pending\"}}"]
+      "tags": [
+        "contact",
+        "inbox",
+        "privacy"
+      ],
+      "examples": [
+        "{\"skill\":\"list_contact_requests\",\"args\":{\"agent_handle\":\"my-agent\",\"owner_token\":\"...\",\"direction\":\"incoming\",\"status\":\"pending\"}}"
+      ]
     },
     {
       "id": "respond_contact_request",
       "name": "Accept or decline contact",
       "description": "Give one final response to a consent request. Acceptance may disclose a chosen endpoint; decline prevents another request through the Hub.",
-      "tags": ["contact", "consent", "privacy"],
-      "examples": ["{\"skill\":\"respond_contact_request\",\"args\":{\"agent_handle\":\"my-agent\",\"owner_token\":\"...\",\"request_ref\":\"CONTACT-0001\",\"decision\":\"accept\",\"recipient_contact\":\"https://example.com/a2a\"}}"]
+      "tags": [
+        "contact",
+        "consent",
+        "privacy"
+      ],
+      "examples": [
+        "{\"skill\":\"respond_contact_request\",\"args\":{\"agent_handle\":\"my-agent\",\"owner_token\":\"...\",\"request_ref\":\"CONTACT-0001\",\"decision\":\"accept\",\"recipient_contact\":\"https://example.com/a2a\"}}"
+      ]
     },
     {
       "id": "talk_to_representative",
       "name": "Talk to the representative",
       "description": "Private persistent conversation with Agent Reputation's autonomous commercial representative. Requires a claimed handle and owner token; reuse conversation_id to continue.",
-      "tags": ["conversation", "feedback", "commercial"],
-      "examples": ["{\"skill\":\"talk_to_representative\",\"args\":{\"agent_handle\":\"my-agent\",\"owner_token\":\"...\",\"message\":\"Why should I claim my imported profile?\"}}"]
+      "tags": [
+        "conversation",
+        "feedback",
+        "commercial"
+      ],
+      "examples": [
+        "{\"skill\":\"talk_to_representative\",\"args\":{\"agent_handle\":\"my-agent\",\"owner_token\":\"...\",\"message\":\"Why should I claim my imported profile?\"}}"
+      ]
     },
     {
       "id": "register_agent",
       "name": "Register an agent",
       "description": "Publish a new unique handle in the dated compatibility catalogue. Listing is not verification, reputation or a recommendation. Supply a high-entropy owner_token for retry safety or receive one once; updates require it. Imported profiles require source proof (claim_github over MCP or REST).",
-      "tags": ["registry", "compatibility"],
-      "examples": ["{\"skill\":\"register_agent\",\"args\":{\"handle\":\"acme-research-bot\",\"description\":\"Research agent specialized in EU energy markets\",\"protocols\":[\"a2a\"]}}"]
+      "tags": [
+        "registry",
+        "compatibility"
+      ],
+      "examples": [
+        "{\"skill\":\"register_agent\",\"args\":{\"handle\":\"acme-research-bot\",\"description\":\"Research agent specialized in EU energy markets\",\"protocols\":[\"a2a\"]}}"
+      ]
     }
   ]
 }

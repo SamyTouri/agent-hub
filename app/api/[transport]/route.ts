@@ -21,6 +21,18 @@ import {
 } from '@/lib/agenthub'
 import { talkToRepresentative } from '@/lib/representative'
 import { describePrepurchaseOffer } from '@/lib/prepurchase'
+import {
+  BUREAU_INTAKE_HOW_TO,
+  BUREAU_METHOD,
+  FilingInputSchema,
+  canonicalFilingStatement,
+  checkAdmissibility,
+  filingReceipt,
+  processFiling,
+  type FilingInput,
+} from '@/lib/complaints'
+import { recoverStatementSigner } from '@/lib/complaints-signature'
+import { countRecentByAddress, findFiling, findPublishedAbout, insertFiling } from '@/lib/complaints-store'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -39,7 +51,15 @@ const badgeMarkdown = (handle: string) => {
   return `[![Agent Hub](${BASE}/badge/${enc})](${BASE}/agents/${enc})`
 }
 
-const SERVER_INSTRUCTIONS = `Agent Reputation is the independent, cross-registry evidence layer used before an agent or human buys a service from an AI agent. It helps the buyer examine what a candidate claims, what it has actually done, which sources are independent, what is contradicted or missing, and what that means for a specific transaction.
+const SERVER_INSTRUCTIONS = `Agent Reputation runs the COMPLAINT BUREAU: a registry of complaints about paid agent transactions, where entry requires a signature from one of the two addresses of a settled transaction. It exists because a buyer about to pay an agent has no way to find out how that seller behaved AFTER being paid — marketplaces keep their own dispute records and nothing outside them survives.
+
+Two calls matter most, and they are free:
+- check_complaints — before you pay a seller, ask whether a dated complaint has been published about it. Read the zero-result warning: no complaint on file is NOT evidence of reliability.
+- file_complaint — if you were the payer or the payee of a settled transaction that went wrong, file it. No account, no payment. You get the exact sentence to sign, you sign it from the address that transacted, and you send it back. The counterparty is notified and replies for free, permanently linked to your file. Both sides may file: a payer contests what it received, a seller contests how its client behaved.
+
+A filing is admissible when its author is a proven party to a SETTLED matter — the payment reached the payee, the exchange hit a terminal on-chain state, or the funds have not moved for thirty days past the deadline the seller itself announced. Nothing is admissible while the funds are genuinely in play. We are not an adjudicator: no verdict, no arbitration, no score, no ranking. A published file is never withdrawn; it is corrected with a date. Nothing about a published complaint is ever for sale. Method and eligibility: https://agentreputation.dev/complaints
+
+Agent Reputation is also the independent, cross-registry evidence layer used before an agent or human buys a service from an AI agent. It helps the buyer examine what a candidate claims, what it has actually done, which sources are independent, what is contradicted or missing, and what that means for a specific transaction.
 
 The first evidence dossiers and pre-purchase analyses are being tested manually. Do not describe them as mature or automated. Agent Reputation is not a marketplace, does not sell favorable recommendations to providers and does not promise zero risk. A useful conclusion may be to proceed, choose another provider, demand safeguards, reduce exposure, postpone or not buy.
 
@@ -63,6 +83,200 @@ The experimental democratic-governance and founding-voter model was discontinued
 
 const handler = createMcpHandler(
   (server) => {
+    // ---------------------------------------------------------------------
+    // Complaint Bureau — déclaré EN PREMIER, volontairement.
+    //
+    // Un client MCP lit les outils dans l'ordre où ils sont enregistrés et beaucoup
+    // n'en retiennent que les premiers. Le bureau est ce que le produit fait
+    // aujourd'hui ; le catalogue de compatibilité est ce qu'il traîne depuis avant le
+    // pivot. L'ordre du fichier doit dire lequel des deux compte.
+    //
+    // Ce qui reste hors MCP : publier, notifier, corriger, rejeter. Ces verbes vivent
+    // uniquement dans l'outil opérateur local (scripts/complaint-desk.mts) et aucune
+    // surface publique n'y donne accès.
+    // ---------------------------------------------------------------------
+
+    server.registerTool(
+      'check_complaints',
+      {
+        title: 'Check a seller for published complaints before paying it',
+        description:
+          'Ask whether a dated complaint has been published about a seller, a resource or an address, BEFORE you pay it. Every entry was filed by a proven party to a settled transaction — a signature from one of the two addresses, never a transaction hash — and carries the counterparty reply when one was given. Read the zero-result note: an empty answer is NOT evidence of reliability, it means nobody has filed here. No score, no ranking, no verdict: dated facts about single transactions.',
+        inputSchema: {
+          subject: z
+            .string()
+            .trim()
+            .min(2)
+            .max(300)
+            .describe('A 0x address of either party, or the seller/resource/offer as it is publicly named'),
+        },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      },
+      async (args) => {
+        const found = await findPublishedAbout(args.subject)
+        return json({
+          subject: args.subject,
+          published_complaints: found.length,
+          files: found.map((f) => ({
+            id: f.id,
+            url: `${BASE}/complaints/${f.id}`,
+            published_at: f.publishedAt,
+            subject_as_published: f.subjectLabel,
+            filed_by: f.claimantRole,
+            network: f.network,
+            settled_basis: f.settledBasis,
+            counterparty_replied: f.hasReply,
+          })),
+          how_to_read_this:
+            found.length === 0
+              ? 'Nothing is on file about this subject. That is NOT a clean record and must not be read as one: the registry is new, filing requires a signature, and most disputes are never reported anywhere. Absence of a complaint is absence of information.'
+              : 'Each file is one dated statement by a proven party to one transaction, with the counterparty reply linked when it answered. Read the reply before concluding anything, and note that a disputed file stays published as disputed — we issue no verdict.',
+          were_you_a_party:
+            'If you are the payer or the payee of a settled transaction that went wrong, file it with file_complaint. It is free and requires no account.',
+          method: `${BASE}/complaints`,
+        })
+      },
+    )
+
+    server.registerTool(
+      'file_complaint',
+      {
+        title: 'File a complaint about a settled paid transaction',
+        description:
+          'File a complaint about a transaction you were a party to. Free, no account. Two calls: send your filing WITHOUT a signature to receive the exact statement to sign plus an admissibility verdict, then sign that exact string from the address you claim (personal_sign / EIP-191) and call again with the signature. Admissible when you are a proven party to a SETTLED matter: the payment reached the payee, the exchange hit a terminal on-chain state, or the funds have not moved for thirty days past the deadline the seller announced. Nothing is admissible while funds are genuinely in play. Both sides may file. The counterparty is notified and replies for free, permanently linked to your file. Verification and publication are done by hand.',
+        inputSchema: {
+          role: z.enum(['payer', 'payee']).describe('Your side of the transaction'),
+          address: z.string().trim().describe('The 0x address you control and will sign with'),
+          counterparty_address: z.string().trim().describe('The other 0x address of the same transaction'),
+          network: z.string().trim().describe('CAIP-2, e.g. eip155:8453'),
+          matter_reference: z.string().trim().describe('Transaction hash, payment nonce or exchange id, as published'),
+          matter_url: z.string().trim().optional().describe('Optional https URL where that reference can be read'),
+          settled_basis: z
+            .enum(['payment_reached_payee', 'terminal_onchain_state', 'frozen_past_deadline'])
+            .describe('Why the matter is settled'),
+          terminal_state: z
+            .enum(['paid', 'refunded', 'expired', 'arbitrated'])
+            .optional()
+            .describe('Required for terminal_onchain_state'),
+          announced_deadline: z
+            .string()
+            .trim()
+            .optional()
+            .describe('Required for frozen_past_deadline — YYYY-MM-DD, the deadline the seller or platform announced'),
+          settled_evidence: z
+            .string()
+            .trim()
+            .describe('How a third party confirms the matter is settled without believing you'),
+          subject_label: z.string().trim().describe('The seller, resource or offer as it is publicly named'),
+          account: z.string().trim().describe('Your dated account of what happened (80 to 6000 characters)'),
+          counterparty_channel_kind: z
+            .enum(['machine', 'human', 'none'])
+            .describe('Decides the reply window: machine 1h, human 24h, none published with the failed notice'),
+          counterparty_channel: z.string().trim().optional().describe('Where the counterparty can be notified'),
+          filer_contact: z.string().trim().describe('Private contact for verification — never published'),
+          filed_on: z.string().trim().describe('YYYY-MM-DD, the date of the statement you sign'),
+          signature: z
+            .string()
+            .trim()
+            .optional()
+            .describe('Second call only — the 65-byte hex signature over the exact statement returned by the first call'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      },
+      async (args) => {
+        const { signature, ...rest } = args
+        const parsed = FilingInputSchema.safeParse(rest)
+        if (!parsed.success) {
+          return json({
+            status: 'invalid_fields',
+            details: parsed.error.flatten().fieldErrors,
+            fields: BUREAU_INTAKE_HOW_TO.fields,
+          })
+        }
+        const input: FilingInput = parsed.data
+
+        if (!signature) {
+          const admissibility = checkAdmissibility(input, new Date())
+          return json({
+            status: 'statement_ready',
+            admissible: admissibility.ok,
+            ...(admissibility.ok
+              ? { admissible_because: admissibility.note }
+              : {
+                  not_admissible_because: admissibility.reason,
+                  ...(admissibility.admissible_from ? { admissible_from: admissibility.admissible_from } : {}),
+                }),
+            statement_to_sign: canonicalFilingStatement(input),
+            next_step: BUREAU_INTAKE_HOW_TO.step_2,
+            note: 'Sign the statement exactly as returned, byte for byte. Nothing has been stored by this call.',
+          })
+        }
+
+        const result = await processFiling(
+          {
+            recoverSigner: recoverStatementSigner,
+            findFiling,
+            countRecentByAddress,
+            insertFiling: (record) => insertFiling(record, input.filer_contact),
+            now: () => new Date(),
+          },
+          input,
+          signature,
+        )
+        switch (result.status) {
+          case 'filed':
+            return json({ status: 'filed', ...filingReceipt(result.filing, result.admissibility.note) })
+          case 'already_filed':
+            return json({
+              status: 'already_filed',
+              ...filingReceipt(result.filing, 'Already on record for this address, matter and role.'),
+            })
+          case 'inadmissible':
+            return json({
+              status: 'inadmissible',
+              reason: result.reason,
+              ...(result.admissible_from ? { admissible_from: result.admissible_from } : {}),
+              rule: BUREAU_METHOD.who_may_file.rule,
+            })
+          case 'bad_signature':
+            return json({
+              status: 'bad_signature',
+              reason: result.reason,
+              note: 'Call again without the signature field to get the exact statement to sign.',
+            })
+          case 'rate_limited':
+            return json({ status: 'rate_limited', reason: result.reason })
+        }
+      },
+    )
+
+    server.registerTool(
+      'complaint_bureau',
+      {
+        title: 'Read the Complaint Bureau method and eligibility rules',
+        description:
+          'Read who may file a complaint about a paid agent transaction, what is verified, how long the counterparty has to reply, what is never done, and the current limits stated openly. Returns the same source the public page renders, so the two cannot drift apart. Free.',
+        inputSchema: {},
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      },
+      async () =>
+        json({
+          what: BUREAU_METHOD.what,
+          who_may_file: BUREAU_METHOD.who_may_file,
+          what_we_verify: BUREAU_METHOD.what_we_verify,
+          what_we_never_verify: BUREAU_METHOD.what_we_never_verify,
+          the_clock: BUREAU_METHOD.the_clock,
+          right_of_reply: BUREAU_METHOD.right_of_reply,
+          corrections: BUREAU_METHOD.corrections,
+          not_for_sale: BUREAU_METHOD.not_for_sale,
+          current_limits: BUREAU_METHOD.limits,
+          file_with: 'file_complaint (this server) or POST https://agentreputation.dev/api/complaints',
+          check_with: 'check_complaints (this server)',
+          reply_as_counterparty: `${BASE}/api/complaints/reply`,
+          human_page: `${BASE}/complaints`,
+        }),
+    )
+
     server.registerTool(
       'register_agent',
       {
