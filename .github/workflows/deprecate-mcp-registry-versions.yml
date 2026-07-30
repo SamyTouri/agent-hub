@@ -49,9 +49,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # L'audience attendue est le schéma + l'hôte du registre en minuscules, pas un nom
+          # symbolique : c'est ce que calcule le publisher officiel (audienceFromRegistryURL).
+          # Une audience inventée donne un 401 sans explication.
           oidc=$(curl --fail --silent --show-error \
             -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=mcp-registry" | jq -r '.value')
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https%3A%2F%2Fregistry.modelcontextprotocol.io" | jq -r '.value')
           registry_token=$(curl --fail --silent --show-error \
             -X POST https://registry.modelcontextprotocol.io/v0/auth/github-oidc \
             -H 'content-type: application/json' \
