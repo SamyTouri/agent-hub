@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { validateDiscoveryExtension } from '@x402/extensions'
 import {
   decodePaymentRequiredHeader,
   decodePaymentSignatureHeader,
@@ -21,6 +22,7 @@ import {
 import {
   buildPaymentRequired,
   buildPaymentRequirements,
+  CDP_FACILITATOR_URL,
   checkPaymentAgainstRequirements,
   deriveOrderId,
   MAINNET_ACK_VALUE,
@@ -880,4 +882,46 @@ test('the mainnet challenge is refused unless every spendable dimension matches'
     )
     assert.equal(result.ok, false, JSON.stringify(override))
   }
+})
+
+// ---------------------------------------------------------------------------
+// Métadonnées de découverte du catalogue x402 (Bazaar)
+// ---------------------------------------------------------------------------
+
+test('the paid offer declares discovery metadata its own library accepts', () => {
+  const config: PrepurchaseConfig = {
+    network: 'eip155:8453',
+    asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+    payTo: '0x1111111111111111111111111111111111111111',
+    facilitatorUrl: CDP_FACILITATOR_URL,
+    facilitatorKind: 'cdp',
+    mainnet: true,
+  }
+  const declared = buildPaymentRequired(config).extensions
+  assert.ok(declared, 'no discovery extension declared — the catalogue would never index us')
+
+  // Le validateur officiel exige `method` alors que le type d'entrée public du helper le
+  // retire. Ce test existe parce que la contradiction est silencieuse : sans lui, une
+  // déclaration invalide passerait le typecheck et le catalogue nous ignorerait sans erreur.
+  const verdict = validateDiscoveryExtension((declared as { bazaar: unknown }).bazaar)
+  assert.deepEqual(verdict, { valid: true })
+})
+
+test('the offer description stays inside the limit the facilitator enforces', () => {
+  const config: PrepurchaseConfig = {
+    network: 'eip155:8453',
+    asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+    payTo: '0x1111111111111111111111111111111111111111',
+    facilitatorUrl: CDP_FACILITATOR_URL,
+    facilitatorKind: 'cdp',
+    mainnet: true,
+  }
+  const description = buildPaymentRequired(config).resource.description ?? ''
+  // Au-delà de 500 caractères le facilitateur CDP refuse le règlement lui-même : ce n'est
+  // pas une préférence de style, c'est un paiement qui échoue.
+  assert.ok(description.length <= 500, `description is ${description.length} characters`)
+  // Le guichet gratuit vient avant l'offre payante : un acheteur qui lit cette fiche a plus
+  // souvent besoin de vérifier un vendeur que d'acheter une analyse.
+  assert.match(description, /FREE/)
+  assert.ok(description.indexOf('complaint') < description.indexOf('PAID'))
 })

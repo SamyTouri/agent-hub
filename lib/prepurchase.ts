@@ -1,6 +1,10 @@
 import { createHash } from 'node:crypto'
 import { z } from 'zod'
 import {
+  declareDiscoveryExtension,
+  type DeclareDiscoveryExtensionConfig,
+} from '@x402/extensions'
+import {
   EVM_ADDRESS_RE,
   HEADER_PAYMENT_REQUIRED,
   HEADER_PAYMENT_SIGNATURE,
@@ -171,17 +175,78 @@ export function buildPaymentRequirements(
   }
 }
 
+/**
+ * Métadonnées de découverte du catalogue x402 (Bazaar), déclarées via le helper
+ * officiel de `@x402/extensions` plutôt qu'écrites à la main.
+ *
+ * À quoi ça sert, concrètement : le catalogue que les agents acheteurs interrogent
+ * n'indexe QUE les routes qui déclarent ces métadonnées, et seulement au premier
+ * paiement réellement réglé par le facilitateur CDP. Les déclarer maintenant ne nous
+ * inscrit donc pas — ça rend l'inscription possible le jour où un règlement mainnet a
+ * lieu. Sans elles, ce règlement ne servirait à rien côté visibilité.
+ */
+function discoveryExtension(): Record<string, unknown> {
+  // Piège de `@x402/extensions` 2.19 : son type d'entrée public retire `method`, mais son
+  // propre validateur REFUSE l'extension produite quand `method` manque (« /input: must
+  // have required property 'method' »). Le runtime, lui, le lit sans broncher. On passe
+  // donc par une variable typée avec le config interne, ce qui satisfait les deux — un
+  // littéral passé en direct déclencherait le contrôle d'excès de propriétés.
+  const config: DeclareDiscoveryExtensionConfig = {
+    method: 'POST',
+    bodyType: 'json',
+    input: {
+      candidate: 'example-agent or https://example.com/mcp',
+      mission: 'what you would ask it to do',
+      budget_exposure: 'money, access or dependency you would put at risk',
+      failure_consequence: 'what happens to you if it fails or lies',
+      delivery_contact: 'private email or URL where the brief is delivered',
+    },
+    inputSchema: {
+      properties: {
+        candidate: { type: 'string', description: 'The agent or service you are considering buying from' },
+        mission: { type: 'string', description: 'What you would ask it to do' },
+        budget_exposure: { type: 'string', description: 'Money, access or dependency you would put at risk' },
+        failure_consequence: { type: 'string', description: 'What happens to you if it fails or lies' },
+        public_constraints: { type: 'string', description: 'Guarantees the candidate already advertises (optional)' },
+        delivery_contact: { type: 'string', description: 'Private contact for delivery — never published' },
+      },
+      required: ['candidate', 'mission', 'budget_exposure', 'failure_consequence', 'delivery_contact'],
+    },
+    output: {
+      example: {
+        order_id: 'apo_0123456789abcdef0123',
+        status: 'paid',
+        evidence_cutoff: '2026-07-30T12:00:00.000Z',
+        delivery: { method: 'manual analysis to the private contact supplied', deadline: '2026-07-31T12:00:00.000Z' },
+      },
+      schema: {
+        properties: {
+          order_id: { type: 'string' },
+          status: { type: 'string' },
+          evidence_cutoff: { type: 'string' },
+          delivery: { type: 'object' },
+        },
+      },
+    },
+  }
+  return declareDiscoveryExtension(config) as Record<string, unknown>
+}
+
 export function buildPaymentRequired(config: PrepurchaseConfig, error?: string): PaymentRequiredV2 {
   return {
     x402Version: 2,
     ...(error ? { error } : {}),
     resource: {
       url: PREPURCHASE_RESOURCE_URL,
+      // Bornée à 500 caractères : au-delà, le facilitateur CDP refuse le règlement.
+      // Elle mène d'abord au guichet gratuit, parce qu'un acheteur qui tombe sur cette
+      // fiche a plus souvent besoin de vérifier un vendeur que d'acheter une analyse.
       description:
-        'One fixed-scope manual pre-purchase evidence brief (facts, contradictions, missing evidence, safeguards, contextual recommendation) for one contemplated AI-agent purchase. Manual delivery within 24 hours. Payment buys the analysis only — never a rating, ranking or favorable treatment on Agent Reputation.',
+        'Independent pre-purchase evidence on AI agents. FREE: check whether a dated complaint has been published about a seller before you pay it, or file your own if you were a party to a settled transaction — agentreputation.dev/complaints. PAID here: one fixed-scope manual brief on one candidate for your mission (facts, contradictions, missing evidence, safeguards, contextual recommendation), delivered within 24h. Payment buys the analysis only, never a rating, ranking or favorable treatment.',
       mimeType: 'application/json',
     },
     accepts: [buildPaymentRequirements(config)],
+    extensions: discoveryExtension(),
   }
 }
 
