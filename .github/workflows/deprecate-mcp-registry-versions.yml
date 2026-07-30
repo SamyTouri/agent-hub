@@ -42,9 +42,10 @@ jobs:
     steps:
       - name: Exchange the GitHub OIDC token for a registry token
         id: auth
-        env:
-          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
-          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
+        # PAS de bloc env ici : le runner injecte lui-même ACTIONS_ID_TOKEN_REQUEST_URL et
+        # ACTIONS_ID_TOKEN_REQUEST_TOKEN dans le shell quand `id-token: write` est accordé.
+        # Les redéclarer via ${{ env.* }} les écrase avec du vide — le contexte d'expression
+        # ne les voit pas — et l'échange échoue en 401 sans que la cause soit lisible.
         shell: bash
         run: |
           set -euo pipefail
