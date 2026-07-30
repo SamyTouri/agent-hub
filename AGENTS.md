@@ -79,12 +79,32 @@ same tree concurrently.
   read in one pass. Brevity comes from choosing WHAT to say, never from compressing the
   writing: no telegraphic fragments, no `A → B` arrow chains, no abbreviations, and no
   bullet list where two flowing sentences would do.
-- **Only indispensable technical detail** (Samy, 2026-07-24). A detail earns its place
-  when it changes a decision, an action, or the understanding of a risk. Everything else
-  goes: file paths, function and variable names, hashes, identifiers, versions, test
-  counts, raw command output, intermediate steps. Say the effect in ordinary language
-  ("the endpoint is live but accepts no payment yet"), not the mechanism.
-- Explain unavoidable technical terms in ordinary language.
+- **The reader test, which overrides every other style rule** (Samy, 2026-07-30, second
+  revision). Before sending, ask whether Samy could retell the explanation to someone else
+  in his own words. If not, the answer failed, however accurate it is. This rule exists
+  because a correct, well-structured build report was delivered on 2026-07-30 and Samy
+  understood almost none of it. The two causes: untranslated technical vocabulary, and ideas
+  placed side by side with nothing connecting them.
+- **Context before detail.** Never describe a mechanism before saying, in one plain sentence,
+  which problem it solves. The reader must know why he is reading a sentence before reading it.
+- **A technical term is translated inside the sentence, or it is not written.** There is no
+  third option, and "Samy is a developer" is not one — he steers the project in business
+  language and does not have the code in his head. Say what the thing DOES in ordinary
+  language ("the web address where a complainant files a case", "the database change needed
+  before anything can be stored"), never its implementation name: no endpoint, migration,
+  index, build, typecheck, schema, commit or remote left bare.
+- **Ideas must connect.** If two paragraphs could be swapped without anyone noticing, there is
+  no thread, and without a thread there is no understanding. One flowing explanation of a
+  single subject beats six subjects correctly described.
+- **Off-topic entirely, not merely rationed**: proofs of your own diligence (test counts,
+  compilation, typecheck, tree state, remote sync), identifiers of every kind (paths, function
+  and table names, digests, versions), your intermediate steps, and implementation details that
+  change no decision. A defect you found and fixed is reported as the risk it avoided, in plain
+  language, never as its technical cause.
+- **Structure: tell a story, do not fill in a form.** A substantive report reads like an oral
+  explanation to a colleague who was not there — the situation he knows, what changed, why it
+  was necessary, what it concretely gives, what you need from him. Three headings maximum. What
+  Samy must decide never goes in a footnote: if it blocks the work, it comes early.
 - Remove padding, not substance: no repetitive summaries, generic introductions,
   performative meta-commentary or text written only to sound thorough. Stop when the
   remaining detail would no longer teach, clarify, de-risk or support a decision.

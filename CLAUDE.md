@@ -49,6 +49,11 @@ La mémoire projet est **thématique** et **bornée en taille**, pas en temps :
 ## Langue et style
 
 Prose en français, code/identifiants/contenu public en anglais. Réponses naturelles et
-fluides, agréables à lire d'une traite, avec uniquement les détails techniques
-indispensables — ceux qui changent une décision, une action ou la lecture d'un risque.
-La règle complète et prioritaire est dans AGENTS.md, section « Response style ».
+fluides, agréables à lire d'une traite.
+
+**Le test du lecteur passe avant tout** (Samy, 30/07, deuxième révision) : Samy doit pouvoir
+raconter mon explication à quelqu'un d'autre avec ses mots. Un terme technique se traduit dans
+la phrase ou ne s'écrit pas ; le contexte vient avant le détail ; les idées s'enchaînent au lieu
+d'être juxtaposées. Les preuves de mon sérieux — tests, compilation, état du dépôt — et les noms
+d'implémentation sont hors sujet, pas seulement à rationner. La règle complète et prioritaire est
+dans AGENTS.md, section « Response style ».
