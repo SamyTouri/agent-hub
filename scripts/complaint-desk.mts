@@ -11,6 +11,15 @@
 //   pwsh -File scripts/with-agenthub-db.ps1 node scripts/complaint-desk.mts <command>
 //   pwsh -File scripts/with-agenthub-db.ps1 -Port 5432 node scripts/complaint-desk.mts doctor
 //
+// BUT any argument holding a colon — every URL, so every --channel — must go through the
+// in-session form instead, with an explicit array. Measured 2026-07-31: `pwsh -File`
+// re-tokenises the command line, and PowerShell reads `-name:value` as a parameter pair,
+// so `--channel=https://host/path` arrives as `--channel=https` plus a stray `//host/path`.
+// The stop-parsing token `--%` does NOT fix it. This does:
+//   & .\scripts\with-agenthub-db.ps1 -Command @('node','scripts/complaint-desk.mts',
+//       'notify','<id>','--channel=https://host/path','--outcome=sent')
+// refuseSplitArguments() below turns the silent truncation into a refusal.
+//
 // Commands
 //   doctor                          state of the tables, indexes and grants; counts per status
 //   selftest                        exercise the real write paths inside a rolled-back transaction
@@ -36,6 +45,38 @@ for (const arg of rest) {
   const match = /^--([a-z-]+)(?:=(.*))?$/.exec(arg)
   if (match) flags.set(match[1], match[2] ?? 'true')
   else positional.push(arg)
+}
+
+/**
+ * Découvert le 2026-07-31 en exerçant le guichet pour de vrai. PowerShell lit
+ * `-nom:valeur` comme une paire paramètre/valeur, donc le lanceur COUPE au premier
+ * deux-points tout argument commençant par un tiret :
+ *
+ *   --channel=https://seller.example/contact
+ *     devient  ["--channel=https", "//seller.example/contact"]
+ *
+ * L'outil enregistrait alors « notifié via https » et jetait le reste en silence — sur
+ * un vrai dossier, ce texte tronqué serait PUBLIÉ comme le canal de la contrepartie,
+ * c'est-à-dire un fait faux affiché par un registre dont l'objet est de n'afficher que
+ * des faits. Le garde est ici plutôt que dans le lanceur : il protège quel que soit
+ * l'appelant, et un morceau d'URL orphelin est le symptôme le plus fiable de la coupure.
+ */
+function refuseSplitArguments(expectedPositional: number): void {
+  const extra = positional.slice(expectedPositional)
+  if (extra.length === 0) return
+  die(
+    [
+      `unexpected extra argument(s): ${extra.map((a) => JSON.stringify(a)).join(', ')}`,
+      '',
+      'This is almost always PowerShell splitting a value that contains a colon.',
+      'Call the launcher IN-SESSION with an explicit array — `pwsh -File` re-tokenises the',
+      'command line and splits the value again, and the stop-parsing token does not help:',
+      "  & .\\scripts\\with-agenthub-db.ps1 -Command @('node','scripts/complaint-desk.mts',",
+      "      'notify','<id>','--channel=https://host/path','--outcome=sent')",
+      '',
+      'Refusing rather than recording a truncated value: the channel is published.',
+    ].join('\n'),
+  )
 }
 
 if (!process.env.DATABASE_URL) {
@@ -245,6 +286,7 @@ async function list() {
 
 async function show() {
   const id = requireId()
+  refuseSplitArguments(1)
   const rows = await sql`select * from complaint_filings where id = ${id}`
   const f = rows[0]
   if (!f) die(`no filing with reference ${id}`)
@@ -283,6 +325,7 @@ async function show() {
  */
 async function verify() {
   const id = requireId()
+  refuseSplitArguments(1)
   const rows = await sql`
     select status, claimant_address, signed_statement, signature, account, account_digest,
            claimant_role, counterparty_address, network, matter_reference, settled_basis
@@ -324,10 +367,27 @@ async function verify() {
 
 async function notify() {
   const id = requireId()
+  refuseSplitArguments(1)
   const channel = flags.get('channel')
   const outcome = flags.get('outcome')
   if (!channel) die('--channel=<where you contacted the counterparty> is required')
   if (outcome !== 'sent' && outcome !== 'failed') die('--outcome=sent or --outcome=failed is required')
+
+  // Une URL amputée de son hôte est le résidu exact de la coupure décrite plus haut, et
+  // elle passerait le garde ci-dessus si l'orphelin avait été absorbé ailleurs. On la
+  // refuse sur sa forme : un canal publié doit être un canal qu'un lecteur peut suivre.
+  if (/^https?$/i.test(channel) || /^https?:\/*$/i.test(channel)) {
+    die(`--channel=${channel} is a truncated URL, not a channel. See the note above about colons.`)
+  }
+  if (/^https?:\/\//i.test(channel)) {
+    let host = ''
+    try {
+      host = new URL(channel).host
+    } catch {
+      /* laissé vide : traité juste en dessous comme une absence d'hôte */
+    }
+    if (!host) die(`--channel=${channel} does not parse as a URL with a host`)
+  }
 
   const rows = await sql`select status from complaint_filings where id = ${id}`
   if (!rows[0]) die(`no filing with reference ${id}`)
@@ -354,6 +414,7 @@ async function notify() {
  */
 async function publish() {
   const id = requireId()
+  refuseSplitArguments(1)
   const rows = await sql`
     select status, reply_deadline, reply_window_hours, counterparty_channel_kind
     from complaint_filings where id = ${id}
@@ -405,6 +466,7 @@ async function publish() {
 
 async function revealReply() {
   const id = requireId()
+  refuseSplitArguments(1)
   const pending = await sql`
     select seq, occurred_at, actor_address, body from complaint_events
     where filing_id = ${id} and kind = 'reply' and not visible order by seq
@@ -427,6 +489,7 @@ async function revealReply() {
 
 async function correct() {
   const id = requireId()
+  refuseSplitArguments(2)
   const text = positional[1]
   if (!text || text.trim().length < 10) die('give the correction as a quoted sentence')
   const rows = await sql`select status from complaint_filings where id = ${id}`
@@ -440,6 +503,7 @@ async function correct() {
 
 async function reject() {
   const id = requireId()
+  refuseSplitArguments(2)
   const reason = positional[1]
   if (!reason || reason.trim().length < 10) die('give the reason as a quoted sentence — it stays on the record')
   const rows = await sql`select status from complaint_filings where id = ${id}`

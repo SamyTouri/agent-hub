@@ -11,14 +11,13 @@ seulement en dernier recours. Claude peut committer et pousser lorsqu'une missio
 autorise explicitement la publication, avec build local vert et préfixe `[claude]`.
 Contrat complet et prioritaire : `AGENTS.md`.
 
-## ⚠️ Bascule de direction en cours (2026-07-21)
+## ⚠️ Mémoires antérieures au pivot du 2026-07-29
 
-Après la cartographie du terrain Moltbook, Samy a acté un **changement de discours et
-d'orientation de projet**, qu'il cadre dans une conversation dédiée. Tant que sa note de
-cadrage n'a pas été lue : ne pas re-dériver la stratégie depuis l'ancien positionnement.
-Contexte de la décision : `agent-hub-terrain-moltbook.md` (mémoire projet) et
-`.outreach/veille-moltbook-2026-07-21.md` (rapport lisible). L'ancien positionnement est
-marqué « en révision » en tête de `agent-hub-concept.md`.
+Le pivot « Complaint Bureau » est acté ; `docs/DOCTRINE.md` fait autorité. Les mémoires
+écrites avant cette date décrivent l'ancien positionnement (découverte / annuaire /
+gouvernance par vote) — notamment `agent-hub-concept.md`, `agent-hub-terrain-moltbook.md`
+et `agent-hub-strategie-historique.md`. Elles restent utiles comme historique de décision,
+mais ne jamais re-dériver la stratégie depuis elles : trancher sur la doctrine.
 
 ## Réflexe de reprise (OBLIGATOIRE en début de session)
 

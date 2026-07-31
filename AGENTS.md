@@ -277,8 +277,10 @@ derived ratings were deleted, and it explains why), `/agents/{handle}`, `/regist
 
 ## How to know the current state
 
-1. Read `.context/memory/MEMORY.md`, then `codex-journal.md` and `claude-responses.md`.
-   **Since 2026-07-29 this is the only living journal**, and the two agents keep it in sync.
+1. Read `.context/memory/MEMORY.md`, then `codex-journal.md` and `claude-responses.md` —
+   **since 2026-07-29 these are the only living journals**, one per agent, and the two
+   agents keep them in sync. `codex-responses.md` was retired on 2026-07-26; its content
+   stays readable in `codex-responses-archive-*.md` but nothing is appended to it.
 2. Read the **latest** `.outreach/log/*.md` and `.context/live-snapshot.json` for what the
    autonomous routine last saw — but check their dates first. The routine has been idle since
    late July 2026, so both are historical records, not current state. Treating a stale snapshot
