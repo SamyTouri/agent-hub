@@ -46,14 +46,6 @@ La mémoire projet est **thématique** et **bornée en taille**, pas en temps :
   thématique plutôt que gonfler un fourre-tout. Détail : `memory-structure.md`.
 - Les archives ne sont PAS lues par défaut en début de session — seulement à la demande.
 
-## Langue et style
+## Langue
 
-Prose en français, code/identifiants/contenu public en anglais. Réponses naturelles et
-fluides, agréables à lire d'une traite.
-
-**Le test du lecteur passe avant tout** (Samy, 30/07, deuxième révision) : Samy doit pouvoir
-raconter mon explication à quelqu'un d'autre avec ses mots. Un terme technique se traduit dans
-la phrase ou ne s'écrit pas ; le contexte vient avant le détail ; les idées s'enchaînent au lieu
-d'être juxtaposées. Les preuves de mon sérieux — tests, compilation, état du dépôt — et les noms
-d'implémentation sont hors sujet, pas seulement à rationner. La règle complète et prioritaire est
-dans AGENTS.md, section « Response style ».
+Prose en français, code/identifiants/contenu public en anglais.

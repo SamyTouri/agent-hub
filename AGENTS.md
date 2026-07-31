@@ -64,56 +64,6 @@ same tree concurrently.
 - Language: replies to the human in **French** (he is French-speaking); code,
   identifiers and public-facing content in **English**.
 
-## Response style for Samy
-
-- Write for a curious business decision-maker who wants both the useful conclusion
-  and enough understanding to learn how the project is being built.
-- Default to natural, connected French: complete sentences and readable paragraphs.
-  Use bullets when they genuinely clarify structure, not as a way to compress every
-  answer into terse fragments.
-- Start with the conclusion, decision or result, then develop the explanation to the
-  depth the subject deserves. For a meaningful choice or change, explain the reason,
-  the relevant mechanism in plain language, the trade-offs or consequences, and any
-  material risk or next action.
-- Do not impose an arbitrary line or paragraph limit, but keep the answer pleasant to
-  read in one pass. Brevity comes from choosing WHAT to say, never from compressing the
-  writing: no telegraphic fragments, no `A → B` arrow chains, no abbreviations, and no
-  bullet list where two flowing sentences would do.
-- **The reader test, which overrides every other style rule** (Samy, 2026-07-30, second
-  revision). Before sending, ask whether Samy could retell the explanation to someone else
-  in his own words. If not, the answer failed, however accurate it is. This rule exists
-  because a correct, well-structured build report was delivered on 2026-07-30 and Samy
-  understood almost none of it. The two causes: untranslated technical vocabulary, and ideas
-  placed side by side with nothing connecting them.
-- **Context before detail.** Never describe a mechanism before saying, in one plain sentence,
-  which problem it solves. The reader must know why he is reading a sentence before reading it.
-- **An implementation term is translated inside the sentence, or it is not written.** What this
-  targets is vocabulary internal to our code and infrastructure — the name of a constraint, an
-  index, a file, a compilation step. Say what the thing DOES, not what we call it.
-- **Its symmetric rule, equally binding: never explain what Samy already knows** (guard added
-  2026-07-30 after an overcorrection — he replied that the rewrite explained things "as if I were
-  an idiot"). He is a seasoned developer. A database, a cryptographic signature, an address, a
-  wallet, an API, a deployment, a test are his daily tools; defining them is condescending. No
-  teaching analogies, no "imagine someone who…", no restating the obvious. The line is clean:
-  explain ecosystem-specific vocabulary, project-specific business rules, and the REASON for a
-  choice; never explain general computing; never mention our internal implementation detail.
-- **Ideas must connect.** If two paragraphs could be swapped without anyone noticing, there is
-  no thread, and without a thread there is no understanding. One flowing explanation of a
-  single subject beats six subjects correctly described.
-- **Off-topic entirely, not merely rationed**: proofs of your own diligence (test counts,
-  compilation, typecheck, tree state, remote sync), identifiers of every kind (paths, function
-  and table names, digests, versions), your intermediate steps, and implementation details that
-  change no decision. A defect you found and fixed is reported as the risk it avoided, in plain
-  language, never as its technical cause.
-- **Structure: tell a story, do not fill in a form.** A substantive report reads like an oral
-  explanation to a colleague who was not there — the situation he knows, what changed, why it
-  was necessary, what it concretely gives, what you need from him. Three headings maximum. What
-  Samy must decide never goes in a footnote: if it blocks the work, it comes early.
-- Remove padding, not substance: no repetitive summaries, generic introductions,
-  performative meta-commentary or text written only to sound thorough. Stop when the
-  remaining detail would no longer teach, clarify, de-risk or support a decision.
-- An explicit request from Samy for a shorter or deeper answer overrides these defaults.
-
 ## Shared persistent memory — read it, write it
 
 `.context/memory/` (a junction to Claude Code's project memory) is the **shared
