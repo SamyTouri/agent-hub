@@ -573,6 +573,23 @@ export const BUREAU_METHOD = {
   what_we_never_verify:
     'Whether your account of events is true. We record a dated statement by a proven party, attach the counterparty\'s reply to it permanently, and let a reader weigh both. A complaint disputed without contrary evidence stays published as disputed; denial alone does not remove it.',
 
+  /**
+   * Ajouté le 2026-07-31 après qu'un vendeur nous ait montré le défaut. Le paiement est la
+   * seule pièce signée d'une affaire, et il désigne le vendeur ; sans cette mise en garde,
+   * un lecteur conclut « payé puis silence, donc le vendeur a encaissé sans livrer ». C'est
+   * une conclusion que la donnée ne porte pas. Le déséquilibre vient du rail — une chaîne
+   * enregistre un transfert de valeur, jamais une livraison — mais c'est notre mise en forme
+   * qui le transformerait en verdict. On l'écrit donc au lieu d'en profiter.
+   */
+  what_a_file_does_not_prove: {
+    principle:
+      'A payment is the only signed artifact of most matters, and it points at the seller. That is a property of the payment rail, which records a transfer of value and never a delivery — not evidence about who was at fault.',
+    consequence:
+      'So a file showing a payment followed by silence does NOT mean the seller took the money and shipped nothing. It may equally mean the buyer got what it paid for and stopped reading, or walked away for reasons neither we nor the seller will ever know. Read the absence of a second leg as an absence, never as an admission.',
+    what_we_do_about_it:
+      'Either party may attach a signed, dated statement of the last thing it did and the last thing it was waiting for. Neither can write for the other. When one side speaks and the other does not, the file shows exactly that — whichever side it turns out to be.',
+  },
+
   the_clock: {
     principle:
       'The reply window never exceeds the speed at which the counterparty bills. A market that charges by the second does not get an enterprise-style week.',
@@ -581,6 +598,14 @@ export const BUREAU_METHOD = {
       { kind: 'human' as ChannelKind, hours: REPLY_WINDOW_HOURS.human, when: 'The counterparty exposes only a human channel.' },
       { kind: 'none' as ChannelKind, hours: REPLY_WINDOW_HOURS.none, when: 'The counterparty is reachable through no verifiable channel: the file is published with the failed notification and its trace attached. Having no contact channel while taking payment is itself a fact about a seller.' },
     ],
+    /**
+     * Mesuré le 2026-07-31, et écrit ici plutôt que découvert plus tard. Sur 1 071 adresses
+     * payeuses observées sur Base, 92 se rattachent à un agent enregistré. Sur 154 fichiers
+     * d'enregistrement lus, 88 % ne déclarent aucune adresse de paiement. Promettre une
+     * notification puis échouer neuf fois sur dix serait une promesse tenue sur le papier.
+     */
+    reachability_reality:
+      'Expect the third case to be the usual one, not the exception. Measured on 2026-07-31: of 1,071 payer addresses observed on Base, 92 resolve to a registered agent — about one in twelve — and 88% of the registration files we read declare no payment address at all. So when the counterparty is a paying address rather than a published seller, it will most often be unreachable, and the file will carry a failed notification. We say so here rather than let a reader assume the other side was usually asked.',
     never_before: 'Nothing is published before the window closes.',
     incentive:
       'Answering speeds up publication of your own side, and silence buys nothing: the file is published either way, and a reply arriving later is appended rather than refused.',

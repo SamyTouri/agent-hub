@@ -166,11 +166,22 @@ export default async function ComplaintFilePage({ params }: { params: Params }) 
           that was signed. Its truth is not something we verified — {BUREAU_METHOD.what_we_never_verify}
         </p>
 
+        <h2 style={h2}>What this file does not prove</h2>
+        <p style={{ marginTop: 0 }}>
+          <strong>{BUREAU_METHOD.what_a_file_does_not_prove.principle}</strong>
+        </p>
+        <p style={{ color: '#c9a0a0', borderLeft: '3px solid #6b3a3a', paddingLeft: 12 }}>
+          {BUREAU_METHOD.what_a_file_does_not_prove.consequence}
+        </p>
+
         <h2 style={h2}>The counterparty&apos;s reply</h2>
         {replies.length === 0 && filing.pendingReplies === 0 ? (
           <p style={{ color: '#888' }}>
             None on the record. The reply channel stays open permanently and for free: a reply
-            arriving today is appended to this file rather than refused.
+            arriving today is appended to this file rather than refused.{' '}
+            {/* Sans cette phrase, un silence se lit comme un aveu — c'est exactement le
+                défaut qu'un vendeur nous a montré le 2026-07-31. */}
+            Silence here is silence: it is not an admission by either side.
           </p>
         ) : null}
         {filing.pendingReplies > 0 && (

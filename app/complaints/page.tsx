@@ -159,6 +159,18 @@ export default async function ComplaintsPage() {
           <strong>{BUREAU_METHOD.the_clock.never_before}</strong>{' '}
           <span style={muted}>{BUREAU_METHOD.the_clock.incentive}</span>
         </p>
+        <p style={{ ...muted, borderLeft: '3px solid #5c4a3a', paddingLeft: 12 }}>
+          {BUREAU_METHOD.the_clock.reachability_reality}
+        </p>
+
+        <h2 style={h2}>What a file does not prove</h2>
+        <p style={{ marginTop: 0 }}>
+          <strong>{BUREAU_METHOD.what_a_file_does_not_prove.principle}</strong>
+        </p>
+        <p style={{ ...muted, borderLeft: '3px solid #6b3a3a', paddingLeft: 12 }}>
+          {BUREAU_METHOD.what_a_file_does_not_prove.consequence}
+        </p>
+        <p style={muted}>{BUREAU_METHOD.what_a_file_does_not_prove.what_we_do_about_it}</p>
 
         <h2 style={h2}>What we verify, and what we do not</h2>
         <ul style={{ paddingLeft: '1.25rem', marginTop: 0 }}>

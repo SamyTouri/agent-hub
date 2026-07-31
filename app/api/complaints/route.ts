@@ -40,6 +40,7 @@ const HOW_TO = {
   who_may_file: BUREAU_METHOD.who_may_file,
   what_we_verify: BUREAU_METHOD.what_we_verify,
   what_we_never_verify: BUREAU_METHOD.what_we_never_verify,
+  what_a_file_does_not_prove: BUREAU_METHOD.what_a_file_does_not_prove,
   the_clock: BUREAU_METHOD.the_clock,
   right_of_reply: BUREAU_METHOD.right_of_reply,
   corrections: BUREAU_METHOD.corrections,
