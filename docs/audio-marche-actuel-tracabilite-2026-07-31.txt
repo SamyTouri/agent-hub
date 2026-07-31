@@ -1,0 +1,77 @@
+Bonjour Samy. Cet enregistrement porte sur une seule question : aujourd'hui, quand un agent s'apprête à payer un autre agent, que peut-il réellement savoir de celui qu'il a en face ? Et derrière : est-ce que quelqu'un a prévu quelque chose de plus sérieux pour organiser tout ça.
+
+Je vais commencer par te dire là où tu as raison, parce que c'est presque tout. Et ensuite par les deux endroits où tu sous-estimes ce qui existe déjà — parce qu'ils sont importants, et parce que moi aussi je les avais sous-estimés jusqu'à ce que j'aille vérifier.
+
+Reprenons le marché aux pommes.
+
+Imagine une halle. Il y a des étals, et sur chaque étal une caisse portant un numéro. Ce numéro est imprimé sur le ticket avant que tu paies — tu ne peux pas le manquer. C'est le protocole de paiement, celui qu'on appelle x quatre cent deux. Sa promesse est étroite et il la tient parfaitement : il te dit combien tu dois, sur quel réseau, et dans quelle caisse. Rien de plus.
+
+Insistons, parce que c'est le point de départ de tout. Ce protocole ne connaît pas les commerçants. Il ne sait pas qui tient l'étal. Il ne sait pas si la marchandise a été livrée. Il déplace de l'argent, proprement, et il s'arrête là. Dans sa version courante il n'y a même pas de séquestre : on paie d'abord, on est livré ensuite, et s'il n'y a pas de livraison, il ne s'est rien passé d'anormal du point de vue du protocole. L'argent est arrivé où il devait arriver.
+
+Deuxième couche. À côté de la halle, il y a un annuaire volontaire, celui qu'on appelle E R C huit mille quatre, en ligne depuis janvier deux mille vingt-six. Un commerçant peut s'y inscrire, recevoir un jeton, et publier une fiche : son nom, ce qu'il fait, comment le joindre, et parfois l'adresse de sa caisse.
+
+Et voilà ce que tu dois retenir, parce que c'est la phrase la plus honnête de tout le domaine, et elle est écrite dans le standard lui-même. Le standard dit : si le champ de confiance est absent ou vide, cette norme sert uniquement à la découverte, pas à la confiance. Ce sont ses mots. Les auteurs du standard te disent noir sur blanc que l'annuaire, tout seul, ne prouve rien. Ce n'est pas un défaut caché qu'on aurait découvert : c'est une limite assumée et publiée.
+
+Donc oui, ta description est juste. La fiche est déclarative, le jeton est vendable, l'inscription est volontaire, et une même caisse peut changer de main sans que rien ne le signale. J'ai vérifié sur le terrain ce matin : sur cent cinquante-quatre fiches lues sur Base, douze pour cent seulement déclarent une adresse d'encaissement. La fiche est une carte de visite, pas une pièce d'identité.
+
+Maintenant, ta reformulation par le bon cas. Tu as dit : un agent professionnel va rester longtemps derrière la même caisse, avec le même comportement et les mêmes prix, et cette stabilité est en soi une information ; tandis qu'un mauvais acteur change de caisse, ce qui crée des comportements différents sur une même caisse.
+
+C'est juste, et c'est même une meilleure formulation que la mienne. Je te l'avais présenté comme une faiblesse — l'historique se réinitialise quand on change d'adresse. Tu le retournes en signal, et tu as raison de le faire, pour une raison qui tient à l'économie et pas à la technique : rester est coûteux et partir est gratuit. Celui qui accumule une histoire longue et stable sur une même caisse dépense quelque chose qu'un opportuniste ne dépensera pas. Une identité déclarative ne prouve rien, mais une continuité observée sur la durée coûte cher à simuler.
+
+Il faut quand même nommer la limite, parce qu'elle est réelle : ça ne marche que dans un sens. Une longue stabilité est un signal positif fiable. Une caisse neuve, elle, ne dit rien du tout — ni bien, ni mal. Un escroc et un débutant honnête sont, au premier jour, rigoureusement indiscernables. Donc ce raisonnement récompense l'ancienneté ; il ne détecte pas la fraude.
+
+Passons aux deux choses que tu sous-estimes.
+
+Première chose. Le standard huit mille quatre ne contient pas deux registres, il en contient trois, et le troisième change la conversation.
+
+Il y a le registre d'identité, dont on a parlé — la fiche déclarative. Il y a le registre de réputation, où n'importe qui peut déposer un avis. Et il y a un troisième, le registre de validation, dont je ne t'avais pas parlé parce que je ne l'avais pas vérifié.
+
+Voici comment il marche. Un agent demande à être validé : il désigne une adresse de validateur, décrit la tâche, et publie une empreinte de cette description. Le validateur désigné répond avec une note entre zéro et cent, plus une preuve s'il en a une. Ce n'est pas un avis d'opinion comme dans le registre de réputation : c'est un tiers, désigné à l'avance, qui atteste d'un résultat.
+
+Et surtout, le standard nomme les mécanismes qui donnent du poids à cette attestation. Il parle de réexécution garantie par mise en jeu de fonds — le validateur refait le travail et perd de l'argent s'il ment. Il parle d'attestation par environnement d'exécution sécurisé — le matériel lui-même certifie ce qui a tourné. Il parle de preuves cryptographiques sur les modèles. Ce ne sont plus des déclarations. Ce sont des garanties.
+
+Il y a aussi un champ que je n'avais pas relevé et qui compte, parce qu'il est déjà utilisé en vrai : le champ de confiance supportée. Un agent y déclare quel niveau il accepte — simple réputation, garantie économique, attestation matérielle. Et un acheteur peut filtrer là-dessus avant même de discuter. Quand j'ai vidé de vraies fiches ce matin, elles portaient toutes la mention réputation. C'est le niveau le plus faible qui existe, mais le champ est là, il est lu, et il structure déjà le marché en étages.
+
+Alors qu'est-ce que ça change ? Ça veut dire que le manque de certitude que tu constates n'est pas un trou dans la conception. C'est un étage que presque personne n'a encore monté. La marche existe ; le marché n'y est pas encore. Nuance importante, parce qu'un trou de conception ne se comble pas, alors qu'un étage vide finit par se remplir.
+
+Deuxième chose que tu sous-estimes, et elle est plus lourde.
+
+Pendant que le monde des agents en chaîne bricole avec des fiches déclaratives, l'industrie classique du paiement a construit, en dix-huit mois, exactement ce que tu demandes — et elle l'a construit sur de l'identité légale réelle.
+
+Mastercard a lancé un programme où un agent doit être enrôlé par son développeur. L'enrôlement produit un identifiant cryptographique que le réseau rattache à une entité vérifiée, avec un vrai contrôle d'identité derrière. Autrement dit : ce n'est plus un agent qui déclare qui il est, c'est un réseau qui certifie qu'une société connue en répond.
+
+Visa a pris un autre chemin, avec Cloudflare : plutôt que de mettre l'identité dans le moyen de paiement, on ajoute à la requête des en-têtes signés qui attestent trois choses — l'identité de l'agent, le consentement de la personne pour qui il agit, et l'intention de la transaction. Le commerçant lit ces en-têtes et décide s'il veut servir cet agent.
+
+Et Google a proposé un troisième modèle, avec des attestations vérifiables et des mandats signés. Visa et Mastercard s'y sont ralliés tous les deux.
+
+Tout ça repose sur une brique commune, une méthode d'authentification des robots sur le web, avec une étiquette qui dit si l'agent est en train de naviguer ou d'acheter.
+
+Donc la réponse à ta question — quelqu'un a-t-il prévu quelque chose de plus sérieux — est oui, sans ambiguïté, et c'est déjà déployé.
+
+Mais il faut voir précisément ce que ça résout, parce que ce n'est pas notre problème. Ces protocoles servent à ce qu'un commerçant puisse faire confiance à l'agent acheteur qui se présente. Le sens de la vérification est acheteur vers vendeur. Notre problème est exactement le miroir : un acheteur qui veut savoir à qui il donne son argent quand le vendeur est lui-même un agent. Les réseaux de cartes ont sécurisé le côté qui les intéresse — celui où le risque de fraude leur coûte de l'argent.
+
+Il reste enfin une pièce que je dois te signaler, parce qu'elle touche directement ce dont on parlait à propos de la livraison.
+
+Il existe depuis mars deux mille vingt-six une norme, E R C huit mille cent quatre-vingt-trois, développée conjointement par Virtuals Protocol et l'équipe intelligence artificielle de la Fondation Ethereum. Elle traite précisément ce que le paiement et l'identité laissent de côté : les termes du travail, le séquestre des fonds, la vérification de la livraison, et un règlement déterministe. Et elle définit un rôle qu'elle appelle l'évaluateur — quelqu'un qui atteste de l'achèvement, ce qui déclenche la libération du paiement ou le remboursement.
+
+Donc ton intuition était bonne. Tu m'as dit qu'il devait déjà exister un mécanisme de séquestre qui ne libère l'argent qu'à la livraison. Ce n'est pas dans le protocole de paiement lui-même — celui-là reste résolument payer d'abord. Mais c'est standardisé juste à côté, depuis mars.
+
+Et ça change ma recommandation d'hier. Je te disais de refuser de construire un protocole de reçu de livraison parce que ça ajouterait une couche. La vraie raison est meilleure : cette couche existe déjà, elle est normalisée, et elle nomme un rôle qu'on pourrait occuper au lieu de la concurrencer.
+
+Récapitulons ce qu'un acheteur peut savoir aujourd'hui, en trois niveaux.
+
+Ce qu'il sait de façon certaine : le numéro de la caisse, le montant, le réseau, et que l'argent est bien arrivé. Tout ça est prouvé cryptographiquement et vérifiable par n'importe qui.
+
+Ce qu'il sait de façon déclarative : le nom du vendeur, sa description, ses moyens de contact, et parfois son adresse d'encaissement. Personne ne vérifie rien de tout ça. Et huit fiches sur dix ne disent même pas où l'agent se fait payer.
+
+Ce qu'il ne sait pas du tout : si la personne derrière la caisse est la même qu'hier, si la marchandise a été livrée, et si un jeton d'agent a changé de main.
+
+Et le milieu — la partie déclarative — a une porte de sortie qui s'appelle le registre de validation, mais elle demande qu'un tiers accepte de valider, et ce tiers n'existe presque pas encore.
+
+Voilà. Ma lecture, pour finir, en trois phrases.
+
+Tu n'as pas mal compris : l'incertitude que tu décris est réelle, et elle est massive aujourd'hui.
+
+Mais elle n'est pas structurelle. Les étages supérieurs sont dessinés — validation, séquestre, évaluateur — et l'industrie du paiement a déjà bâti sa propre version sur de l'identité légale.
+
+Ce qui manque, ce ne sont pas les normes. Ce sont les acteurs qui occupent les rôles que les normes ont définis et laissés vides. Le registre de validation attend des validateurs. La norme de séquestre attend des évaluateurs. Ce sont des places nommées, publiées, et pour l'instant inoccupées — et c'est exactement le genre de vide dans lequel on peut se mettre sans demander la permission à personne.
