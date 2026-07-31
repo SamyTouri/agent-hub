@@ -31,22 +31,50 @@ import { createHash } from 'node:crypto'
  *  géante : une empreinte partielle serait fausse en silence, ce qui est pire que rien. */
 export const MAX_CAPTURE_BYTES = 2_000_000
 
-export type CanonicalCapture = {
-  /** Toujours présent : l'observation a eu lieu, même ratée. */
-  observed_at: string
-  url: string
-  /** Absent si l'hôte n'a pas répondu. */
-  http_status?: number
-  /** SHA-256 des octets EXACTS reçus. Absent si le corps n'a pas pu être lu en entier. */
-  body_sha256?: string
-  /** Nombre d'octets réellement lus. */
-  body_bytes?: number
-  content_type?: string
-  /** Validateurs HTTP servis par l'hôte : ils datent la ressource sans nous. */
+/**
+ * Validateurs servis par l'origine. **Ce ne sont PAS des horodatages indépendants**, et le nom
+ * du champ existe pour empêcher cette confusion. Corrigé le 2026-07-31 sur objection de
+ * rushabdev : `Date`, `ETag` et `Last-Modified` sont des assertions de l'origine ou de son
+ * cache, donc du même auteur que la page qu'ils prétendent dater. Une première version les
+ * appelait « validateurs qui datent la ressource sans nous », ce qui était faux.
+ */
+export type OriginValidators = {
   etag?: string
   last_modified?: string
-  /** En-tête `Date` du serveur : un horodatage qui ne vient pas de notre horloge. */
-  server_date?: string
+  /** En-tête `Date` du serveur. Assertion de l'origine, pas une preuve de temps. */
+  date?: string
+}
+
+/**
+ * Y a-t-il un tiers qui atteste QUAND cette capture a eu lieu ? Aujourd'hui, non : nous
+ * sommes seuls à dater notre propre observation. Le champ reste explicite plutôt qu'absent,
+ * pour qu'un lecteur ne prenne jamais notre horloge pour une preuve. Il passera à
+ * `COMMITTED` le jour où un second observateur, un journal de transparence en ajout seul ou
+ * une autorité d'horodatage engagera l'empreinte de la capture.
+ */
+export type TimestampIndependence = 'UNKNOWN' | 'COMMITTED'
+
+export type CanonicalCapture = {
+  /** Toujours présent : l'observation a eu lieu, même ratée. Notre horloge, et rien d'autre. */
+  observed_at: string
+  url: string
+  /** Chaîne de redirections réellement suivie, première URL exclue. */
+  redirect_chain?: string[]
+  /** URL finalement servie, si elle diffère de celle demandée. */
+  final_url?: string
+  /** Absent si l'hôte n'a pas répondu. */
+  http_status?: number
+  /**
+   * SHA-256 des octets EXACTS de l'entité reçue. Renommé depuis `body_sha256` le 2026-07-31 :
+   * il y a désormais DEUX engagements distincts, et les confondre était le risque.
+   */
+  entity_sha256?: string
+  /** Nombre d'octets réellement lus. */
+  entity_bytes?: number
+  content_type?: string
+  content_encoding?: string
+  origin_validators?: OriginValidators
+  timestamp_independence: TimestampIndependence
   /** Renseigné quand la capture a échoué. Une absence d'empreinte n'est JAMAIS silencieuse. */
   capture_failure?: 'no_response' | 'too_large' | 'read_error'
 }
@@ -56,40 +84,96 @@ export function sha256Hex(bytes: Uint8Array): string {
 }
 
 /**
- * Verdict d'une divergence entre deux captures de la même adresse.
+ * Le tuple commercial canonique : ce qu'une offre ANNONCE, extrait des octets et normalisé.
  *
- * Trois cas, et le troisième est celui qui compte. Des octets identiques ne prouvent RIEN
- * sur le fond — un serveur peut resservir la même page en ayant changé d'avis ailleurs.
- * Des octets différents ne prouvent pas non plus une rupture de promesse : une date, un
- * jeton de session ou un compteur suffisent à changer l'empreinte. Ce que la divergence
- * établit, et c'est déjà beaucoup, c'est que **la ressource servie n'est plus celle qui
- * était servie au moment du paiement** — donc que la version invoquée par le vendeur
- * aujourd'hui n'est pas celle que l'acheteur a payée.
+ * Séparer cette empreinte de celle des octets est l'apport de rushabdev, 2026-07-31. Avec un
+ * seul engagement, une page qui change d'habillage et une page qui change de prix rendent le
+ * même verdict, ce qui rend le verdict inutilisable. Avec deux, on distingue les deux — et on
+ * distingue aussi le cas où c'est NOTRE extracteur qui a bougé, qui était jusqu'ici invisible.
+ *
+ * `EXTRACTOR_VERSION` monte dès que la normalisation change de sens. Sans elle, deux mesures
+ * prises par deux lentilles différentes seraient comparées comme si c'était la même.
+ */
+export const EXTRACTOR_VERSION = 'terms-v1'
+
+export type CommercialTerms = {
+  price?: string
+  asset?: string
+  network?: string
+  pay_to?: string
+  route?: string
+  method?: string
+  /** Ce que la surface exige pour répondre : `payment_challenge`, `open`, `auth`, `absent`. */
+  access?: string
+}
+
+/** Empreinte du tuple commercial, extracteur inclus dans le hachage. */
+export function termsSha256(terms: CommercialTerms): string {
+  const ordered = Object.keys(terms)
+    .sort()
+    .reduce<Record<string, string>>((acc, k) => {
+      const v = (terms as Record<string, string | undefined>)[k]
+      if (v !== undefined && v !== '') acc[k] = v
+      return acc
+    }, {})
+  return createHash('sha256')
+    .update(JSON.stringify({ extractor: EXTRACTOR_VERSION, terms: ordered }), 'utf8')
+    .digest('hex')
+}
+
+/**
+ * Verdict à QUATRE branches, sur deux engagements indépendants.
+ *
+ * Ce qui compte ici est ce que chaque branche REFUSE de dire. Aucune ne conclut à une
+ * promesse rompue : établir qu'une page a changé n'établit pas qu'un vendeur a menti, et
+ * confondre les deux serait exactement le défaut que ce registre existe pour exposer.
  */
 export type DivergenceVerdict =
-  | { kind: 'identical'; note: string }
-  | { kind: 'diverged'; note: string }
-  | { kind: 'undecidable'; note: string }
+  | { kind: 'no_observed_change'; note: string }
+  | { kind: 'presentation_drift'; note: string }
+  | { kind: 'commercial_terms_divergence'; note: string }
+  | { kind: 'extractor_drift'; note: string }
+  | { kind: 'indeterminate'; note: string }
 
-export function compareCaptures(atPayment: CanonicalCapture, now: CanonicalCapture): DivergenceVerdict {
-  if (!atPayment.body_sha256 || !now.body_sha256) {
+export function compareCaptures(
+  atPayment: { entity_sha256?: string; terms_sha256?: string },
+  now: { entity_sha256?: string; terms_sha256?: string },
+): DivergenceVerdict {
+  if (!atPayment.entity_sha256 || !now.entity_sha256 || !atPayment.terms_sha256 || !now.terms_sha256) {
     return {
-      kind: 'undecidable',
+      kind: 'indeterminate',
       note:
-        'One of the two captures has no byte digest, so nothing is compared. An unreadable capture is not a match and not a divergence.',
+        'One of the two captures is missing a commitment, so nothing is compared. A failed or oversized capture is an explicit indeterminate row: never a match, never a divergence.',
     }
   }
-  if (atPayment.body_sha256 === now.body_sha256) {
+  const sameEntity = atPayment.entity_sha256 === now.entity_sha256
+  const sameTerms = atPayment.terms_sha256 === now.terms_sha256
+
+  if (sameEntity && sameTerms) {
     return {
-      kind: 'identical',
+      kind: 'no_observed_change',
       note:
-        'The exact same bytes are served. This says the published page has not moved; it says nothing about whether the promise was kept.',
+        'The same bytes and the same commercial tuple are served. This says the published surface has not moved; it says nothing about whether any promise was kept.',
+    }
+  }
+  if (!sameEntity && sameTerms) {
+    return {
+      kind: 'presentation_drift',
+      note:
+        'The bytes changed but the commercial tuple did not: a date, a counter or a template moved. Nothing commercial is observed to have changed.',
+    }
+  }
+  if (!sameEntity && !sameTerms) {
+    return {
+      kind: 'commercial_terms_divergence',
+      note:
+        'Both the bytes and the commercial tuple changed. The terms served today are not the terms served at the reference capture — which is not a breach, only that the version the seller invokes now is not the version the buyer met.',
     }
   }
   return {
-    kind: 'diverged',
+    kind: 'extractor_drift',
     note:
-      'The resource served today is not the one served when the payment settled. This does not by itself prove a broken promise — a date or a counter changes the digest too — but the version the seller invokes today is not the version the buyer paid against.',
+      'The bytes are identical but our tuple is not, so the change is OURS: the extractor moved. This says nothing about the seller and must never be published as if it did.',
   }
 }
 
@@ -104,7 +188,12 @@ export async function captureCanonicalResponse(
 ): Promise<CanonicalCapture> {
   const now = options.now ?? (() => new Date())
   const doFetch = options.fetchImpl ?? fetch
-  const base: CanonicalCapture = { observed_at: now().toISOString(), url }
+  const base: CanonicalCapture = {
+    observed_at: now().toISOString(),
+    url,
+    // Jamais autre chose tant qu'un tiers n'engage pas l'empreinte. Voir le type.
+    timestamp_independence: 'UNKNOWN',
+  }
 
   let response: Response
   try {
@@ -119,13 +208,18 @@ export async function captureCanonicalResponse(
   }
 
   const header = (name: string) => response.headers.get(name) ?? undefined
+  const finalUrl = response.url && response.url !== url ? response.url : undefined
   const withHeaders: CanonicalCapture = {
     ...base,
     http_status: response.status,
+    ...(finalUrl ? { final_url: finalUrl, redirect_chain: [finalUrl] } : {}),
     content_type: header('content-type'),
-    etag: header('etag'),
-    last_modified: header('last-modified'),
-    server_date: header('date'),
+    content_encoding: header('content-encoding'),
+    origin_validators: {
+      etag: header('etag'),
+      last_modified: header('last-modified'),
+      date: header('date'),
+    },
   }
 
   // Le plafond est contrôlé sur les octets RÉELLEMENT lus, pas sur `content-length` :
@@ -134,9 +228,9 @@ export async function captureCanonicalResponse(
   try {
     const buffer = new Uint8Array(await response.arrayBuffer())
     if (buffer.byteLength > MAX_CAPTURE_BYTES) {
-      return { ...withHeaders, body_bytes: buffer.byteLength, capture_failure: 'too_large' }
+      return { ...withHeaders, entity_bytes: buffer.byteLength, capture_failure: 'too_large' }
     }
-    return { ...withHeaders, body_bytes: buffer.byteLength, body_sha256: sha256Hex(buffer) }
+    return { ...withHeaders, entity_bytes: buffer.byteLength, entity_sha256: sha256Hex(buffer) }
   } catch {
     return { ...withHeaders, capture_failure: 'read_error' }
   }
@@ -153,11 +247,16 @@ export async function captureCanonicalResponse(
 export function canonicalCaptureFacts(capture: CanonicalCapture): Record<string, string | number> {
   const facts: Record<string, string | number> = { url: capture.url }
   if (capture.http_status !== undefined) facts.http_status = capture.http_status
-  if (capture.body_sha256) facts.body_sha256 = capture.body_sha256
-  if (capture.body_bytes !== undefined) facts.body_bytes = capture.body_bytes
+  if (capture.final_url) facts.final_url = capture.final_url
+  if (capture.entity_sha256) facts.entity_sha256 = capture.entity_sha256
+  if (capture.entity_bytes !== undefined) facts.entity_bytes = capture.entity_bytes
   if (capture.content_type) facts.content_type = capture.content_type
-  if (capture.etag) facts.etag = capture.etag
-  if (capture.last_modified) facts.last_modified = capture.last_modified
+  if (capture.content_encoding) facts.content_encoding = capture.content_encoding
+  // Les validateurs d'origine entrent dans les faits SOUS LEUR VRAI NOM : ils appartiennent
+  // au vendeur, pas à un tiers. Le préfixe empêche de les relire comme une preuve de temps.
+  if (capture.origin_validators?.etag) facts.origin_etag = capture.origin_validators.etag
+  if (capture.origin_validators?.last_modified) facts.origin_last_modified = capture.origin_validators.last_modified
+  facts.timestamp_independence = capture.timestamp_independence
   if (capture.capture_failure) facts.capture_failure = capture.capture_failure
   return facts
 }
