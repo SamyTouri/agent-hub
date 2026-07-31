@@ -36,6 +36,14 @@ same address it publishes for *receiving* is unknown. A single-wallet agent will
 properly-separated one will not. Until that ratio is measured on real payer addresses, the size
 of this channel is a guess.
 
+> **Measured 2026-07-31, and this paragraph is now out of date.** On 190 distinct payer
+> addresses observed on Base against twelve announced receiving addresses, **31 resolve to a
+> registered agent — 16.3 %, and that is a floor**, because the public index exposes the token
+> owner address and not the `agentWallet` inside the registration file. So a sixth of observed
+> payers are already reachable with no index of ours. Method, guards and limits:
+> `docs/payer-identifiability-2026-07-31.md`. Left standing rather than rewritten, per the
+> dated-corrections rule.
+
 ## Channel 2 — posting into the reputation registry the buyer already queries
 
 The same standard's reputation registry accepts feedback from **any address that is not the
