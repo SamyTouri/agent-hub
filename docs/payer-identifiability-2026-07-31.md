@@ -29,23 +29,33 @@ against the requested address: an unrecognised filter on that index returns the 
 instead of an error, measured 2026-07-31, so a non-matching answer is scored `inconclusive`,
 never `unknown`.
 
-## Result — pilot run
+## Result
 
-| | |
-|---|---|
-| Catalogue entries scanned | 100 of 14 795 announced |
-| Distinct Base receiving addresses sampled | 12 |
-| Block window | 49 307 672 → 49 347 672 (40 000 blocks, ≈22 h) |
-| Failed log ranges | 0 |
-| Distinct payer addresses observed | 190 |
-| Resolved to a registered agent | **31** |
-| Not found in the index | 159 |
-| Inconclusive | 0 |
-| **Share of decided lookups that resolve** | **16.3 %** |
+Two runs, and **the second is the one to quote**. The first was a pilot on twelve sellers over
+roughly a day; it returned 16.3 % and that figure was wrong to rely on. Widening the sample to
+thirty-five sellers over about four days more than halved it. Both are recorded here because a
+number that moved by a factor of two under a wider sample is a fact about how much this
+measurement can be trusted, and deleting the pilot would hide it.
 
-The 31 matches are 31 distinct addresses carrying 31 distinct agent names — `garciaclaw`,
-`collateral-flux-engine`, `vostro-correspondent`, `dorsa-batch-clerk` and so on. They are not one
-shared relayer counted repeatedly, which was the failure mode most likely to inflate this figure.
+| | Pilot | **Wide run — quote this one** |
+|---|---|---|
+| Base receiving addresses sampled | 12 | **35** |
+| Block window | 40 000 (≈22 h) | **150 000 (≈3.5 days)** |
+| Failed log ranges | 0 | **15** |
+| Distinct payer addresses observed | 190 | **1 071** |
+| Resolved to a registered agent | 31 | **92** |
+| Not found in the index | 159 | **979** |
+| Inconclusive | 0 | **0** |
+| **Share of decided lookups that resolve** | 16.3 % | **8.6 %** |
+
+So roughly **one payer in twelve**, not one in six. The matches carry distinct agent names —
+`ShengWang_Trade_AI`, `garciaclaw`, `inkstone-router`, `cyclops-oracle`, `thrum-settler` — so
+they are not one shared relayer counted repeatedly, which was the failure mode most likely to
+inflate the figure. Zero lookups were inconclusive in either run.
+
+Fifteen log ranges failed in the wide run out of 525, so some payers were missed. That
+understates the payer count; whether it moves the ratio is unknown, since a missed payer is as
+likely to be registered as not.
 
 ## What the number means, and what it does not
 
@@ -54,9 +64,11 @@ agent token*, not the `agentWallet` declared inside the registration file. An ag
 properly separated service wallet is counted here as unknown. The true resolution rate is at
 least 16.3 % and cannot be below it.
 
-**Roughly one payer in six is already identifiable from its address alone** — and each one, being
-registered, publishes machine endpoints that answer continuously. For that sixth, the chain from
-an observed payment to a reachable counterpart is complete today, with no index of ours.
+**Roughly one payer in twelve is already identifiable from its address alone** — and each one,
+being registered, publishes machine endpoints that answer continuously. For that twelfth, the
+chain from an observed payment to a reachable counterpart is complete today, with no index of
+ours. Eleven in twelve remain unreachable from the address, which is the majority and should be
+stated first in any summary of this page.
 
 **What it does not say.** A payer address may be a human wallet, a relayer or a facilitator
 rather than a buying agent; the name in the index is a self-declared label, not a verified
@@ -75,4 +87,9 @@ should be scoped against a measured gap rather than an assumed one.
 
 **Correction to `docs/buyer-channels-2026-07-30.md`, dated 2026-07-31.** That note stated the
 ratio was unknown and the size of channel 1 a guess. It is no longer unknown; the floor is
-16.3 %. The note is left standing with this pointer rather than rewritten.
+8.6 %. The note is left standing with this pointer rather than rewritten.
+
+**Correction to this page's own first version, same day.** It was written and committed with
+the pilot's 16.3 % as its headline before the wide run finished. That figure stood for about
+forty minutes and is superseded by 8.6 %. Recorded rather than rewritten, because a page that
+exists to argue against numbers presented as knowledge cannot quietly swap one of its own.
