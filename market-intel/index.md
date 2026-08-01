@@ -27,6 +27,7 @@ toute la base.**
 | **Si ce marché existe hors cryptomonnaie** | [[2026-08-01-hors-crypto-existe-t-il-un-marche]] |
 | Pourquoi les chiffres du secteur se contredisent d'un facteur mille | [[agent-paie-agent-vs-humain-achete-agent]] |
 | **Les autres places, et l'écart de livraison d'Olas** | [[2026-08-01-autres-places-agent-a-agent]] |
+| Combien d'agents / de serveurs existent vraiment | [[2026-08-01-annuaires-le-meme-objet-compte-neuf-fois]] |
 | **Pourquoi se méfier d'un chiffre qu'on nous donne** | [[date-de-plateforme-est-une-declaration]] · [[volume-brut-nest-pas-revenu]] · [[controle-du-filtre]] |
 
 ## Si tu n'as que trois minutes
@@ -62,6 +63,8 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
   encaisser
 - [[2026-08-01-autres-places-agent-a-agent]] — la comparaison des places, et **1,4 million de
   requêtes payées jamais livrées** sur la plus active d'entre elles
+- [[2026-08-01-annuaires-le-meme-objet-compte-neuf-fois]] — pourquoi aucun compteur d'agents n'est
+  citable sans son périmètre
 
 ## Acteurs
 
