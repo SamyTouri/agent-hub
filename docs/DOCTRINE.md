@@ -105,11 +105,73 @@ heavier when the record of either party warrants it. Advice, never a decision, a
 delivered with the complaints and replies it rests on, so the parties can contradict it.
 Rationale in `docs/field-report-2026-07-29.md`.
 
+Extended 2026-08-01 with a second concrete form: **holding the paid evaluator role itself**, on
+the terms set out in *Holding the evaluator role* below.
+
 **D — reciprocity.** Activated 2026-07-29, earlier than the original "silent until there is
 volume" plan: the seller-side filing enabled in B *is* the reciprocity, so keeping it quiet
 would mean hiding half the product. It stays manual like everything else, and the first field
 gate requires at least one of the two admissible files to come from the seller side — otherwise
 symmetry is an intention that was never tested.
+
+## Holding the evaluator role
+
+Decided by Samy 2026-08-01, after a reanalysis found the earlier refusal rested on a sentence
+whose purpose did not cover this case. We may hold, and be paid for, the **evaluator role** an
+escrow standard defines: attesting that a delivery matches the criteria **the two parties
+themselves signed before the work started**, so the escrow can release. That is a statement of
+fact against supplied criteria — the exact definition layer C already gives itself. It is not a
+ruling, and a challenge to one of our attestations goes to the dispute layer, never back to us.
+
+**Per-transaction role exclusivity was considered and rejected the same day.** The rejected rule
+would have barred us from evaluating any deal our own advice touched. Two reasons it lost. It
+assumes a buyer wants distance, when a buyer who has read our record may specifically want our
+evaluator in the report. And it is a cost paid before a single dollar has been earned, against a
+risk that has not yet been observed once. **The client decides**: the inclusion rule is set by
+the buyer before the work starts and recorded in the report. A client may exclude our own
+evaluator and our own contract templates from the options; another may ask for them.
+
+What replaces exclusivity is not a declaration of good faith. It is five obligations, and they
+are the load-bearing part:
+
+1. **Technical objectivity is the deliverable, and it is not the same thing as commercial
+   neutrality.** We do not claim to be commercially disinterested — we are not. Competing
+   evaluators are presented with the same depth as ours: price, terms, observable record. **If we
+   cannot describe a competitor's offer factually, we do not present our own.** That is the test,
+   and it bites: it makes covering the competition a precondition of selling, not a courtesy.
+2. **The inclusion rule is the buyer's and is stated in the report**, before the work, never
+   after.
+3. **We publish our own propensity as observed counts, never as a verdict on our own advice.**
+   See below — this is where the founding principle constrains the mechanism.
+4. **A complaint about our own evaluation enters the Bureau exactly like any other**: same
+   mechanical admissibility, flagged as ours, our attestation and its material published in full,
+   same reply window as any counterparty. No discretion is exercised over a file that concerns us,
+   because none is available for any file.
+5. **Separation measures are held in reserve and triggered by an observed signal**, not by
+   principle: a filed complaint about the impartiality of our advice, a buyer declining on those
+   grounds, a measured drift in our own propensity counts. In escalating order — per-transaction
+   exclusivity, then a full information barrier between advising and evaluating. Naming them now
+   is what makes deferring them a decision rather than an oversight.
+
+**The propensity counts, and why the obvious version of them is forbidden.** The intent is that a
+buyer can see how readily we recommend a contract and price that in. The tempting number — *in X%
+of the files where we advised a contract, one was genuinely needed* — cannot be published, because
+"genuinely needed" is a judgement we would compute about our own work and then present as a fact.
+That is the failure mode this project exists to expose, turned on ourselves. What we publish
+instead is observed and countable: how many advices recommended a contract at all, in how many our
+own evaluator appeared among the options, in how many the buyer chose it, and how many of the
+advised matters later produced a file in the Bureau. The buyer draws the conclusion; we supply the
+counts.
+
+**The wager, stated so it can be lost.** This bets that a machine-readable market disciplines a
+conflict faster than abstention prevents it: a buyer's own agent can check our comparison against
+the same public sources we used, at no cost, which is not true of the human advisory markets whose
+scandals produced the abstention rule. If that proves wrong, the reserve measures above are the
+answer, and the signal that triggers them is written down before we have any reason to argue with
+it.
+
+**Status caution.** At the last reading (2026-07-28) the standard was still Draft and provided no
+accreditation or whitelist. We may operate; we do not claim a status the standard does not confer.
 
 ## Naming a seller
 
@@ -148,6 +210,15 @@ of operator becomes readable information in the file rather than a reset.
   2026-07-10, mainnet targeted Q4 2026) and cannot be won frontally. Their published stack also
   has no layer after the verdict and delegates reputation to ERC-8004: our place is the loop
   between their last layer and their first, not a rival to either.
+
+  **Narrowed 2026-08-01.** As written, this sentence also caught the escrow evaluator role, which
+  was never its target: it was written to keep us out of a frontal fight over disputes, and the
+  same consortium's own stack places ERC-8183 in its contracts-and-obligations layer, not in its
+  verification-and-disputes layer. The line now runs between **attesting facts against criteria
+  the parties supplied** — permitted, and the subject of *Holding the evaluator role* above — and
+  **deciding a contested matter**, which stays forbidden without exception. An attestation is
+  binding in effect, which is why the permission is written down rather than read into the old
+  wording.
 
 ## What remains, and why
 

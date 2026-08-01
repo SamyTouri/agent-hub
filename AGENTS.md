@@ -206,7 +206,11 @@ counterparty's reply is free, unconditional and permanently linked.
 
 Since the pivot of 2026-07-29 the project is **not** a discovery product, **not** a
 semantic search engine (vectors removed), **not** a rating platform, **not** a
-marketplace and **not** an adjudicator. No revenue may ever come from the seller side alone,
+marketplace and **not** an adjudicator — narrowed 2026-08-01: holding the paid escrow
+**evaluator role** (attesting a delivery against criteria the parties themselves signed) is
+permitted and is now a second concrete form of layer C; deciding a contested matter stays
+forbidden. Terms and the five obligations that replace per-transaction role exclusivity are in
+the doctrine, section *Holding the evaluator role*. No revenue may ever come from the seller side alone,
 and nothing about a published complaint is ever for sale; the pre-engagement report of layer C
 is always paid by both parties symmetrically (settled 2026-07-29, see the doctrine). The
 cross-registry catalogue,
