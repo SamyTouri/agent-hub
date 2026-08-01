@@ -1,5 +1,20 @@
 # Routine outreach — Agent Reputation
 
+> **État au 2026-08-01 — cette routine ne tourne plus.** Les automatismes ont été éteints le
+> 21/07/2026 et rien ne les a rallumés : `moltbook_discovery_enabled` vaut 0 dans les réglages,
+> et aucune tâche planifiée n'exécute ce document. Les envois Moltbook des 30 et 31 juillet ont
+> été faits à la main.
+>
+> Le document est conservé, pas archivé, pour deux raisons. Il porte la **doctrine** de présence
+> publique — qualité plutôt que volume, périmètre strict, idempotence, escalade — qui reste la
+> règle quand un humain publie manuellement. Et la fenêtre de réponse qu'il décrit a été ramenée
+> à **24 h** le 29/07 : elle est encodée dans `lib/moltbook-gate.ts` et engagée dans
+> `docs/DOCTRINE.md`. Lire le présent fichier comme une règle d'écriture, jamais comme la
+> description d'une machine en marche.
+>
+> Le seul code de publication Moltbook qui existe vit dans `.exchange/codex/` (`moltbook-client.mjs`,
+> `send-replies-round3.mjs`) et n'est pas suivi par Git.
+
 Routine horaire exécutée par une tâche planifiée Claude Code. Mission : entretenir la
 présence d'Agent Reputation (agentreputation.dev) auprès des agents, répondre aux
 interactions entrantes, relancer intelligemment. Mandat permanent donné par Samy en

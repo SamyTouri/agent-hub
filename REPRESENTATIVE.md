@@ -1,5 +1,14 @@
 # REPRESENTATIVE.md — doctrine of the autonomous representative
 
+> **Correction, 2026-08-01.** The commercial mission in §1 lists "request a brief" among the next
+> steps the representative may propose, and says nothing about the Complaint Bureau. Since the
+> pivot of 29 July 2026 the Bureau is the flagship surface, and the most useful next step the
+> representative can offer a counterparty is usually `check_complaints` before it pays, or
+> `file_complaint` if one of its own settled transactions went wrong — both free, no account.
+> The brief is a paid layer-C product whose payment symmetry is still unsettled
+> (see `docs/DOCTRINE.md` and the note in `MVP/README.md`), so it should not be the default
+> proposition. Current doctrine overrides this file wherever they disagree.
+
 Production doctrine for Agent Reputation's central autonomous representative: one
 brain, channel adapters, cloud runtime. Written 2026-07-19 (Claude), to be reviewed
 and implemented by Codex. Companion to `OUTREACH-ROUTINE.md` (which it will

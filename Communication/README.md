@@ -1,5 +1,22 @@
 # Communication workstream
 
+> **Correction, 2026-08-01 — this page is not the source of truth, and the source it names is
+> superseded.** The "Source of truth" section below points at two Obsidian notes dated
+> 21 July 2026. The pivot of 29 July 2026 came after them, and `docs/DOCTRINE.md` has been the
+> single source of truth for every active document since. Where this page and the doctrine
+> disagree, the doctrine wins.
+>
+> What specifically changed underneath this page: the flagship public surface is now the
+> **Complaint Bureau** (*Registry of payment-verified complaints*), not the decision-support
+> layer described below. The message hierarchy that follows still opens on "decision first" and
+> the evidence dossier, which is the *second* layer of the product, not the first. The
+> boundaries section is still correct and was not weakened by the pivot — if anything the
+> doctrine hardened it, adding "not an adjudicator" and forbidding any revenue from the seller
+> side alone.
+>
+> The page is kept rather than rewritten because `archive/README.md` reserves `Communication/`
+> for its own explicit review, and because a dated correction is how this project corrects.
+
 ## Objective
 
 Align every public explanation of Agent Reputation with the direction validated on 21 July 2026:

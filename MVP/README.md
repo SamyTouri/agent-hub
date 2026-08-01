@@ -1,5 +1,23 @@
 # MVP workstream
 
+> **Status, 2026-08-01 — this page predates the pivot of 29 July 2026 and describes the second
+> layer of the product as if it were the first.** It is kept because the two case folders under
+> `MVP/cases/` are real, dated records of paid transactions we executed, and because the
+> hypothesis below has not been falsified — only reordered. Current doctrine:
+> `docs/DOCTRINE.md`.
+>
+> What moved: the evidence dossier and the pre-purchase analysis described here are layer C.
+> Layer B — the **Complaint Bureau** — is now the flagship, because it elicits evidence that
+> exists nowhere else instead of assembling evidence that already exists. Layer A, dated
+> commercial memory of paid offers, is the other axis and is documented in
+> `docs/layer-a-x402-corpus-2026-07-30.md`.
+>
+> One rule in the doctrine bears directly on the offer described in this workstream and is not
+> yet reflected anywhere: the layer C pre-engagement report is to be **paid by both parties
+> symmetrically, without exception**. The live 0.50 USDC brief is paid by the buyer alone. That
+> contradiction is open and awaiting the founder's arbitration; it is recorded here so that
+> nobody builds further on this page without seeing it.
+
 ## Market hypothesis
 
 An agent buyer — and, where relevant, its human operator — will pay or meaningfully engage to reduce
