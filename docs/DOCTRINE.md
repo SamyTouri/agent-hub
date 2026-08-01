@@ -127,9 +127,12 @@ ruling, and a challenge to one of our attestations goes to the dispute layer, ne
 would have barred us from evaluating any deal our own advice touched. Two reasons it lost. It
 assumes a buyer wants distance, when a buyer who has read our record may specifically want our
 evaluator in the report. And it is a cost paid before a single dollar has been earned, against a
-risk that has not yet been observed once. **The client decides**: the inclusion rule is set by
-the buyer before the work starts and recorded in the report. A client may exclude our own
-evaluator and our own contract templates from the options; another may ask for them.
+risk that has not yet been observed once. **The client decides**: the inclusion rule is set
+before the work starts and recorded in the report. A client may exclude our own evaluator and our
+own contract templates from the options; another may ask for them. Where a report is commissioned
+by both parties, **either one may exclude them, and its exclusion binds** — an inclusion one side
+did not want would make the report a thing sold to the other, which is the shape this project
+already forbids.
 
 What replaces exclusivity is not a declaration of good faith. It is five obligations, and they
 are the load-bearing part:
