@@ -8,7 +8,7 @@ updated: 2026-08-01
 
 Dossier **autonome et transportable**. Il ne dépend d'aucun code du dépôt : on peut le copier
 dans le vault Obsidian, l'ouvrir comme un vault à lui seul, ou le lire tel quel sur GitHub. Les
-liens internes sont au format ``[[nom-de-fiche]]`` pour qu'Obsidian les résolve sans transformation.
+liens internes sont au format `wikilink Obsidian (double crochet autour du nom de fiche)` pour qu'Obsidian les résolve sans transformation.
 
 Il vit **dans le dépôt** plutôt que directement dans le vault, pour une raison précise : chaque
 fait ici est daté, et git donne gratuitement l'historique de ses corrections. Pour un projet dont
