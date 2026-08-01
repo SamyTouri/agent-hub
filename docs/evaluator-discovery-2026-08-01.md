@@ -101,6 +101,28 @@ tout de suite".
 
 ---
 
+## The neighbours have the same hole
+
+A bounded check of two adjacent protocols, done first-hand after two assisted searches stalled.
+It is not a survey, but the pattern in both is the same one found above.
+
+**Boson Protocol**, where a seller must designate a dispute resolver at offer creation. Its
+dispute-resolver interface (`IBosonDisputeResolverHandler.sol`, read 2026-08-01) exposes exactly
+three read functions: `getDisputeResolver(uint256 id)`, `getDisputeResolverByAddress(address)`,
+and `areSellersAllowed(...)`. **There is no enumeration** — no list, no count, no way to walk the
+set. A caller can only retrieve a dispute resolver it can already name.
+
+**Kleros / ERC-792.** The arbitration standard makes the arbitrator a constructor parameter of the
+arbitrable contract, and its stated virtue is that a dapp can switch arbitration services or let
+users pick their own. That is interface flexibility, not discovery: the arbitrator interface
+documentation (read 2026-08-01) describes only the functions an arbitrator must implement and
+gives no mechanism, registry or guidance for obtaining an address in the first place.
+
+So the shape repeats across three independent designs: **the role is specified, the interface is
+specified, and where the address comes from is left to somebody else.** Kleros does solve the
+selection problem one layer down — jurors are drawn at random from a staked pool, which removes
+the choice rather than informing it — but the choice of *arbitrator* remains outside the protocol.
+
 ## Provenance
 
 **Verified first-hand on 2026-08-01**: the three evaluation modes and their wording, the
@@ -108,7 +130,12 @@ tout de suite".
 `browseAgents` discovery path with its reputation sort keys for providers, and the null ranking
 fields on registered evaluators.
 
+Also verified first-hand: the Boson dispute-resolver read interface and the Kleros arbitrator
+interface documentation, both read 2026-08-01.
+
 **Not established here**: whether informal channels — Discord, Telegram, direct solicitation —
-carry evaluator hiring in practice. An assisted search for this stalled before completing, and
-the absence of a documented method is not proof that no informal one exists. A comparison of how
-neighbouring protocols solve the same discovery problem was commissioned separately.
+carry evaluator hiring in practice. Three assisted searches were commissioned for this and all
+three stalled before completing, so the question was not answered rather than answered in the
+negative. **The absence of a documented method is not proof that no informal one exists**, and
+this report does not claim a vacuum it did not measure. The neighbour comparison above is two
+protocols checked by hand, not a survey.
