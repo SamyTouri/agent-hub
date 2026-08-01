@@ -357,3 +357,92 @@ not a neutral outcome.
 No tracked file was moved or deleted in this corrective lot, so there is no new restoration path
 to record. A doctrine-boundary test now guards the public contracts, tag ordering, localized
 owners copy and equality of the two agent-card copies.
+
+## 2026-08-01 — cleanup audit: three unreferenced tools
+
+Found by a reference sweep of `scripts/` and `lib/`: every tracked file was checked for an
+import, an exact-path mention, and a claim in `package.json`, `vercel.json`, the workflows and
+the active documentation. Eight scripts had zero references; five of them are kept and are
+listed under "Kept deliberately" below. These three are moved.
+
+### `scripts/evidence-recompose.mts`
+
+- **Original path:** `scripts/evidence-recompose.mts`
+- **New path:** `archive/2026-08/superseded-tools/evidence-recompose.mts`
+- **Ground:** 2 — doctrinal obsolescence
+- **Reason:** it plans and applies a recomposition of the evidence cohort under a per-operator
+  cap, deactivating members and admitting others. `docs/DOCTRINE.md` freezes that cohort: "The
+  109-subject MCP cohort is frozen as a technical instrument: maintained, never extended, never
+  presented as the product corpus." A tool whose purpose is to re-select the members of a frozen
+  corpus has no doctrinal use left.
+- **Proof of no active use:** no import; no exact-path reference anywhere in the tree; absent from
+  `package.json`, `vercel.json`, both workflows and all active documentation. `lib/evidence-cohort.ts`
+  and its test remain active and are not touched by this move.
+- **Public contract:** none. The script was never exposed through a route, a tool or a public URL.
+- **Current replacement:** none is needed while the cohort stays frozen. Daily cohort availability
+  is recorded by `/api/cron/daily` through `lib/evidence-store.ts`.
+- **Restoration:** `git mv archive/2026-08/superseded-tools/evidence-recompose.mts scripts/evidence-recompose.mts`.
+  Re-read its header before running it: it writes to the cohort tables, never to the observation
+  journal, and a deactivated subject keeps its recorded history.
+
+### `scripts/indexnow-submit.mjs`
+
+- **Original path:** `scripts/indexnow-submit.mjs`
+- **New path:** `archive/2026-08/superseded-tools/indexnow-submit.mjs`
+- **Ground:** 1 — inactivity
+- **Reason:** the file declares its own scope in its first line — a one-shot initial submission of
+  every site URL to IndexNow. That submission was performed on 2026-07-15. The recurring delta has
+  been handled since by `/api/cron/daily`, which calls `submitIndexNow` from `lib/indexnow.ts`.
+- **Proof of no active use:** no import; no exact-path reference; absent from `package.json`,
+  `vercel.json`, the workflows and the documentation. `lib/indexnow.ts` stays active and is the
+  only IndexNow code path that runs.
+- **Public contract:** the IndexNow key file `public/ffcdfbcca65a32dfd4026f467a3cc16a.txt` is a
+  public URL and is deliberately left in place; archiving the submitter does not touch it.
+- **Current replacement:** `/api/cron/daily` (`vercel.json`, `0 3 * * *`).
+- **Restoration:** `git mv archive/2026-08/superseded-tools/indexnow-submit.mjs scripts/indexnow-submit.mjs`.
+  Needed only for another full resubmission — after a domain change, for instance.
+
+### `scripts/run-sql.mjs`
+
+- **Original path:** `scripts/run-sql.mjs`
+- **New path:** `archive/2026-08/superseded-tools/run-sql.mjs`
+- **Ground:** 1 — inactivity
+- **Reason:** it executes arbitrary SQL passed as a shell argument. `scripts/run-sql-file.mjs` does
+  the same work from a file and is the one actually referenced — by four call sites, including the
+  complaint-desk workflow. Of the two, the argv variant is the one that cannot be reviewed or
+  version-controlled before it runs, which matters because both are used for production DDL.
+- **Proof of no active use:** no import; no exact-path reference; absent from `package.json`,
+  `vercel.json`, the workflows and the documentation.
+- **Public contract:** none.
+- **Current replacement:** `scripts/run-sql-file.mjs`, invoked through `scripts/with-agenthub-db.ps1`.
+- **Restoration:** `git mv archive/2026-08/superseded-tools/run-sql.mjs scripts/run-sql.mjs`.
+
+### Kept deliberately — five candidates that failed the burden of proof
+
+Recorded here because "no reference" was true for all of them and was not sufficient.
+
+- `scripts/Invoke-DiscoveryListing.ps1`, `scripts/Invoke-IntakeDrill.ps1` and
+  `scripts/Invoke-PayerIdentifiability.ps1` are operator entry points, written 2026-07-31. They are
+  invoked by a human, not by code, so an import search cannot see them. Their absence from the
+  documentation was the actual defect and is fixed in `AGENTS.md` rather than by a move.
+- `scripts/layer-a-capture.mts` is the caller of layer A. It ran once, on 2026-07-31, and wrote ten
+  `paid_offer_surface` observations. Nothing schedules it — that is an open gap for the founder to
+  arbitrate, and archiving the tool would convert a scheduling gap into a capability loss.
+- `scripts/clawgig-packet.mts` is the frozen input packet of an experiment whose counterparty
+  conversation is still open.
+
+Two `lib/` modules are called only by their own tests, and both stay for the same kind of reason:
+`lib/moltbook-gate.ts` encodes the 24-hour response window that `docs/DOCTRINE.md` commits to —
+its whole value is being written before the results are seen — and `lib/page-signals-comparator.ts`
+is the instrument that verifies a published dossier
+(`public/dossiers/cases/homepage-rewrite-agent-base-usdc-page-signals-2026-07-26.md`). Removing it
+would remove the ability to re-verify a claim we have already published.
+
+### Retained outside the repository — the star-rating backup
+
+`.exchange/backup-github-stars-ratings.json` holds the 11,277 star-derived ratings deleted on
+2026-07-25. Size 3,674,363 bytes; SHA-256
+`0a6f93344c8b966fe55868ba10d5adb8b21cbfef00c8a8a707731b6db50c45c8`, read 2026-08-01. It is the only artifact that lets anyone check our own
+retraction of that number, so it must not be deleted — but it is not committed either, because
+3.7 MB of one-off data does not belong in the permanent history of this repository. It stays at its
+current path, and this entry is what makes it findable.

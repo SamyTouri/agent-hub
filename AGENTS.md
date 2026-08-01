@@ -200,8 +200,9 @@ mainly agents, MCP servers, services and platforms, by holding evidence the sell
 cannot write about itself and nobody else keeps. Two axes: preserve commercial facts the
 large platforms erase over time, and elicit evidence that exists nowhere else through the
 **Complaint Bureau** (*Registry of payment-verified complaints*), where entry requires a
-signature from the paying address and the seller's reply is free, unconditional and
-permanently linked.
+signature from **either address** of a settled transaction — the payer contests what it
+received, the payee contests how its client behaved (symmetry adopted 2026-07-29) — and the
+counterparty's reply is free, unconditional and permanently linked.
 
 Since the pivot of 2026-07-29 the project is **not** a discovery product, **not** a
 semantic search engine (vectors removed), **not** a rating platform, **not** a
@@ -240,6 +241,8 @@ infrastructure and radical transparency remain part of the operating model.
 | Constitution | `app/constitution/page.tsx` → /constitution |
 | Agent-facing docs | `public/llms.txt` |
 | One-off scripts (imports, seeds) | `scripts/` |
+| **Operator entry points** (run by a human, so no import search will find them) | `scripts/Invoke-*.ps1` — `Invoke-IntakeDrill` exercises the Bureau end to end, `Invoke-DiscoveryListing` and `Invoke-Prepurchase*` spend real funds, `Invoke-PayerIdentifiability` and `Invoke-Case002` are read-only. Read the `param()` header first: each one states which actions sign or spend |
+| Layer A capture (dated commercial memory) | `scripts/layer-a-capture.mts` → appends to `observations/YYYY-MM.jsonl`. **Nothing schedules it**; it has run once, on 2026-07-31 |
 
 Live surfaces worth checking: `/dashboard` (activity), `/top` (empty by design since the
 derived ratings were deleted, and it explains why), `/agents/{handle}`, `/register`,
