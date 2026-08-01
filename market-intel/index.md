@@ -24,6 +24,9 @@ toute la base.**
 | La plateforme mesurée et les défauts de ses données | [[virtuals-acp]] |
 | Un interlocuteur du terrain et ce qu'il nous a corrigé | [[markus-dropspace]] |
 | Une anomalie non expliquée | [[les-201-acheteurs]] |
+| **Si ce marché existe hors cryptomonnaie** | [[2026-08-01-hors-crypto-existe-t-il-un-marche]] |
+| Pourquoi les chiffres du secteur se contredisent d'un facteur mille | [[agent-paie-agent-vs-humain-achete-agent]] |
+| **Les autres places, et l'écart de livraison d'Olas** | [[2026-08-01-autres-places-agent-a-agent]] |
 | **Pourquoi se méfier d'un chiffre qu'on nous donne** | [[date-de-plateforme-est-une-declaration]] · [[volume-brut-nest-pas-revenu]] · [[controle-du-filtre]] |
 
 ## Si tu n'as que trois minutes
@@ -45,6 +48,8 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
 - [[date-de-plateforme-est-une-declaration]] — le piège qui nous a eus deux fois le même jour
 - [[controle-du-filtre]] — un zéro ne vaut rien tant qu'on n'a pas prouvé que le filtre filtre
 - [[volume-brut-nest-pas-revenu]] — le piège numéro un des chiffres spectaculaires du secteur
+- [[agent-paie-agent-vs-humain-achete-agent]] — la confusion qui fait varier les chiffres du
+  secteur d'un facteur mille
 
 ## Mesures — ce qu'on a compté soi-même
 
@@ -53,6 +58,10 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
 - [[2026-08-01-metiers-de-la-confiance]] — qui vend quel contrôle, à quel prix réel
 - [[2026-08-01-segment-confiance-encore-actif]] — le segment filtré sur l'activité récente
 - [[2026-08-01-siege-evaluateur-vide]] — le rôle d'évaluateur, mesuré à zéro
+- [[2026-08-01-hors-crypto-existe-t-il-un-marche]] — hors crypto, un agent peut dépenser mais pas
+  encaisser
+- [[2026-08-01-autres-places-agent-a-agent]] — la comparaison des places, et **1,4 million de
+  requêtes payées jamais livrées** sur la plus active d'entre elles
 
 ## Acteurs
 
@@ -71,10 +80,12 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
 
 ## Ce qui manque encore
 
-**Le hors-crypto.** Toutes les mesures ci-dessus portent sur **une seule place, très orientée
-cryptomonnaie**. Savoir si elle représente le marché des agents ou une niche est la question
-ouverte la plus importante, et elle n'a pas de fiche parce qu'elle n'est pas mesurée.
+**Le hors-crypto et les autres places sont traités**
+([[2026-08-01-hors-crypto-existe-t-il-un-marche]], [[2026-08-01-autres-places-agent-a-agent]]).
 
-Manquent aussi : les autres places, le rail de paiement lui-même, les acteurs d'arbitrage annoncés
-pour fin 2026. Et surtout **la série** : une mesure prise une fois n'est pas une tendance, et
+À faire en priorité : **revérifier l'écart de livraison d'Olas** — 12,4 % des requêtes payées sans
+livraison — avant tout usage public, car c'est le chiffre le plus exploitable du corpus. Puis
+confirmer en direct la place agent-à-agent à zéro dollar, aujourd'hui seulement rapportée.
+
+Manquent aussi : les acteurs d'arbitrage annoncés pour fin 2026. Et surtout **la série** : une mesure prise une fois n'est pas une tendance, et
 c'est la répétition datée qui produira ce que personne d'autre ne publie.
