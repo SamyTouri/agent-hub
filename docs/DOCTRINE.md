@@ -173,8 +173,17 @@ scandals produced the abstention rule. If that proves wrong, the reserve measure
 answer, and the signal that triggers them is written down before we have any reason to argue with
 it.
 
-**Status caution.** At the last reading (2026-07-28) the standard was still Draft and provided no
-accreditation or whitelist. We may operate; we do not claim a status the standard does not confer.
+**Status caution.** Re-read first-hand 2026-08-01: still Draft, unchanged since 2026-03-13, with
+no accreditation, whitelist, staking or slashing of evaluators anywhere in the text. We may
+operate; we do not claim a status the standard does not confer.
+
+**And the incentive we are stepping into, named before we take it.** The same reading established
+that the reference implementation pays the evaluator **only on approval** — the rejection and
+expiry paths transfer nothing to it — and that the rate is a platform-wide admin parameter, not
+ours to set. That is structurally the seller-side revenue refused on 2026-07-29, in a different
+costume. It does not reverse the decision, and it is why obligation 3 above is not optional
+housekeeping: our completed-to-rejected ratio is the observed count that answers it. Evidence,
+line references and what remains unverified: `docs/erc-8183-evaluator-role-2026-08-01.md`.
 
 ## Naming a seller
 
