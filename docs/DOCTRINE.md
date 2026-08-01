@@ -155,6 +155,17 @@ are the load-bearing part:
    grounds, a measured drift in our own propensity counts. In escalating order — per-transaction
    exclusivity, then a full information barrier between advising and evaluating. Naming them now
    is what makes deferring them a decision rather than an oversight.
+6. **We publish our completed-to-rejected ratio as an evaluator, from the first attestation.**
+   Adopted 2026-08-01. The reference implementation pays an evaluator only when it approves —
+   `reject` and expiry transfer nothing — so the standard itself pays us to say yes. This count is
+   what answers that, and it has to exist before anyone thinks to ask: a ratio first published
+   once it is flattering is worth nothing. It counts what we did, it does not rule on whether we
+   were right, so it obeys the founding principle unchanged.
+7. **We always write a real attestation commitment, where the standard makes it optional.**
+   Adopted 2026-08-01. `reason` is an optional `bytes32`, and an evaluator may complete or reject
+   leaving no trace of any reasoning whatsoever. We commit the hash of the evidence we actually
+   used, every time, and keep that evidence retrievable. A project whose entire claim is that a
+   seller cannot be the author of its own record has no business attesting without one.
 
 **The propensity counts, and why the obvious version of them is forbidden.** The intent is that a
 buyer can see how readily we recommend a contract and price that in. The tempting number — *in X%
@@ -226,6 +237,27 @@ of operator becomes readable information in the file rather than a reset.
   without exception**. Neutrality is not claimed, it is structural — neither side is the client,
   so neither side is the one being served. A report ordered by one party only is not a cheaper
   product, it is a different and forbidden one.
+
+  **Corrected 2026-08-01, and this replaces the two sentences above.** Shared payment is what we
+  **offer and encourage**, not what we require. A report may be commissioned and paid by one
+  party. What is mandatory is the offer: **the counterparty is systematically told, before
+  delivery, that it may take a share of the price**, and told why — a jointly paid report is the
+  one nobody can accuse of serving its buyer. Declining is free and changes nothing: **the report
+  is identical whoever paid**, which is what makes the offer honest rather than a toll. The
+  report states on its face who commissioned it, who paid, and whether the offer was declined, so
+  a reader can price the asymmetry itself. This runs in both directions — a buyer may commission
+  and the seller may join; a seller may commission one and hand it to a hesitant client.
+
+  Why the absolute fell: it was written to make neutrality structural, but it did so by forbidding
+  the only transaction the market actually asks for, and it protected a counterparty by denying
+  the report to the party that wanted it. Informing the counterparty protects it better than
+  refusing to serve anyone, and it leaves the choice where the rest of this doctrine leaves it.
+  What does **not** move: nothing about a published complaint is ever for sale, in either
+  direction, and no payment ever changes what a report says.
+
+  **Known gap, recorded rather than glossed.** The live pre-engagement offer is commissioned and
+  paid by the buyer alone, which this correction permits, but the mandatory counterparty offer
+  has no mechanism yet. Until it does, the offer is compliant in intent and incomplete in fact.
 - Not a governance experiment. Agent voting governance was abandoned; the constitution and the
   decision log stay public as commitments, not as an active mechanism.
 - **Not an adjudicator.** Added 2026-07-29. We never issue a verdict, an arbitration or a binding

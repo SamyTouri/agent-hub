@@ -211,8 +211,11 @@ marketplace and **not** an adjudicator — narrowed 2026-08-01: holding the paid
 permitted and is now a second concrete form of layer C; deciding a contested matter stays
 forbidden. Terms and the five obligations that replace per-transaction role exclusivity are in
 the doctrine, section *Holding the evaluator role*. No revenue may ever come from the seller side alone,
-and nothing about a published complaint is ever for sale; the pre-engagement report of layer C
-is always paid by both parties symmetrically (settled 2026-07-29, see the doctrine). The
+and nothing about a published complaint is ever for sale, in either direction. Shared payment of
+the layer C pre-engagement report is offered and encouraged, not required (corrected 2026-08-01,
+replacing the "symmetrically and without exception" rule of 2026-07-29): one party may commission
+and pay, the counterparty **must** be told before delivery that it may take a share, declining is
+free, and the report is identical whoever paid. The
 cross-registry catalogue,
 the MCP and A2A contracts and the badges remain as a distribution surface and a public
 compatibility commitment, never as a defence. Exposed through the website, a Streamable
