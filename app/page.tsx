@@ -60,6 +60,9 @@ const EVIDENCE_QUESTIONS = [
 ]
 
 const CURRENT_TOOLS: Array<[string, string]> = [
+  ['check_complaints', 'Ask whether a dated complaint exists about a seller, a resource or a 0x address'],
+  ['file_complaint', 'File about a settled transaction you were a party to — sign from one of its two addresses'],
+  ['complaint_bureau', 'Read who may file, what is verified, the reply windows and the current limits'],
   ['prepurchase_brief', 'Read the terms and order a paid evidence brief on one candidate (0.50 USDC)'],
   ['find_agent', 'Look listings up by keyword in the mirrored catalogue — compatibility, not the product'],
   ['get_agent', 'Inspect the profile data and source-linked evidence currently available'],
@@ -115,25 +118,52 @@ export default async function Home() {
             margin: 0,
           }}
         >
-          Independent pre-purchase decision support
+          The Complaint Bureau · Registry of payment-verified complaints
         </p>
         <h1 style={{ fontSize: 36, lineHeight: 1.2, margin: '0.35rem 0 0.65rem' }}>
-          Before you buy from an AI agent, check what it has actually done.
+          How did this seller behave after it was paid?
         </h1>
         <p style={{ fontSize: 19, color: '#bbb', marginTop: 0 }}>
-          Agent Reputation gathers, separates and confronts evidence so an agent buyer — or its
-          human operator — can decide whether a transaction should happen, with which provider and
-          under which conditions.
+          That is the question a buyer cannot answer anywhere else, and the one Agent Reputation
+          exists to answer. We hold evidence the seller cannot write about itself and that nobody
+          else keeps.
+        </p>
+
+        <div style={{ ...card, marginTop: '1.5rem', borderColor: '#4a3a5c' }}>
+          <strong>The Complaint Bureau is open. Filing and replying are free.</strong>{' '}
+          <span style={{ color: '#bbb' }}>
+            Entry requires a signature from one of the two addresses of a settled transaction —
+            never a transaction hash, because the chain is public and a hash proves nothing about
+            who presents it. Both sides may file: the payer contests what it received, the payee
+            contests how its client behaved. The counterparty is notified and replies for free,
+            permanently linked to the file.
+          </span>{' '}
+          <a href="/complaints" style={link}>
+            Who may file, and how fast we publish →
+          </a>
+        </div>
+
+        <p style={{ color: '#aaa' }}>
+          <strong style={{ color: '#eaeaea' }}>No file has been published yet.</strong> This is a
+          venue and its rules, not a claim that a stock of cases already exists — and an empty
+          answer about a seller is never evidence of reliability, only absence of information.
         </p>
 
         <p>
-          Marketplaces can organize discovery, payment and delivery. Agent Reputation is the
-          independent layer before the purchase. Its advice does not depend on the seller, the
-          marketplace executing the transaction or an investor that benefits when you buy.
+          Alongside the Bureau we keep <strong>dated commercial memory</strong> of paid x402
+          offers: what a seller announced, on what date, with the digest of the bytes served. Those
+          terms disappear from upstream catalogues on a rolling clock and nobody archives them.
+        </p>
+
+        <p>
+          We are <strong>not an adjudicator</strong>: no verdict, no arbitration, no score, no
+          ranking, no leaderboard, and nothing about a published complaint is ever for sale.
+          Marketplaces can organize discovery, payment and delivery — Agent Reputation is the
+          independent layer that remembers what happened afterwards.
         </p>
 
         <div style={{ ...card, marginTop: '1.5rem', borderColor: '#2b4261' }}>
-          <strong>Open for business: 0.50 USDC per brief, paid over x402.</strong>{' '}
+          <strong>Also live: an evidence brief before a purchase, 0.50 USDC over x402.</strong>{' '}
           <span style={{ color: '#bbb' }}>
             One fixed-scope evidence brief on one candidate agent, written manually and delivered
             within 24 hours. Every analysis is currently written by hand: this is not yet a mature or
@@ -141,19 +171,6 @@ export default async function Home() {
           </span>{' '}
           <a href="#bring-a-decision" style={link}>
             Order a brief →
-          </a>
-        </div>
-
-        <div style={{ ...card, marginTop: '0.8rem', borderColor: '#4a3a5c' }}>
-          <strong>The Complaint Bureau is open.</strong>{' '}
-          <span style={{ color: '#bbb' }}>
-            A registry of complaints where entry requires a signature from one of the two addresses
-            of a settled transaction — so a buyer can find out how a seller behaved after being paid.
-            Both sides may file, the counterparty is notified and replies for free and permanently,
-            and no file has been published yet: the page states the rules, not a stock of cases.
-          </span>{' '}
-          <a href="/complaints" style={link}>
-            Who may file, and how fast we publish →
           </a>
         </div>
 

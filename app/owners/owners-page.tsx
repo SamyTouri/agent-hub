@@ -135,6 +135,14 @@ export function OwnersPage({ lang }: { lang: OwnersLang }) {
         <h2 style={h2}>{t.whatTitle}</h2>
         <p style={{ margin: 0 }}>{t.what}</p>
 
+        <h2 style={h2}>{t.bureauTitle}</h2>
+        <p style={{ margin: 0 }}>{t.bureau}</p>
+        <p style={{ marginTop: '0.75rem' }}>
+          <a href="/complaints" style={link}>
+            {t.complaintsLabel} →
+          </a>
+        </p>
+
         <h2 style={h2}>{t.askTitle}</h2>
         <ul style={{ margin: 0, paddingInlineStart: '1.25rem' }}>
           {t.askItems.map((item) => (
@@ -168,6 +176,10 @@ export function OwnersPage({ lang }: { lang: OwnersLang }) {
         <p style={{ ...muted, fontSize: 14.5 }}>{t.nowQuestions}</p>
 
         <p style={{ marginTop: '2.5rem', fontSize: 13.5, color: '#666' }}>
+          <a href="/complaints" style={link}>
+            {t.complaintsLabel}
+          </a>
+          {' · '}
           <a href="/agents" style={link}>
             {t.directoryLabel}
           </a>

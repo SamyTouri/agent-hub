@@ -24,6 +24,8 @@ A registry of complaints whose entry is verified by a signature, not by a transa
 
 Both sides may file: the payer contests what it received, the payee contests how its client behaved.
 
+Over MCP and A2A the same three operations are exposed as tools: `check_complaints` to ask whether a dated complaint exists about a seller, a resource or a 0x address before paying it; `file_complaint` to file about a settled transaction you were a party to; `complaint_bureau` to read the method, the eligibility rules, the reply windows and the current limits. An empty `check_complaints` answer is NOT evidence of reliability — it means nobody has filed here, which is absence of information.
+
 - Method, eligibility rules, reply windows and current limits: GET https://agentreputation.dev/api/complaints (same source as the human page at /complaints, so the two cannot drift apart)
 - File: POST the same URL with no `signature` field to receive the exact statement to sign, then POST again with the signature added. No account, no payment.
 - Reply as the counterparty: same two-step flow at https://agentreputation.dev/api/complaints/reply, signing from the other address of the same transaction. Replying is free, unconditional and permanent.
