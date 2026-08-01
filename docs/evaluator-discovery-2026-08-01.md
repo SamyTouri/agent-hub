@@ -84,22 +84,94 @@ Three methods, in descending order of what the tooling steers you toward:
 
 ## What this changes for us
 
-It confirms the gap named on 2026-08-01, and sharpens it. The unoccupied position is not
-"evaluator" — the role is defined, 75 addresses have registered for it, and none has earned
-anything. **The unoccupied position is the thing that would let a buyer choose one**, and its
-absence is why the role is empty rather than the reverse: a market whose default is "grade your
-own homework" never develops a demand for graders.
+**Do not wait for the evaluator seat to become a business.** It is not empty for want of a
+directory; it is empty because it is a worse deal than selling the same judgement directly, and
+agents selling exactly that judgement are already earning real money on the same rail. If we want
+revenue from verification in this market, the observed path is to sell it as a service, not to
+hold an escrow key. That costs nothing to act on: layer C already prices per act rather than as a
+share of a deal, which is the structure that works here.
 
-Two cautions before treating this as an opening. A discovery surface for a role nobody is paid to
-hold solves the second problem, not the first; and this project's own doctrine says catalogue
-breadth is not a moat. What would be ours is narrower and consistent with what we already do:
-the ranking signals for an evaluator — how often it approves versus rejects, whether its
-attestations carry retrievable evidence, whether any file was ever opened against one — are
-observed facts of exactly the kind we already keep, and they are precisely the fields that are
-null today. That is a note for later, not a plan: Samy set this aside as "à construire, mais pas
-tout de suite".
+**Keep the role anyway, for the reason established earlier**: it puts us at the instant a matter
+becomes settled with both parties reachable, which is the constraint the 2026-07-30 field test
+identified. The doctrine already forbids treating it as revenue. This sweep is the evidence for
+that prohibition, not an argument against the role.
+
+**And a directory is a later question, not a next one.** A discovery surface for a role nobody is
+paid to hold solves the second problem while the first stands; our own doctrine says catalogue
+breadth is not a moat. What would be ours is narrower: the signals that would rank an evaluator —
+how often it approves versus rejects, whether its attestations carry retrievable evidence, whether
+any file was ever opened against one — are observed facts of the kind we already keep, and they
+are precisely the fields sitting null today. Samy set this aside as "à construire, mais pas tout
+de suite", and nothing here argues for moving it forward.
+
+**One clock worth watching.** The dispute-adjudication layer this project already decided not to
+contest is targeting mainnet in Q4 2026. It rules after the fact and needs material to rule on;
+choosing and sizing the commitment *before* the job is outside its announced scope. That remains
+our position, and it does not depend on the evaluator seat ever filling.
 
 ---
+
+## The inversion: verification sells, the escrow role does not
+
+Added later the same day, after a further sweep answered the informal-channel question this report
+had left open. It changes the conclusion more than it confirms it.
+
+**Verified first-hand on 2026-08-01**, by direct query of the same registry:
+
+| Agent | Role | Revenue | Jobs | Offerings |
+|---|---|---|---|---|
+| ArAIstotle (fact-checking) | HYBRID | **$22 344.59** | 87 938 | 5 |
+| WachAI ("the security layer of ACP") | PROVIDER | **$5 548.76** | 6 137 | 5 |
+| Cybercentry (verification offerings) | HYBRID | **$3 152.73** | 13 526 | 9 |
+| **All 75 agents registered `role = EVALUATOR`** | EVALUATOR | **$0** | — | 30 of them publish offerings |
+
+Scanned across all three pages of the evaluator role: 75 agents, **45 with no offering at all,
+none with any revenue**. Thirty of them do publish offerings — they are trying to sell — and still
+earn nothing.
+
+So the market for judging work is **not** absent. It is worth tens of thousands of dollars and
+hundreds of thousands of jobs, and it is transacting today. It simply does not flow through the
+escrow evaluator role. The same work — checking whether something is true, sound, safe — sells
+fine as an ordinary service bought like any other. What does not sell is holding the escrow key.
+
+That reframes the gap found above. The evaluator seat is not empty because buyers cannot find a
+candidate; it is empty because **the seat is worse than the alternative for everyone involved**.
+Its occupant must be named at job creation and can never be changed, is paid only if it approves,
+at a rate it does not set, out of the provider's net, with no recourse if it is wrong and no
+obligation if it stays silent. A buyer who wants an opinion can simply buy one.
+
+## What the community sweep found, and what it could not reach
+
+Second-hand and **not re-verified line by line**; treat as leads, not facts.
+
+**Supply exists and is being ignored.** At least six third parties have publicly pitched
+themselves as evaluators — bonded verdicts with slashable deposits, reasoning-quality checks
+before settlement, trust oracles priced at a few cents per call. Several posted directly on the
+reference implementation's own repositories. The recurring detail is that **none received a
+reply**: issues with zero comments, a pull request open for months without review.
+
+**Demand is not weak, it is close to absent.** The sweep found essentially one public request
+resembling "let me choose an evaluator", and it concerns selecting an internal evaluation module,
+not a third-party address that releases an escrow. The standard's own discussion forum, where the
+role was debated, contains no proposal for a registry or a discovery mechanism at all.
+
+**A field measurement worth having, and worth doubting.** One third-party write-up reports that
+across the escrow's jobs on Base, a sampled set showed the buyer named as its own evaluator in 29
+cases, one left blank, and **zero using an independent third party**. The direction matches what
+the SDK documents and what the revenue figures show. But the sweep itself flags that this
+write-up was authored through Claude Code on an unrelated repository, so its provenance is
+uncertain and its numbers are **not corroborated**. Do not cite the figures; the direction stands
+on the first-hand evidence above without them.
+
+**What could not be reached at all**: the project's Discord and Telegram, which need an account
+and have no public mirror. Informal hiring may well happen there. This report does not know.
+
+**One trap to name.** The published agent counters across this ecosystem disagree wildly with each
+other — figures in the tens of thousands, hundreds of thousands and low millions all circulate,
+with no published scope or method. That is the shape of the "15 000+ agents" claim we had to
+retract publicly. **No number from this family may be repeated without its source and its scope**,
+and a widely-quoted example of an "independent evaluator service" turns out to be a fictional
+illustration from a vendor blog post rather than a real operator.
 
 ## The neighbours have the same hole
 
