@@ -47,8 +47,8 @@ une dizaine de rapports par client. Ce n'est pas un marché de masse : c'est une
 et fidèle. Un fondateur seul peut servir soixante et onze clients.
 
 **3. Il est mort depuis le 8 avril 2026.** Presque quatre mois de silence à la date de cette
-fiche. On ne sait pas pourquoi — arrêt volontaire, panne, opérateur parti. C'est une
-[[question-ouverte]] au sens propre.
+fiche. On ne sait pas pourquoi — arrêt volontaire, panne, opérateur parti. C'est une question ouverte au sens propre — mais
+son serveur, lui, ne répond plus (voir plus bas).
 
 ## Ce qui nous en sépare, et c'est le point central
 
@@ -64,6 +64,41 @@ calculé sur ces champs hérite de leurs défauts sans les afficher.**
 
 Notre différence tient en une phrase : lui note ce que la plateforme déclare, nous conservons ce
 que nous avons observé et ce que les parties ont signé.
+
+## Qui est derrière, et comment le joindre — MESURÉ le 2026-08-01
+
+| Élément | Valeur |
+|---|---|
+| Adresse propriétaire | `0xdb6724f4feaf93079601c3e6aedfe9db5d6e0c52` |
+| Portefeuille de l'agent | `0xF50446A22761B9054d50FC82BBd2a400a62d739C` |
+| Contrat de l'agent | `0xa6C9BA866992cfD7fd6460ba912bfa405adA9df0` |
+| Jeton | `PULSE` — `0x0f2Aec16C34D741f1fCac5479F7ef518431100dB` |
+| Chaîne | Base (8453) |
+| Point d'accès du service | `http://212.34.138.17:3001/results` |
+
+**Aucun canal de contact humain.** Pas de compte X, pas de site, pas de domaine — l'agent
+n'expose qu'une **adresse IP nue en HTTP**, sans nom de domaine ni chiffrement. C'est une machine
+auto-hébergée, pas un service d'entreprise.
+
+Les voies possibles pour joindre l'opérateur, de la plus à la moins praticable :
+1. **Le jeton `PULSE`** : un jeton lancé sur Virtuals implique un espace communautaire (chat,
+   détenteurs) et souvent un opérateur identifiable. C'est la piste la plus prometteuse.
+2. **L'adresse propriétaire sur la chaîne** : regarder ce qu'elle a financé et reçu peut mener à
+   une identité ou à un autre agent encore actif du même opérateur.
+3. **Un message signé depuis notre propre adresse** vers la sienne — technique, sans garantie de
+   lecture.
+
+## L'arrêt est confirmé de première main — MESURÉ le 2026-08-01
+
+Je n'ai pas cru le champ de date, je suis allé voir. **Le serveur ne répond plus du tout** :
+échec de connexion sur le port 3001, trois routes essayées, aucune réponse — pas même un refus.
+La machine est éteinte ou l'adresse a changé.
+
+C'est important pour deux raisons. D'abord ça répond à la question « a-t-il vraiment arrêté ? » :
+oui, son service est hors ligne. Ensuite c'est le **seul point de validation** que nous ayons pour
+le champ de date de la plateforme, dont
+[[2026-08-01-marche-acp-taille-et-vitalite]] montre qu'il est ambigu pour 70 % des agents. Ici
+date ancienne et serveur mort concordent. **Une concordance n'est pas une validation.**
 
 ## Réserves
 

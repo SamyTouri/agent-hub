@@ -8,7 +8,7 @@ updated: 2026-08-01
 
 Dossier **autonome et transportable**. Il ne dépend d'aucun code du dépôt : on peut le copier
 dans le vault Obsidian, l'ouvrir comme un vault à lui seul, ou le lire tel quel sur GitHub. Les
-liens internes sont au format `[[wikilink]]` pour qu'Obsidian les résolve sans transformation.
+liens internes sont au format ``[[nom-de-fiche]]`` pour qu'Obsidian les résolve sans transformation.
 
 Il vit **dans le dépôt** plutôt que directement dans le vault, pour une raison précise : chaque
 fait ici est daté, et git donne gratuitement l'historique de ses corrections. Pour un projet dont
@@ -57,3 +57,6 @@ publiquement le 25/07.
 - Chaque page commence par un en-tête `title / type / updated`, pour qu'Obsidian et un humain
   pressé sachent tout de suite de quoi il s'agit.
 - Le point d'entrée est [[index]].
+- Les **concepts** sont la colonne vertébrale : une leçon qui a servi deux fois devient une fiche
+  dans `concepts/`, et les mesures y renvoient au lieu de la réexpliquer. C'est ce qui empêche la
+  base de n'être qu'une pile de fichiers.

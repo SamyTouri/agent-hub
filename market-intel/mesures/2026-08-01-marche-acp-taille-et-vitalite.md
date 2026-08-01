@@ -79,15 +79,48 @@ de trois mois sont un **héritage historique**, pas une activité.
 
 Sept des douze plus gros gagnants sont silencieux depuis des mois.
 
-## Correction datée du 2026-08-01 (le jour même)
+## Correction datée du 2026-08-01 (le jour même) — première passe
 
 Ma première ventilation par activité annonçait « 171 agents actifs à 7 jours, 30 % du revenu ».
 **C'était faux.** Cent soixante agents portent une date de dernière activité au **31 décembre
 2999**, et mon calcul d'ancienneté les traitait comme actifs à l'instant. Corrigé : 11 agents à
 7 jours, et les dates aberrantes isolées dans leur propre ligne plutôt que réparties au hasard.
 
-La leçon à garder : **une date de plateforme n'est pas une observation, c'est une déclaration**,
-et il faut la traiter comme telle même quand elle a l'air d'un champ technique.
+## ⚠️ Correction datée du 2026-08-01 — seconde passe : le tableau de vitalité ci-dessus n'est PAS fiable
+
+**À lire avant d'utiliser le moindre chiffre de la section « en grande partie mort ».**
+
+En vérifiant la fiche d'[[agentpulse]], j'ai vu que sa « dernière activité » était identique à sa
+date de publication **à la milliseconde près**. J'ai donc testé la coïncidence sur tout le corpus :
+
+| Relation entre `publishedAt` et `lastActiveAt` | Agents | Part |
+|---|---|---|
+| **Identiques à la seconde** | **1 000** | **69,5 %** — et 3 370 606 $, soit 86 % du revenu |
+| Même jour, heure différente | 157 | 10,9 % |
+| Réellement différentes | **114** | **7,9 %** |
+| Inexploitables | 167 | 11,6 % |
+
+Et `publishedAt` n'est pas non plus une date de première publication : l'agent le plus riche du
+marché est créé en juin 2025 et « publié » le 31 juillet 2026. **Ce champ est mis à jour.**
+
+**Conclusion honnête : je ne sais pas distinguer « l'agent a travaillé » de « la fiche a été
+touchée ».** Les deux champs bougent ensemble. Une date récente ne prouve pas une activité, une
+date ancienne ne prouve pas un arrêt. **Le chiffre « 36 agents vivants » ne doit donc pas être
+cité.** Ce que j'ai réellement mesuré, c'est : 36 agents ont une fiche récemment mise à jour.
+
+**Ce qui reste vrai et exploitable de cette page** : le nombre d'inscrits, le nombre d'agents avec
+du revenu, le total, la concentration, et la répartition par nombre d'acheteurs. Ces mesures ne
+dépendent d'aucune date.
+
+**La seule méthode fiable pour la vitalité est la sonde.** Interroger l'endpoint que l'agent
+publie, en lecture seule, et enregistrer ce qui répond. Premier point de validation : le serveur
+d'[[agentpulse]] ne répond plus du tout, ce qui concorde avec sa date ancienne. **Une concordance
+n'est pas une validation** — il en faudrait plusieurs dizaines pour que le champ redevienne
+utilisable, et c'est une mesure à faire.
+
+La leçon générale, et c'est la deuxième fois dans la même journée : **une date de plateforme n'est
+pas une observation, c'est une déclaration.** Elle se traite comme telle même quand elle a l'air
+d'un champ technique anodin.
 
 ## Réserve qui vaut pour toute la page
 
