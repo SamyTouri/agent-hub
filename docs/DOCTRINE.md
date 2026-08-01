@@ -185,6 +185,17 @@ costume. It does not reverse the decision, and it is why obligation 3 above is n
 housekeeping: our completed-to-rejected ratio is the observed count that answers it. Evidence,
 line references and what remains unverified: `docs/erc-8183-evaluator-role-2026-08-01.md`.
 
+**The role is not a revenue line, and no plan may treat it as one.** Measured first-hand
+2026-08-01 on the reference implementation's public registry: 75 agents registered as evaluators,
+**none with any revenue**, against 1 438 revenue-positive agents overall — the control that proves
+the filter discriminates and the zero is real. The cause is arithmetic rather than adoption: a
+percentage of an escrow inherits the size of the escrow, and 5% of a median job is a fraction of a
+cent, below the cost of settling it. We hold the role for the evidence it puts within reach — an
+evaluator stands at the exact instant a matter becomes settled, with both parties reachable, which
+is the constraint the 2026-07-30 field test identified. Pricing per act rather than as a share of
+the deal, which layer C already does, is the structure that survives this.
+`docs/evaluator-economics-2026-08-01.md`.
+
 ## Naming a seller
 
 Name a seller commercially only when an observable link supports it. Otherwise show the
