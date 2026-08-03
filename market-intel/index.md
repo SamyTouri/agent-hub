@@ -9,7 +9,11 @@ updated: 2026-08-01
 Conventions et règle des trois statuts (MESURÉ / RAPPORTÉ / DÉCLARÉ) : [[README]].
 
 **Plusieurs conversations travaillent en parallèle depuis le 2026-08-03.** Qui possède quoi, et ce
-qui reste à faire par chantier : **[[CHANTIERS]]**. À lire avant d''écrire quoi que ce soit ici.
+qui reste à faire par chantier : **[[CHANTIERS]]**.
+
+**Ce que les autres viennent de trouver** se lit dans les quatre journaux : [[A-marche]] ·
+[[B-terrain]] · [[C-communication]] · [[D-produit]]. Un seul chantier écrit dans chacun, tous les
+lisent. À lire avant d''écrire quoi que ce soit ici.
 
 ## Table de routage — quelle question, quelle fiche
 

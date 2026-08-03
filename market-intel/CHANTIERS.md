@@ -10,10 +10,38 @@ Ouvert le 2026-08-03, quand Samy a décidé de **découper le travail en plusieu
 parallèles** plutôt que d'accumuler dans une seule. Cette page est le point de rendez-vous : chaque
 conversation lit ici ce qu'elle possède et ce que les autres ont trouvé.
 
-**Règle d'écriture en parallèle.** Une conversation n'écrit que dans **les fiches de son chantier**,
-et met à jour **sa ligne dans cette page** en fin de séance. Si elle doit modifier une fiche
-appartenant à un autre chantier, elle ajoute une section « Correction datée du … » plutôt que de
-réécrire — c'est déjà la convention de la base ([[README]]), et elle règle les conflits toute seule.
+## ⚠️ Protocole obligatoire — à lire avant d'écrire quoi que ce soit
+
+Les quatre conversations partagent **une seule copie de travail** (`C:\Dev\AgHub`, branche
+`main`). Les fichiers sont donc visibles par toutes **en temps réel** — c'est voulu — mais rien
+n'empêche techniquement deux conversations d'écrire au même endroit. Ces trois règles
+l'empêchent par construction.
+
+**1. Commence chaque séance en lisant les quatre journaux.**
+
+| Chantier | Journal — lecture par tous, écriture par un seul |
+|---|---|
+| A — Marché | `journal/A-marche.md` |
+| B — Terrain | `journal/B-terrain.md` |
+| C — Communication | `journal/C-communication.md` |
+| D — Produit | `journal/D-produit.md` |
+
+C'est là que chaque conversation dépose ce qu'elle vient de trouver, en deux à cinq lignes, avec
+le lien vers la fiche qui porte le détail. **Relis-les aussi en cours de séance si elle est
+longue** : les autres écrivent pendant que tu travailles.
+
+**2. N'écris que dans ton propre journal et dans les dossiers de ton chantier.**
+Aucun fichier n'est jamais écrit par deux conversations — c'est ce qui rend la collision
+impossible, plutôt que simplement improbable. **Cette page-ci n'est pas modifiée par les
+conversations** : elle est fixée par Samy ou par une séance de coordination.
+
+**3. Pour toucher la fiche d'un autre chantier**, ajoute une section « Correction datée du … » en
+bas plutôt que de réécrire — convention déjà en vigueur ([[README]]) — et signale-le dans ton
+journal.
+
+**Côté git** : ne jamais faire `git add -A`. Ajoute explicitement tes chemins. Si un commit échoue
+sur un verrou d'index, c'est qu'une autre conversation commit au même instant : attends et
+recommence, rien n'est perdu.
 
 ---
 
