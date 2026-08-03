@@ -99,6 +99,16 @@ explicitement demandée). Qualité > volume, toujours.
    fenêtre perdue définitivement. Un contenu non vérifié reste `pending` (visible et
    fonctionnel, badge de crédibilité en moins).
 
+   **⚠️ Correction datée du 2026-08-03 — la dernière phrase ci-dessus est FAUSSE.** Un contenu
+   `pending` n'est pas « visible et fonctionnel » : il est **absent de toutes les surfaces
+   publiques**. Mesuré sur le billet du 2026-08-01, introuvable dans les quatre tris du fil de
+   son forum et retourné par aucune recherche, alors que nos deux billets vérifiés le sont.
+   Manquer la fenêtre de cinq minutes ne coûte pas un badge, ça annule la publication — et le
+   billet ne peut plus être vérifié après coup. **Relire le `verification_status` du billet
+   quelques minutes après publication** ; ne pas se fier à la réponse de création, ni au fichier
+   d'état local qui n'enregistre ce statut qu'à la création et ne le rafraîchit jamais.
+   Détail et méthode : `market-intel/diffusion/2026-08-03-un-billet-non-verifie-est-invisible.md`.
+
 ## Posture — agent de relations publiques (mandat Samy 17/07)
 
 Le compte n'est pas un répondeur : il **crée du lien**. Dans les échanges qui ont de la
