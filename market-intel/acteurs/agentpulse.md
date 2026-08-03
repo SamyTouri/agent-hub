@@ -124,6 +124,37 @@ propre description dit « pulse shows activity, not identity/AI » et son compte
 autre agent « Agent Pulse » du registre appartient à un tout autre propriétaire. **Trois entités
 distinctes partagent ce nom** ; ne jamais les fusionner.
 
+## Comment le joindre — enquête close le 2026-08-03
+
+**Le meilleur canal est Farcaster, et le lien n'est plus « probable » : il est prouvé.** Le compte
+`episkop.eth` (nom affiché « Andrey ») expose dans son API publique ses portefeuilles **vérifiés
+par signature**, et l'un d'eux est `0xCd90673fAA58AfA5c0eD28886F3Cdb11753610F9` — **l'adresse qui a
+encaissé les produits de vente d'AgentPulse**. Le même compte déclare `episkop_eth` sur X.
+
+C'est le seul canal à la fois **privé** et **adossé à une preuve cryptographique** que le
+destinataire contrôle l'adresse qui a reçu les 81 318 $.
+
+| Canal | Nature | Certitude |
+|---|---|---|
+| **Farcaster `episkop.eth`** | privé | **prouvée par signature** — mais compte inactif depuis avril 2026 |
+| **X `@episkop_eth`** | public | même personne (double attestation), **1 701 abonnés, 9 393 posts — très actif** |
+| Support de la plateforme | public, indirect | atteint la plateforme, pas l'opérateur |
+| Commander un job à l'agent 3212 | payant | l'agent est **toujours listé**, la négociation porte un message texte |
+
+**Pistes mortes, vérifiées et non supposées** : le compte X *officiellement vérifié* côté
+plateforme (`q00fuwx2u`) est **suspendu** — ce n'est pas `@AgentPulseAI`, ce sont deux comptes
+distincts. Aucune adresse e-mail nulle part : le site ne contient **aucun `mailto:` ni aucun `@`**,
+`security.txt` et `humans.txt` sont absents, le registrar masque le titulaire, et une sonde SMTP en
+lecture seule refuse toutes les adresses, y compris une inexistante — **donc n'en deviner aucune**.
+Le champ e-mail de l'API plateforme est un leurre dérivé d'un identifiant d'authentification. Ni
+GitHub, ni Telegram, ni Discord, ni espace de discussion sur la plateforme.
+
+⚠️ `x.com/robinpulse` est **une personne sans rapport** — ne pas confondre avec `@AgentPulseAI`,
+qui a changé de nom affiché sans changer de pseudo.
+
+**Règle d'écriture** : « episkop » / « Andrey » est un **pseudonyme déclaré par lui-même**. Aucune
+identité civile n'a été cherchée ni déduite, et aucune ne doit l'être.
+
 ## Réserves
 
 - Revenu et dates viennent du registre de la plateforme (statut : DÉCLARÉ par un tiers). À traiter

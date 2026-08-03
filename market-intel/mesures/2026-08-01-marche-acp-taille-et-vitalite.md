@@ -79,6 +79,24 @@ de trois mois sont un **héritage historique**, pas une activité.
 
 Sept des douze plus gros gagnants sont silencieux depuis des mois.
 
+## ⚠️ Correction datée du 2026-08-03 — ce que le total de 3,9 M$ mesure vraiment
+
+**Le champ « revenu » n'est pas « ce que les agents ont vendu ».** Mesuré le 2026-08-03 en suivant
+l'argent sur la chaîne : une seule transaction verse **1 803,81 USDC** à un agent depuis un contrat
+de distribution à preuve Merkle, réclamée par son propriétaire — à comparer aux **8 dollars** que
+rapporte un job réel chez le même agent. Le même contrat apparaît chez plusieurs agents témoins.
+
+Le total agrège donc **des ventes réglées ET des récompenses d'un programme de subvention**, dans
+une proportion que l'API ne permet pas de séparer. La plateforme a versé, RAPPORTÉ, jusqu'à un
+million de dollars par mois avant d'arrêter ce programme en mars 2026.
+
+**Ce qui reste valable** : le nombre d'inscrits, le nombre d'agents avec un revenu non nul, la
+concentration, la répartition par nombre d'acheteurs. Ces mesures ne dépendent pas de la nature du
+revenu. **Ce qui change** : le total ne peut plus être présenté comme un chiffre d'affaires. Il
+faut écrire « revenu déclaré, ventes et subventions confondues ».
+
+Détail et méthode : [[deux-grappes-anormales-verification-on-chain]].
+
 ## Correction datée du 2026-08-01 (le jour même) — première passe
 
 Ma première ventilation par activité annonçait « 171 agents actifs à 7 jours, 30 % du revenu ».

@@ -1,98 +1,146 @@
 ---
-title: Les deux grappes anormales — ce que la chaîne montre, et ce qu'elle ne montre pas
-type: question ouverte
-statut: MESURÉ (registre + chaîne) — aucune conclusion
+title: Les deux grappes — l'anomalie on-chain est RÉFUTÉE, et ce qui reste est plus intéressant
+type: question ouverte (résolue en grande partie)
+statut: MESURÉ — hypothèse initiale abandonnée le 2026-08-03
 date: 2026-08-03
 updated: 2026-08-03
 ---
 
-# Deux grappes, 11,4 % du marché, et une vérification on-chain
+# ⛔ L'anomalie on-chain n'existe pas. Test témoin à l'appui.
 
-**De quel marché s'agit-il ?** Question de Samy, et la réponse est nette : **Virtuals ACP**, la
-place de marché où des agents se vendent des services, avec règlement en USDC et VIRTUAL sur
-**Base**. Ce n'est pas x402 — x402 est un rail de paiement HTTP distinct, avec son propre
-catalogue. Les deux coexistent, et tous les chiffres de cette fiche viennent d'ACP.
+**Cette fiche a d'abord soutenu qu'un faible nombre d'expéditeurs autour de quinze agents était
+troublant. C'était faux, et le test témoin prévu dans la version précédente l'a démontré le jour
+même.** La version initiale est conservée plus bas pour que l'erreur reste lisible.
 
-## Ce que le registre déclare
+## Le test témoin, et il est sans appel
 
-**Grappe A — onze agents, exactement 201 acheteurs chacun.** Domaines sans rapport, créés en
-treize jours en mars 2026, **224 857 $**. Sept propriétaires différents, dont un qui en détient
-cinq. Détail : [[les-201-acheteurs]].
+Même méthode, appliquée à des agents **hors grappe** de revenu comparable :
 
-**Grappe B — quatre agents, un seul propriétaire.** Tous créés le **4 mars 2026**, aucune
-description, nombres d'acheteurs entre 999 et 1 017 — un intervalle de 2 %. **220 850 $**.
+| Agent | Revenu | Acheteurs annoncés | **Expéditeurs distincts** |
+|---|---|---|---|
+| **Maya** (témoin) | 54 227 $ | **1 417** | **2** |
+| x402guard_pentester (témoin) | 47 600 $ | 206 | 3 |
+| BloombergAI (témoin) | 41 530 $ | 26 | 3 |
+| ArAIstotle (témoin) | 22 345 $ | 707 | 7 |
+| The TA Guru (témoin) | 26 368 $ | 613 | 9 |
+| aixbt (témoin) | 38 200 $ | 1 904 | 14 |
+| *Synapse (grappe B)* | *56 515 $* | *1 004* | *7* |
+| *ERC-8183 Inspector (grappe A)* | *28 170 $* | *201* | *3* |
 
-Total : **445 707 $, soit 11,4 % de tout le revenu déclaré du marché.** Les quinze agents
-appartiennent au même groupe interne de la plateforme, `OPENCLAW`.
+**Maya — agent parfaitement ordinaire, 1 417 acheteurs — montre DEUX expéditeurs. Deux fois moins
+que l'agent de grappe.** Les grappes sont au milieu de la distribution témoin, pas au bord.
 
-## Ce que la chaîne montre — MESURÉ le 2026-08-03
+## Pourquoi c'était voué à ne rien dire
 
-J'ai relevé les quinze portefeuilles d'agents et je suis allé voir sur Base.
+**Le chemin de l'argent, mesuré sur deux règlements réels** (un témoin, un de grappe) : l'acheteur
+**n'apparaît jamais** comme expéditeur. C'est un contrat, le **PaymentManager** de la plateforme,
+qui verse à l'agent — avec une commission constante de 20 % prélevée au passage.
 
-**Premier constat : les quinze portefeuilles ont un nonce à zéro et zéro USDC en solde.** Un nonce
-à zéro signifie qu'aucune transaction n'a été *émise* par cette adresse. Ça ne dit rien des
-réceptions, et un solde nul est normal si les fonds sont reversés. **Ces deux faits ne prouvent
-donc rien à eux seuls** — je les note pour qu'on ne les surinterprète pas plus tard.
+**Compter les expéditeurs d'un portefeuille d'agent revient à compter les guichets de la banque,
+pas les clients.**
 
-**Second constat, et c'est celui qui compte.** Sur le plus gros de la grappe B — revenu déclaré
-**56 515 $** pour **1 004 acheteurs distincts** — j'ai relevé ses cinquante derniers transferts de
-jetons :
+Et les deux autres signaux tombent avec :
 
-| | |
-|---|---|
-| Transferts examinés | 50 |
-| **Expéditeurs distincts** | **8** |
-| dont deux adresses | **41 des 50 transferts** |
-| Jeton dominant | **CBBTC**, 31 transferts, valeurs à quatre décimales de zéro |
-| Transferts en USDC | 15 |
-| Destinataire sortant identifié | **l'adresse propriétaire des quatre agents** |
+- **Le nonce à zéro** n'est pas suspect : ces portefeuilles ne sont pas des comptes ordinaires,
+  ce sont des **comptes intelligents** dont les opérations passent par un point d'entrée commun.
+  Tous les témoins affichent zéro aussi.
+- **Le solde USDC nul** est l'état normal : les agents balayent leur solde. Un témoin hors grappe
+  à 47 600 $ de revenu est à zéro lui aussi.
+- **Les « poussières de CBBTC »** que j'avais relevées viennent d'un contrat nommé **AgentTax** —
+  la redistribution de la taxe de trading sur les jetons d'agents. Elles arrosent tous les agents
+  mesurés, témoins compris.
 
-**La plateforme annonce un millier d'acheteurs distincts. La page de transferts en montre huit.**
+## Et les nombres 201 et ~1000 ont une cause mécanique
 
-## Ce que ça peut vouloir dire — et pourquoi je ne tranche pas
+**Le motif « N agents partagent exactement le même compte d'acheteurs » est courant sur cette
+place en mars 2026, et n'implique aucune coordination.** La valeur **300** est portée par
+**18 agents, dont 17 créés le même jour par 17 propriétaires tous différents**.
 
-Trois lectures tiennent, et **rien dans ce que j'ai mesuré ne permet de choisir** :
+**Le ~1000 vient du job, pas du propriétaire.** Les quatre agents de la grappe B vendent tous le
+même job — un « contrôle de santé » à **un centime**. Sur les agents relevés, cinq seulement
+vendent ce job : les quatre de la grappe **et un cinquième sans aucun lien avec eux**. Les cinq
+ont ~1000 acheteurs.
 
-1. **Le règlement ne passe pas par le portefeuille de l'agent.** C'est l'explication la plus
-   probable et la plus banale : sur ACP, les fonds transitent par le contrat d'escrow. Les
-   « acheteurs » n'envoient pas directement à l'agent — ils alimentent le contrat, qui verse le
-   net. Dans ce cas, ne voir que huit expéditeurs est **attendu**, et ne prouve rien du tout.
-2. **Une flotte servie par un petit nombre de comptes.** Le compteur d'acheteurs de la plateforme
-   compterait alors des identités de plateforme, pas des payeurs distincts sur la chaîne.
-3. **Une circulation organisée.** C'est l'hypothèse que Samy a nommée. Elle est **possible et non
-   démontrée**, et le motif des poussières de CBBTC répétées depuis deux adresses mérite d'être
-   compris avant d'écrire quoi que ce soit.
+**Et la pièce la plus directe** : un agent de la grappe A porte comme description publique, en
+coréen, *« évaluation de test aGDP v0.0.2 »*. **Il se déclare lui-même agent de test du programme
+d'incitation de la plateforme** — un programme qui versait, RAPPORTÉ, jusqu'à un million de
+dollars par mois et qui s'est terminé en mars 2026, exactement la fenêtre de création des deux
+grappes.
 
-## Ce qu'il faudrait mesurer pour trancher
+**Pas de financeur commun** non plus : quatorze mois séparent le plus ancien propriétaire du plus
+récent.
 
-C'est la partie utile de cette fiche.
+---
 
-- **Lire le contrat d'escrow ACP**, pas les portefeuilles : identifier l'adresse du contrat, et
-  compter les payeurs distincts *à l'entrée* du contrat pour ces agents. Tant que ce n'est pas
-  fait, aucune affirmation sur le nombre réel d'acheteurs n'est défendable.
-- **Remonter les deux adresses dominantes** : qui les finance, à quoi elles servent ailleurs.
-- **Comparer à un agent témoin hors grappe**, de revenu comparable. Si un agent ordinaire montre
-  aussi huit expéditeurs, alors la lecture 1 est la bonne et la grappe n'a rien d'anormal côté
-  chaîne. **C'est le test le moins cher et il doit être fait en premier.**
-- **Établir la chronologie des flux sortants** vers l'adresse propriétaire.
+# ⚠️ Ce que l'enquête a trouvé à la place, et qui est bien plus grave
 
-## Avertissement, à respecter avant toute publication
+**Le champ « revenu » de cette plateforme ne mesure pas que des ventes.**
 
-Une régularité statistique n'est pas une preuve d'intention. Un compteur de plateforme qui ne
-concorde pas avec la chaîne est d'abord un **défaut de compteur** — c'est le sujet de
-[[date-de-plateforme-est-une-declaration]], et ce registre en a déjà fourni trois exemples.
+Mesuré : sur un agent de la grappe B, une seule transaction verse **1 803,81 USDC** depuis un
+contrat de distribution à preuve Merkle, réclamée par le propriétaire lui-même. À comparer aux
+**8 dollars** que rapporte un job réel chez le même agent. Le même contrat de distribution apparaît
+chez des agents témoins.
 
-**Publier une accusation de blanchiment ou de manipulation sur la base de ce qui est ici serait
-exactement la faute que ce projet existe pour dénoncer** : présenter un calcul comme une
-connaissance. Ce qui est publiable aujourd'hui, et qui est déjà beaucoup :
+**Donc le « revenu » agrège des ventes réglées et des récompenses d'un programme de subvention
+réclamées par l'opérateur.** Il n'y a aucun moyen, depuis l'API, de séparer les deux.
 
-> Sur cette place, onze agents sans rapport entre eux partagent exactement le même nombre
-> d'acheteurs, et quatre autres, créés le même jour par le même propriétaire et sans aucune
-> description, affichent des nombres d'acheteurs à 2 % près. Ensemble ils portent 11,4 % du revenu
-> déclaré du marché. Voici la méthode, refaites-la. Nous avons demandé publiquement une
-> explication et nous publierons la réponse sans la modifier.
+## Conséquence pour nos propres publications — correction due
 
-Le reste attend les mesures ci-dessus.
+Le chiffre de **3 923 557 $** que porte [[2026-08-01-marche-acp-taille-et-vitalite]], et que nous
+avons **publié publiquement le 2026-08-01**, n'est donc pas « ce que les agents ont vendu ». C'est
+**ventes + subventions réclamées**, dans une proportion inconnue.
 
-Voisin : [[les-201-acheteurs]] · [[2026-08-03-quelle-part-est-un-vrai-service]] ·
-[[virtuals-acp]] · [[volume-brut-nest-pas-revenu]]
+Ça ne détruit pas les mesures qui en dérivent — la concentration, la répartition par acheteurs, la
+part spéculative — mais **ça change ce que le total veut dire**, et il faut le dire là où on l'a
+écrit. Correction publiée le 2026-08-03.
+
+Cette découverte renforce d'ailleurs [[2026-08-03-quelle-part-est-un-vrai-service]] : si une part
+du revenu est de la subvention, alors le vrai service pèse **encore moins** que le million de
+dollars estimé.
+
+---
+
+# Ce qui reste vrai, et qui est publiable
+
+Rien de tout ceci n'est une anomalie de chaîne. C'est une observation sur **la qualité économique
+de la place** :
+
+- Un propriétaire détient cinq agents affichant chacun exactement 201 acheteurs ; un autre en
+  détient quatre créés le même jour, sans aucune description.
+- Un job décrit comme « une simple mission de validation » se vend 30 $ ; un « contrôle de santé »
+  se vend un centime. **La structure de prix suit la logique du programme d'incitation, pas celle
+  d'un marché de services.**
+- Et le point central : **le revenu affiché mélange vente et subvention**, sans distinction
+  possible.
+
+---
+
+# La leçon de méthode, et c'est la vraie valeur de cette fiche
+
+**Le test témoin a coûté une heure et il a détruit une hypothèse spectaculaire.** Sans lui, nous
+aurions publié qu'un groupe d'agents pesant 11,4 % du marché présentait une signature on-chain
+douteuse — ce qui est faux, et diffamatoire.
+
+La version précédente de cette fiche disait : *« le test le moins cher, et il doit être fait en
+premier »*. Il l'a été, il a donné tort à l'intuition, et **c'est le meilleur résultat qu'une
+enquête puisse produire**.
+
+Règle à retenir : **avant de publier une régularité, mesurer la même chose sur un témoin qui n'a
+aucune raison de la présenter.** Sans témoin, une régularité n'est qu'une chose qu'on n'a pas
+l'habitude de voir.
+
+---
+
+## Version initiale du 2026-08-03, conservée
+
+Elle relevait : quinze portefeuilles à nonce nul et zéro USDC ; huit expéditeurs distincts sur
+cinquante transferts chez le plus gros de la grappe B ; deux adresses concentrant 41 transferts ;
+un destinataire sortant identifié comme le propriétaire. Elle nommait trois lectures possibles et
+**donnait la première — « le règlement passe par le contrat, donc ça ne prouve rien » — comme la
+plus probable**. C'était la bonne, et c'est celle que le test a confirmée.
+
+Elle refusait déjà explicitement de parler de blanchiment. Cette prudence-là était la bonne
+décision ; l'erreur était d'avoir publié la régularité avant d'avoir le témoin.
+
+Voisin : [[les-201-acheteurs]] · [[2026-08-01-marche-acp-taille-et-vitalite]] ·
+[[volume-brut-nest-pas-revenu]] · [[controle-du-filtre]]

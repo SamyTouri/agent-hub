@@ -94,8 +94,9 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
 
 - [[les-201-acheteurs]] — onze agents sans rapport ont exactement le même nombre de clients.
   Posée publiquement, sans réponse.
-- **[[deux-grappes-anormales-verification-on-chain]]** — deux grappes, 11,4 % du marché, ce que la
-  chaîne montre et surtout **le test témoin à faire avant toute publication**
+- **[[deux-grappes-anormales-verification-on-chain]]** — ⛔ **l'anomalie est RÉFUTÉE par le test
+  témoin**, et l'enquête a trouvé bien plus important : **le revenu affiché mélange ventes et
+  subventions**
 
 ## Ce qui manque encore
 
