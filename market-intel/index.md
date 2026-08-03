@@ -29,6 +29,7 @@ toute la base.**
 | **Les autres places, et l'écart de livraison d'Olas** | [[2026-08-01-autres-places-agent-a-agent]] |
 | Combien d'agents / de serveurs existent vraiment | [[2026-08-01-annuaires-le-meme-objet-compte-neuf-fois]] |
 | **Est-ce que les vendeurs de confiance répondent quand on frappe** | [[2026-08-03-sonde-endpoints-segment-confiance]] |
+| **Un dossier complet : promesse publique contre observation** | [[2026-08-03-agentpulse-le-site-dit-vivant-le-serveur-est-mort]] |
 | x402 accepte-t-il autre chose que la crypto | [[x402-crypto-seulement-ou-pas]] |
 | **Pourquoi se méfier d'un chiffre qu'on nous donne** | [[date-de-plateforme-est-une-declaration]] · [[volume-brut-nest-pas-revenu]] · [[controle-du-filtre]] |
 
@@ -69,6 +70,8 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
   citable sans son périmètre
 - **[[2026-08-03-sonde-endpoints-segment-confiance]]** — 67 % des points d'accès publiés ne
   répondent pas, et sur 82 il en reste **13** qui sont un service à eux
+- **[[2026-08-03-agentpulse-le-site-dit-vivant-le-serveur-est-mort]]** — le dossier modèle : un
+  vendeur annonce 99,8 % de disponibilité pendant que son serveur refuse toute connexion
 
 ## Acteurs
 

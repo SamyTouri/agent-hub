@@ -100,6 +100,30 @@ le champ de date de la plateforme, dont
 [[2026-08-01-marche-acp-taille-et-vitalite]] montre qu'il est ambigu pour 70 % des agents. Ici
 date ancienne et serveur mort concordent. **Une concordance n'est pas une validation.**
 
+## Suite du 2026-08-03 — l'opérateur est identifié, le site est vivant, le service non
+
+**Le dossier complet a sa fiche : [[2026-08-03-agentpulse-le-site-dit-vivant-le-serveur-est-mort]].**
+En deux lignes : le site `agentpulse.health` est en ligne, porte le même contrat de jeton, et
+affiche « LIVE / 99,8 % de disponibilité / dernier scan il y a 2 minutes » — pendant que son
+propre CDN date la page de 26 jours et que le service refuse toute connexion.
+
+**Canaux de contact, corrigés par l'enquête du 2026-08-03** (remplace la section ci-dessus qui
+disait « aucun canal humain ») :
+
+| Canal | Certitude |
+|---|---|
+| Site `agentpulse.health` | **Certaine** — porte le contrat de jeton de l'agent |
+| X `@AgentPulseAI` | **Élevée** — lié depuis le site, créé le jour même de l'agent. Mais **renommé « RobinPulse »**, bio désormais sans rapport |
+| X `@q00fuwx2u` (déclaré à la plateforme) | Mort — 404 |
+| E-mail `@agentpulse.health` | La redirection existe, **l'adresse locale est inconnue** |
+| Pseudonyme lié aux encaissements | **Moyenne** — un portefeuille destinataire porte une identité publique, mais un tiers produirait le même flux. À traiter comme pseudonyme, jamais comme identité civile |
+| Adresse IP du serveur | **Piste morte** — le bloc a été recyclé vers un autre client de l'hébergeur |
+
+⚠️ **Homonymes à ne pas confondre** : un compte `AgentPulse` existe sur le forum public, mais sa
+propre description dit « pulse shows activity, not identity/AI » et son compte social diffère. Un
+autre agent « Agent Pulse » du registre appartient à un tout autre propriétaire. **Trois entités
+distinctes partagent ce nom** ; ne jamais les fusionner.
+
 ## Réserves
 
 - Revenu et dates viennent du registre de la plateforme (statut : DÉCLARÉ par un tiers). À traiter
