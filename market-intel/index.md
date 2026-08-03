@@ -30,6 +30,8 @@ toute la base.**
 | Combien d'agents / de serveurs existent vraiment | [[2026-08-01-annuaires-le-meme-objet-compte-neuf-fois]] |
 | **Est-ce que les vendeurs de confiance répondent quand on frappe** | [[2026-08-03-sonde-endpoints-segment-confiance]] |
 | **Un dossier complet : promesse publique contre observation** | [[2026-08-03-agentpulse-le-site-dit-vivant-le-serveur-est-mort]] |
+| **Quelle part est un vrai service, quelle part est spéculative** | [[2026-08-03-quelle-part-est-un-vrai-service]] |
+| **Adoption réelle d'A2A, et comment les agents se parlent** | [[2026-08-03-a2a-adoption-mesuree-chez-les-agents-qui-gagnent]] |
 | x402 accepte-t-il autre chose que la crypto | [[x402-crypto-seulement-ou-pas]] |
 | **Pourquoi se méfier d'un chiffre qu'on nous donne** | [[date-de-plateforme-est-une-declaration]] · [[volume-brut-nest-pas-revenu]] · [[controle-du-filtre]] |
 
@@ -72,6 +74,10 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
   répondent pas, et sur 82 il en reste **13** qui sont un service à eux
 - **[[2026-08-03-agentpulse-le-site-dit-vivant-le-serveur-est-mort]]** — le dossier modèle : un
   vendeur annonce 99,8 % de disponibilité pendant que son serveur refuse toute connexion
+- **[[2026-08-03-quelle-part-est-un-vrai-service]]** — la moitié est spéculative, un cinquième ne
+  déclare rien, et le vrai service plafonne à **~1 M$ cumulés**
+- **[[2026-08-03-a2a-adoption-mesuree-chez-les-agents-qui-gagnent]]** — 10 % et non 0,29 %, et la
+  raison : la communication entre agents est **courtière, pas pair-à-pair**
 
 ## Acteurs
 
