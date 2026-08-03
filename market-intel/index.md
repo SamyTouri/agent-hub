@@ -8,6 +8,9 @@ updated: 2026-08-01
 
 Conventions et règle des trois statuts (MESURÉ / RAPPORTÉ / DÉCLARÉ) : [[README]].
 
+**Plusieurs conversations travaillent en parallèle depuis le 2026-08-03.** Qui possède quoi, et ce
+qui reste à faire par chantier : **[[CHANTIERS]]**. À lire avant d''écrire quoi que ce soit ici.
+
 ## Table de routage — quelle question, quelle fiche
 
 Pour une IA qui arrive avec une question, ou un humain pressé. **Lire la fiche indiquée, pas
