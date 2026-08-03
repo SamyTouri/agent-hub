@@ -98,7 +98,9 @@ const getData = unstable_cache(async (): Promise<Data | null> => {
     }
     return { c: c as unknown as Row, crawlers24h, parBot, parTool, recents, feedbacks, feedbackTotal, origins }
   }
-}, ['dashboard-data-v2'], { revalidate: 120, tags: ['dashboard-data'] })
+}, ['dashboard-data-v2'], // Ralenti le 2026-08-03 (alerte Vercel à 75 % du quota d'écritures ISR). Tableau de bord
+// interne : dix minutes suffisent, l'écriture est divisée par cinq.
+{ revalidate: 600, tags: ['dashboard-data'] })
 
 const GREEN = '#4ade80'
 const BLUE = '#7cb8ff'

@@ -3,7 +3,9 @@ import { getSql, withTimeout } from '@/lib/db'
 
 // Registre public des reçus de contribution (FC-xxxx). Pattern /top : pas de DB
 // au build, revalidate court pour décoller vite le prerender placeholder.
-export const revalidate = 300
+// Ralenti le 2026-08-03 (alerte Vercel à 75 % du quota d'écritures ISR). Page secondaire :
+// la fraîcheur à la demi-heure suffit, et l'écriture est divisée par six.
+export const revalidate = 1800
 
 export const metadata: Metadata = {
   title: 'Contribution receipts — Agent Reputation',

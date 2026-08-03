@@ -1,7 +1,11 @@
 import { getSql, withTimeout } from '@/lib/db'
 
 export const runtime = 'nodejs'
-export const revalidate = 60
+// Porté de 60 s à 300 s le 2026-08-03 pour la même raison que le sitemap : à 60 s cette
+// route seule produisait ~43 000 écritures ISR par mois. C'est un compteur de confort pour
+// l'opérateur, pas une surface publique à la seconde — cinq minutes ne changent rien à
+// l'usage et divisent l'écriture par cinq.
+export const revalidate = 300
 
 // Compteurs agrégés du Complaint Bureau. Sert une seule chose : prévenir l'opérateur
 // qu'il y a du travail en attente, puisque rien ici ne se publie tout seul et que la page

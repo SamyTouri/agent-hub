@@ -10,7 +10,9 @@ import { getSql, withTimeout } from '@/lib/db'
 // Une seule demande a jamais été déposée. Elle n'est ni supprimée ni modifiée : elle reste
 // lisible et répondable jusqu'à son expiration naturelle. La cacher priverait son auteur d'une
 // réponse sans rien corriger. Aucune écriture n'est possible depuis cette date.
-export const revalidate = 300
+// Ralenti le 2026-08-03 (alerte Vercel à 75 % du quota d'écritures ISR). Page secondaire :
+// la fraîcheur à la demi-heure suffit, et l'écriture est divisée par six.
+export const revalidate = 1800
 
 const RETIRED_ON = '2026-07-29'
 

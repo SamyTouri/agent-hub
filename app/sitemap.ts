@@ -3,10 +3,18 @@ import { unstable_cache } from 'next/cache'
 import { getSql, withTimeout } from '@/lib/db'
 import { OWNERS_LANGS, ownersPath } from '@/lib/owners-i18n'
 
-// Le build émet un placeholder sans DB ; 5 min évite qu'un deploy ne colle des
-// shards vides pendant 24 h. Les données elles-mêmes restent en Data Cache 24 h
-// et persistent entre déploiements.
-export const revalidate = 300
+// Le build émet un placeholder sans DB ; un revalidate court évite qu'un deploy ne colle
+// des shards vides pendant 24 h. Les données elles-mêmes restent en Data Cache 24 h et
+// persistent entre déploiements.
+//
+// Porté de 300 s à 1800 s le 2026-08-03. Motif : Vercel a alerté à 75 % du quota gratuit
+// d'écritures ISR (200 000/mois). À 300 s, les CINQ shards se réécrivaient 288 fois par
+// jour chacun, soit ~43 000 écritures par mois pour un sitemap dont les données sous-jacentes
+// ne bougent qu'une fois par jour — le revalidate extérieur était 288 fois plus rapide que
+// le cache intérieur qu'il sert. 1800 s corrige un shard vide en une demi-heure au lieu de
+// cinq minutes, ce qui reste largement sous la fenêtre d'un passage de robot, et divise
+// l'écriture par six.
+export const revalidate = 1800
 
 const BASE = 'https://agentreputation.dev'
 // Shard 0 : pages statiques + tags. Shards 1..4 : agents par tranches de 5 000
