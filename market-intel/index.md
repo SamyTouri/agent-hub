@@ -28,6 +28,8 @@ toute la base.**
 | Pourquoi les chiffres du secteur se contredisent d'un facteur mille | [[agent-paie-agent-vs-humain-achete-agent]] |
 | **Les autres places, et l'écart de livraison d'Olas** | [[2026-08-01-autres-places-agent-a-agent]] |
 | Combien d'agents / de serveurs existent vraiment | [[2026-08-01-annuaires-le-meme-objet-compte-neuf-fois]] |
+| **Est-ce que les vendeurs de confiance répondent quand on frappe** | [[2026-08-03-sonde-endpoints-segment-confiance]] |
+| x402 accepte-t-il autre chose que la crypto | [[x402-crypto-seulement-ou-pas]] |
 | **Pourquoi se méfier d'un chiffre qu'on nous donne** | [[date-de-plateforme-est-une-declaration]] · [[volume-brut-nest-pas-revenu]] · [[controle-du-filtre]] |
 
 ## Si tu n'as que trois minutes
@@ -65,6 +67,8 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
   requêtes payées jamais livrées** sur la plus active d'entre elles
 - [[2026-08-01-annuaires-le-meme-objet-compte-neuf-fois]] — pourquoi aucun compteur d'agents n'est
   citable sans son périmètre
+- **[[2026-08-03-sonde-endpoints-segment-confiance]]** — 67 % des points d'accès publiés ne
+  répondent pas, et sur 82 il en reste **13** qui sont un service à eux
 
 ## Acteurs
 
@@ -75,6 +79,7 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
 ## Règles du jeu
 
 - [[erc-8183-escrow-et-evaluateur]] — le séquestre, et les trois asymétries du rôle d'arbitre
+- [[x402-crypto-seulement-ou-pas]] — agnostique par conception, crypto par implémentation
 
 ## Questions ouvertes
 
@@ -85,6 +90,9 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
 
 **Le hors-crypto et les autres places sont traités**
 ([[2026-08-01-hors-crypto-existe-t-il-un-marche]], [[2026-08-01-autres-places-agent-a-agent]]).
+
+**La sonde est faite** ([[2026-08-03-sonde-endpoints-segment-confiance]]) et c'est la mesure la
+plus exploitable du corpus : elle transforme une déclaration en observation, en une commande.
 
 À faire en priorité : **revérifier l'écart de livraison d'Olas** — 12,4 % des requêtes payées sans
 livraison — avant tout usage public, car c'est le chiffre le plus exploitable du corpus. Puis
