@@ -23,7 +23,7 @@ toute la base.**
 | Le concurrent le plus proche de notre produit | [[agentpulse]] |
 | La plateforme mesurée et les défauts de ses données | [[virtuals-acp]] |
 | Un interlocuteur du terrain et ce qu'il nous a corrigé | [[markus-dropspace]] |
-| Une anomalie non expliquée | [[les-201-acheteurs]] |
+| Une anomalie non expliquée | [[les-201-acheteurs]] · [[deux-grappes-anormales-verification-on-chain]] |
 | **Si ce marché existe hors cryptomonnaie** | [[2026-08-01-hors-crypto-existe-t-il-un-marche]] |
 | Pourquoi les chiffres du secteur se contredisent d'un facteur mille | [[agent-paie-agent-vs-humain-achete-agent]] |
 | **Les autres places, et l'écart de livraison d'Olas** | [[2026-08-01-autres-places-agent-a-agent]] |
@@ -94,6 +94,8 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
 
 - [[les-201-acheteurs]] — onze agents sans rapport ont exactement le même nombre de clients.
   Posée publiquement, sans réponse.
+- **[[deux-grappes-anormales-verification-on-chain]]** — deux grappes, 11,4 % du marché, ce que la
+  chaîne montre et surtout **le test témoin à faire avant toute publication**
 
 ## Ce qui manque encore
 
