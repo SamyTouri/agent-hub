@@ -33,6 +33,7 @@ toute la base.**
 | **Quelle part est un vrai service, quelle part est spéculative** | [[2026-08-03-quelle-part-est-un-vrai-service]] |
 | **Adoption réelle d'A2A, et comment les agents se parlent** | [[2026-08-03-a2a-adoption-mesuree-chez-les-agents-qui-gagnent]] |
 | x402 accepte-t-il autre chose que la crypto | [[x402-crypto-seulement-ou-pas]] |
+| **CE QU'ON PEUT VENDRE, ET À QUI** | [[2026-08-03-ce-que-les-mesures-disent-de-notre-offre]] |
 | **Pourquoi se méfier d'un chiffre qu'on nous donne** | [[date-de-plateforme-est-une-declaration]] · [[volume-brut-nest-pas-revenu]] · [[controle-du-filtre]] |
 
 ## Si tu n'as que trois minutes
@@ -46,6 +47,12 @@ toute la base.**
    → [[2026-08-01-metiers-de-la-confiance]] · [[2026-08-01-segment-confiance-encore-actif]]
 3. **Le poste d'arbitre payé créé par la norme est vide** : 75 candidats, zéro revenu, et l'outil
    officiel recommande « l'acheteur s'évalue lui-même ». → [[2026-08-01-siege-evaluateur-vide]]
+
+## Synthèses — ce que les mesures impliquent
+
+- **[[2026-08-03-ce-que-les-mesures-disent-de-notre-offre]]** — la confrontation entre ce qu'on a
+  mesuré et ce qu'on prévoit de vendre. Contient **un arbitrage à rendre par Samy** : le marché où
+  l'argent est présent n'est pas celui que la doctrine vise.
 
 ## Concepts — la colonne vertébrale
 
