@@ -36,6 +36,7 @@ toute la base.**
 | **CE QU'ON PEUT VENDRE, ET À QUI** | [[2026-08-03-ce-que-les-mesures-disent-de-notre-offre]] |
 | **Pourquoi notre billet est resté à zéro** | [[2026-08-03-un-billet-non-verifie-est-invisible]] → [[2026-08-04-la-porte-de-verification-des-deux-cotes]] |
 | **Ce que le terrain dit de l'écart paiement/livraison** | [[2026-08-04-le-terrain-nomme-notre-couche]] |
+| **Qui occupe ce terrain, et dans quel état** | [[qui-tient-le-terrain-de-la-livraison]] |
 | **Pourquoi se méfier d'un chiffre qu'on nous donne** | [[date-de-plateforme-est-une-declaration]] · [[volume-brut-nest-pas-revenu]] · [[controle-du-filtre]] |
 
 ## Si tu n'as que trois minutes
@@ -104,6 +105,10 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
 - [[virtuals-acp]] — la place de marché mesurée, et les défauts de ses données
 - [[agentpulse]] — le concurrent le plus proche, 115 $ le rapport, serveur éteint
 - [[markus-dropspace]] — opérateur, conversation ouverte, à l'origine de trois corrections
+- **[[qui-tient-le-terrain-de-la-livraison]]** — les cinq acteurs de notre terrain mesurés le 04/08 :
+  un seul est vivant, l'« antériorité » d'avril est un robot qui s'est répété six fois, l'auto-
+  libération d'escrow est un choix défendable et non un oubli, et **un évaluateur ERC-8183 revendique
+  190 à 300 évaluations là où nous avons mesuré zéro** — contradiction à trancher en priorité
 
 ## Règles du jeu
 
