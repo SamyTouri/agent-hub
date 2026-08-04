@@ -1,3 +1,18 @@
+> # ⛔ SUSPENDU — NE PAS EXÉCUTER
+>
+> **Décision de Samy, 2026-08-03**, le jour même de la rédaction : la refonte est **prématurée**.
+> Un beau site figerait des choix de positionnement qui ne sont pas faits, et créerait de la dette
+> de modification en aval. L'effort va à **la définition de la proposition de valeur et au contact
+> direct avec les acteurs de terrain**.
+>
+> Ce document est conservé pour son raisonnement, pas pour être suivi. **Au plus, aujourd'hui :**
+> un changement de couleurs et une page propre pour un premier article — rien de la refonte
+> décrite ci-dessous.
+>
+> Ne le reprendre que sur instruction explicite de Samy.
+
+---
+
 # Mission Codex — refonte visuelle et éditoriale d'agentreputation.dev
 
 Rédigé le 2026-08-03. Destinataire : Codex. Émetteur : Samy, via Claude.

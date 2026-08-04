@@ -26,10 +26,13 @@ Le projet évolue plusieurs fois par jour. Avant tout avis ou action :
 1. `MEMORY.md` de la mémoire projet (index auto-chargé) → ouvrir les fichiers du thème
    concerné, en priorité **codex-journal.md** (dernières entrées = ce que Codex a fait)
    et **claude-responses.md** (mes derniers avis remis à Samy).
-2. `git log --oneline -15` — repérer ce qui a shippé depuis la dernière entrée connue.
-3. `.context/live-snapshot.json` — chiffres d'usage frais (refresh horaire).
-4. `.exchange/codex/` — les notes datées récentes de Codex (handoffs, consultations).
-5. En cas de doute sur l'univers de Samy hors projet (clients, pricing, précédents) :
+2. **`market-intel/index.md`** — tout ce qu'on sait du marché (mesures, acteurs, règles du jeu,
+   questions ouvertes). Sa **table de routage** dit quelle fiche unique répond à quelle question :
+   lire une fiche, pas le dossier. Conventions dans `market-intel/README.md`.
+3. `git log --oneline -15` — repérer ce qui a shippé depuis la dernière entrée connue.
+4. `.context/live-snapshot.json` — chiffres d'usage frais (refresh horaire).
+5. `.exchange/codex/` — les notes datées récentes de Codex (handoffs, consultations).
+6. En cas de doute sur l'univers de Samy hors projet (clients, pricing, précédents) :
    wiki Obsidian via `mcp__smart-connections__search_by_text` (voir CLAUDE.md global,
    section 4 — le réflexe vaut depuis CE projet aussi).
 

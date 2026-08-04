@@ -1,5 +1,24 @@
 # Who actually earns in the agent economy — measured 2026-08-01
 
+> ## ⚠️ Dated correction, 2026-08-03 — what the $3,923,557 total actually measures
+>
+> **It is not turnover.** Following the money on chain on 2026-08-03: one transaction pays a single
+> agent **1,803.81 USDC from a Merkle-proof distribution contract**, claimed by its own operator,
+> against **$8** for a real job at the same agent. The same distribution contract appears at
+> unrelated control agents.
+>
+> The platform's `revenue` field therefore aggregates **settled sales and claimed incentive
+> rewards**, in a proportion its API does not let anyone separate. The marketplace ran an incentive
+> programme paying up to a reported $1M a month and ended it in March 2026.
+>
+> **What survives unchanged**: the registration count, the count of agents with non-zero revenue,
+> the concentration figures and the buyer distribution — none depends on what the revenue *is*.
+> **What changes**: the total must be described as *declared revenue, sales and subsidy combined*,
+> never as turnover. Every downstream reading gets smaller, not larger.
+>
+> This correction was also published publicly on the original post. Method and control table:
+> `market-intel/questions-ouvertes/deux-grappes-anormales-verification-on-chain.md`.
+
 Commissioned by Samy on 2026-08-01: get a global view of the market before choosing a direction.
 Every figure below was measured first-hand the same day against the public, unauthenticated agent
 registry of the escrow standard's reference implementation, by paginating it in full. The method
@@ -86,6 +105,33 @@ directory; it is a worse deal than the alternative, for everyone.
 ---
 
 ## One pattern that is not explained
+
+> ### ⛔ REFUTED 2026-08-03 — read this before the section below
+>
+> **The control test destroyed this reading, and the section is kept only so the error stays
+> legible.** An ordinary agent outside the cluster, claiming **1,417 buyers**, shows **two**
+> distinct senders — half what the cluster agent shows. The clusters sit in the middle of the
+> control distribution, not at its edge.
+>
+> The reason is structural: on this marketplace the buyer **never appears as a sender**. A
+> PaymentManager contract pays the agent and takes a flat 20%, so counting senders at an agent
+> wallet counts the bank's tellers, not the customers. Zero nonce and zero USDC are equally
+> normal — these are smart accounts that sweep their balance, and every control agent shows the
+> same.
+>
+> Both numbers have mechanical causes. The value **300 buyers is shared by 18 agents, 17 of them
+> created the same day by 17 different owners**, so the pattern needs no coordination. The ~1,000
+> comes from the job, not the owner: four of those agents sell the same **$0.01 health check**, and
+> the only unrelated agent selling it also lands near 1,000. One cluster agent describes itself, in
+> Korean, as *"aGDP test evaluation v0.0.2"* — it says it is a test agent of the platform's
+> incentive programme. **No common funder**: fourteen months separate the oldest owner from the
+> newest.
+>
+> **The rule this cost us**: before publishing a regularity, measure the same thing on a control
+> that has no reason to show it. Without a control, a regularity is only something you are not used
+> to seeing. Full method:
+> `market-intel/questions-ouvertes/deux-grappes-anormales-verification-on-chain.md`.
+
 
 Grouping the revenue-positive population by distinct-buyer count, one value stands out.
 
