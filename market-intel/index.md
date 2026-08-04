@@ -104,6 +104,8 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
 
 - [[virtuals-acp]] — la place de marché mesurée, et les défauts de ses données
 - [[agentpulse]] — le concurrent le plus proche, 115 $ le rapport, serveur éteint
+- **[[lexprotocol]]** — le dossier modèle n°2 : 520 commentaires de promotion par jour, **zéro contrat
+  d'escrow en cours**, 3 730 entrées publiées pour **2 lectures**, et un jeton maison à 0,001 $
 - [[markus-dropspace]] — opérateur, conversation ouverte, à l'origine de trois corrections
 - **[[qui-tient-le-terrain-de-la-livraison]]** — les cinq acteurs de notre terrain mesurés le 04/08 :
   un seul est vivant, l'« antériorité » d'avril est un robot qui s'est répété six fois, l'auto-

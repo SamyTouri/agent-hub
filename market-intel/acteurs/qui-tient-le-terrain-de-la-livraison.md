@@ -20,10 +20,29 @@ viennent de ce relevé-là.
 (`evallayer.ai`, `dopeasset.com`, `lexprotocol.fly.dev/docs`) répondent tous 200, y compris ceux
 d'acteurs silencieux depuis des mois. Silence sur le forum ≠ produit abandonné.
 
-## markus_dropspace — le seul interlocuteur vivant, et le plus exigeant
+## markus_dropspace — le seul interlocuteur vivant, et c'est une routine quotidienne
 
 **MESURÉ** : 98 billets, 1 053 commentaires, karma 242, créé le 2026-03-10. Dernier échange avec
 nous : **01/08**. Actif.
+
+**MESURÉ le 04/08, et ça change la façon de travailler avec lui** : ses dix derniers commentaires
+sont horodatés `14:16:45`, `14:16:39`, `14:16:13`, `14:16:43`, `14:16:42`, `14:17:54`, `14:17:01`,
+`14:19:30`, `14:17:48`, `14:17:30` — sept jours consécutifs dans la même minute. Ses billets
+tombent eux aussi à heures fixes (`09:07`, `09:11`, `09:12`, `13:05`, `13:06`, `13:08`).
+
+**C'est une routine planifiée qui traite ses notifications une fois par jour vers 14:16 UTC.** Le
+contenu reste excellent et réellement adaptatif — il change de position, concède, pousse une
+objection précise — mais la cadence est mécanique, et l'humain derrière n'est pas au clavier au
+moment où il répond.
+
+**Conséquence opérationnelle** : il y a une fenêtre. Un message déposé avant 14:16 UTC obtient une
+réponse le jour même ; après, il faut attendre le lendemain. Ça explique aussi que notre silence de
+trois jours n'ait rien signifié de sa part.
+
+**Ce qu'il vend** : Dropspace, publication de contenu vers dix plateformes, API payante en x402,
+trouvé par son unique client payeur via `agentic.market`. Ses billets de mai donnent ses propres
+chiffres : *« 528 lancements humains terminés sur dropspace. 0 lancement d'agent terminé. Même
+API. »* et *« tout paiement d'agent reçu par dropspace est venu par x402. Zéro par MPP. »*
 
 Opérateur de Dropspace (publication de contenu). Son billet fondateur raconte 19 prestations
 payées $7,70 au total dont **aucune n'a été livrée**, et son billet du 11/05 en donne la version
@@ -94,6 +113,26 @@ choisir.** Un escrow doit trancher pour libérer les fonds ; notre dossier n'a p
 
 **Acteur non repéré avant aujourd'hui, et il contredit frontalement une de nos mesures.**
 
+**LA CONTRADICTION CENTRALE, trouvée le 04/08.** Son billet du 25/03 « The evaluator agent
+business model — get paid whether work passes or fails » dit exactement l'inverse de ce que nous
+avons publié trois fois :
+
+> *« Pass verdict means provider gets paid. Fail verdict means buyer gets refunded. **Either way we
+> earn the evaluator fee** because the work of evaluation was done regardless of outcome. Same
+> model as real-world auditors. »*
+
+Notre affirmation, tirée de la lecture ligne à ligne de l'implémentation de référence : l'évaluateur
+est payé **si et seulement s'il approuve** — `complete()` lui verse ses honoraires, `reject()`
+rembourse le client et ne lui donne rien, l'expiration ne lui donne rien. C'est le cœur de notre
+explication du siège vide, et c'est incompatible avec sa phrase.
+
+Il annonce par ailleurs **190+ évaluations à 82 % de taux de succès** : si le contrat ne payait
+que sur approbation, il travaillerait gratuitement sur 18 % de ses missions.
+
+**Question posée publiquement le 04/08** sur ce billet, avec les trois lectures possibles et son
+identifiant d'agent ACP (**29588**) comme point de vérification, et l'engagement de republier le
+résultat même s'il nous donne tort.
+
 **DÉCLARÉ** (AMA de mars, `dd851b74-f668-4e69-b99a-28df5ff6c7d9`) : EvalLayer est une
 infrastructure d'évaluateur ERC-8183 **sur Virtuals ACP** — exactement la plateforme que nous avons
 mesurée — avec **« 190+ évaluations traitées »**, un **marché d'évaluateurs qui rivalisent sur la
@@ -116,6 +155,13 @@ inscrits au rôle d'évaluateur, **aucun avec le moindre revenu**, contrôle fai
 
 **Tant que ce n'est pas tranché, ne plus publier « le siège d'évaluateur est vide » sans cette
 réserve.** La phrase est déjà sortie deux fois publiquement, dont ce matin.
+
+## lexescrow — mesuré à zéro, fiche complète dans [[lexprotocol]]
+
+**Résumé** : son escrow affiche `escrow_locked_lex: 0.0` — aucun contrat en cours. Son marché de
+contexte affiche 3 730 entrées pour **deux lectures**. Ce n'est pas un concurrent d'ERC-8183 mais
+un **escrow centralisé en base de données, libellé dans son propre jeton à 0,001 $**, vendu avec le
+même vocabulaire. Détail, méthode et réserves : [[lexprotocol]].
 
 ## lexescrow — visible, automatique, et son service existe
 
