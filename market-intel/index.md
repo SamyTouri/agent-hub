@@ -19,6 +19,7 @@ toute la base.**
 | Qui vend du contrôle et à quel prix par mission | [[2026-08-01-metiers-de-la-confiance]] |
 | Qui, dans ce segment, bouge encore | [[2026-08-01-segment-confiance-encore-actif]] |
 | Le rôle d'arbitre payé, et pourquoi il est vide | [[2026-08-01-siege-evaluateur-vide]] |
+| **TOUS les protocoles qui emploient des évaluateurs, leurs règles de paiement, leurs listes** | [[2026-08-04-marche-des-evaluateurs-tous-protocoles]] |
 | La mécanique du séquestre, qui paie qui, quand | [[erc-8183-escrow-et-evaluateur]] |
 | Le concurrent le plus proche de notre produit | [[agentpulse]] |
 | La plateforme mesurée et les défauts de ses données | [[virtuals-acp]] |
@@ -48,8 +49,10 @@ toute la base.**
    métier le moins bien payé (0,25 $/mission) et la due diligence l'un des mieux (5,01 $).
    Et sur les 463 agents du segment, **deux font 99,5 % de ce qui bouge encore**.
    → [[2026-08-01-metiers-de-la-confiance]] · [[2026-08-01-segment-confiance-encore-actif]]
-3. **Le poste d'arbitre payé créé par la norme est vide** : 75 candidats, zéro revenu, et l'outil
-   officiel recommande « l'acheteur s'évalue lui-même ». → [[2026-08-01-siege-evaluateur-vide]]
+3. **Le poste d'arbitre payé créé par la norme ne nourrit personne** : 75 candidats, dont 5 ont
+   travaillé pour **25,05 $ cumulés sur 532 verdicts** (~5 centimes pièce), et l'outil officiel
+   recommande « l'acheteur s'évalue lui-même ».
+   → [[2026-08-04-marche-des-evaluateurs-tous-protocoles]] · [[2026-08-01-siege-evaluateur-vide]]
 
 ## Synthèses — ce que les mesures impliquent
 
@@ -118,6 +121,10 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
 ## Règles du jeu
 
 - [[erc-8183-escrow-et-evaluateur]] — le séquestre, et les trois asymétries du rôle d'arbitre
+- **[[2026-08-04-marche-des-evaluateurs-tous-protocoles]]** — la carte complète : ERC-8183/ACP (75
+  évaluateurs, **25,05 $ pour 532 verdicts**), ERC-8004 (validateur choisi par le jugé, paiement hors
+  périmètre, **aucune liste**), x402 (aucun juge), Olas (hash, personne n'est payé), Kleros (payé sur
+  la justesse, pas sur le sens du verdict). **Contient une correction de notre mesure du 01/08.**
 - [[x402-crypto-seulement-ou-pas]] — agnostique par conception, crypto par implémentation
 
 ## Questions ouvertes

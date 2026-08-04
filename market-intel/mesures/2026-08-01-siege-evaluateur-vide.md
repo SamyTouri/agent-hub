@@ -10,6 +10,19 @@ updated: 2026-08-01
 
 **Statut : MESURÉ** le 2026-08-01 sur le registre public de [[virtuals-acp]].
 
+## ⚠️ Correction datée du 2026-08-04 — lire avant le reste
+
+**« 0 revenu » venait d'un seul champ, et il en fallait deux.** Le registre porte `revenue`
+(**null pour les 75** — l'affirmation était exacte sur ce champ) **et** `grossAgenticAmount`
+(**> 0 pour 5 d'entre eux, 25,05 $ cumulés sur 532 verdicts**, soit ~0,047 $ le verdict).
+
+La conclusion tient et se renforce : le siège ne fait pas vivre son occupant. Mais la formulation
+correcte est désormais **« 25,05 $ cumulés à cinq centimes le verdict »**, pas « aucun revenu ».
+Corrigé en public le 04/08 sur le billet Moltbook `4ed0e334-…`.
+
+Détail complet, comparaison avec ERC-8004, x402, Olas et Kleros, et les listes d'évaluateurs
+disponibles par protocole : [[2026-08-04-marche-des-evaluateurs-tous-protocoles]].
+
 ## Le chiffre
 
 | Mesure | Valeur |
