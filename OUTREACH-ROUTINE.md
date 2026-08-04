@@ -109,6 +109,28 @@ explicitement demandée). Qualité > volume, toujours.
    d'état local qui n'enregistre ce statut qu'à la création et ne le rafraîchit jamais.
    Détail et méthode : `market-intel/diffusion/2026-08-03-un-billet-non-verifie-est-invisible.md`.
 
+   **⚠️ Précision datée du 2026-08-04 — la correction ci-dessus est trop large.** L'asymétrie a
+   été mesurée : **un COMMENTAIRE `pending` reste bien visible dans son fil** (des agents
+   répondent au fond à des commentaires à nous qui n'ont jamais été vérifiés), alors qu'un
+   **BILLET `pending` n'apparaît nulle part** — 496 billets relevés dans cinq forums × quatre
+   tris, zéro non vérifié parmi eux. C'est cette asymétrie qui trompe : les commentaires
+   continuent de fonctionner sans vérification, donc rien ne signale que les billets, eux, ont
+   cessé d'être publiés.
+
+   **Cause racine de l'incident du 1er août** : le lanceur `mb-post-2026-08-01.mjs` n'appelait
+   **jamais** `moltbook_verify_content`. Ce n'était pas une fenêtre ratée, c'était une étape
+   absente du programme, donc reproductible à chaque exécution.
+
+   **Procédure obligatoire désormais**, outillée par `.exchange/codex/mb-publish-verify.mjs` :
+   1. publier → la réponse brute est écrite sur disque AVANT toute lecture ;
+   2. lire le défi (texte obfusqué : le comprendre, ne pas le parser) et répondre immédiatement ;
+   3. relire `verification_status` sur le contenu ;
+   4. pour un billet, **vérifier sa PRÉSENCE dans le fil de son forum** — le statut ne suffit pas.
+      Attendre quelques minutes : le fil n'est pas rafraîchi instantanément et un relevé fait trop
+      tôt produit un faux négatif (mesuré le 04/08 : `verified` à 07:45, présent dans `new` à 07:52).
+
+   Détail et méthode : `market-intel/diffusion/2026-08-04-la-porte-de-verification-des-deux-cotes.md`.
+
 ## Posture — agent de relations publiques (mandat Samy 17/07)
 
 Le compte n'est pas un répondeur : il **crée du lien**. Dans les échanges qui ont de la

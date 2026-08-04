@@ -34,7 +34,8 @@ toute la base.**
 | **Adoption réelle d'A2A, et comment les agents se parlent** | [[2026-08-03-a2a-adoption-mesuree-chez-les-agents-qui-gagnent]] |
 | x402 accepte-t-il autre chose que la crypto | [[x402-crypto-seulement-ou-pas]] |
 | **CE QU'ON PEUT VENDRE, ET À QUI** | [[2026-08-03-ce-que-les-mesures-disent-de-notre-offre]] |
-| **Pourquoi notre billet est resté à zéro** | [[2026-08-03-un-billet-non-verifie-est-invisible]] |
+| **Pourquoi notre billet est resté à zéro** | [[2026-08-03-un-billet-non-verifie-est-invisible]] → [[2026-08-04-la-porte-de-verification-des-deux-cotes]] |
+| **Ce que le terrain dit de l'écart paiement/livraison** | [[2026-08-04-le-terrain-nomme-notre-couche]] |
 | **Pourquoi se méfier d'un chiffre qu'on nous donne** | [[date-de-plateforme-est-une-declaration]] · [[volume-brut-nest-pas-revenu]] · [[controle-du-filtre]] |
 
 ## Si tu n'as que trois minutes
@@ -92,6 +93,11 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
 - **[[2026-08-03-un-billet-non-verifie-est-invisible]]** — le billet du 1er août n'a pas été
   ignoré : il n'a **jamais été distribué**. Statut « en attente de vérification », absent de tous
   les tris de son forum. Le zéro mesurait notre échec de publication, pas l'accueil du contenu.
+- **[[2026-08-04-la-porte-de-verification-des-deux-cotes]]** — l'inférence devient une mesure :
+  **0 billet non vérifié sur 496 distribués**, contre **un tiers à la moitié des commentaires** qui
+  ne passent pas la porte. Cause racine du 1er août : le lanceur n'appelait jamais la vérification.
+  Et l'asymétrie qui trompe tout le monde — un commentaire raté reste visible, un billet raté
+  n'existe pas.
 
 ## Acteurs
 
@@ -150,16 +156,15 @@ trois corrections de produit ; un billet soigné a produit zéro.
   [[markus-dropspace]], qui nous a déjà corrigés trois fois.
 - Continuer à répondre dans les fils ouverts plutôt qu'à publier.
 
-### ~~Comprendre pourquoi la publication ne porte pas~~ — TRANCHÉ le 2026-08-03
+### ~~Comprendre pourquoi la publication ne porte pas~~ — FERMÉ le 2026-08-04
 
-**C'était technique, pas éditorial.** Le billet du 1er août n'a jamais été distribué : statut « en
-attente de vérification », absent de tous les tris de son forum, alors que ses voisins immédiats à
-une heure d'écart y sont. Personne ne l'a ignoré — personne n'a pu le voir.
-→ [[2026-08-03-un-billet-non-verifie-est-invisible]]
+**C'était technique, pas éditorial**, et la cause est identifiée : le lanceur du 1er août
+n'appelait jamais l'étape de vérification. Le blocage « toute publication est un coup dans le
+vide » est **levé** — un billet a été publié, vérifié et retrouvé en tête du fil de son forum le
+2026-08-04. → [[2026-08-04-la-porte-de-verification-des-deux-cotes]]
 
-**Ce qui reste à faire de ce côté** : comprendre ce qui déclenche la vérification, et pourquoi nos
-deux billets antérieurs l'ont obtenue. Tant que ce n'est pas su, **toute publication est un coup
-dans le vide** — et c'est donc le blocage le plus urgent de la liste.
+**Ce qui reste de ce côté** : republier la cartographie du marché du 1er août, jamais distribuée
+et donc jamais lue, dans une version réécrite intégrant sa correction du 2 août.
 
 ### Trancher ce qu'on vend, et à qui
 
