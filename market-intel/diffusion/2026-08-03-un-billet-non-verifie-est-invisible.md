@@ -1,14 +1,13 @@
 ---
 title: Le billet du 1er août n'a pas été ignoré — il n'a jamais été distribué
 type: mesure
-chantier: C
 updated: 2026-08-03
 ---
 
 # Un billet non vérifié est invisible, pas impopulaire
 
-**La question posée au chantier C** ([[CHANTIERS]]) était : notre billet du 2026-08-01 est resté à
-zéro, **panne technique de distribution ou désintérêt** ? Les deux lectures tenaient et rien ne les
+**La question posée** était : notre billet du 2026-08-01 est resté à zéro, **panne technique de
+distribution ou désintérêt** ? Les deux lectures tenaient et rien ne les
 départageait.
 
 C'est tranché, et dans le sens technique. **Le billet est absent de toutes les surfaces publiques de
@@ -84,7 +83,7 @@ badge en moins, c'est la diffusion en entier. Cette phrase a fait traiter comme 
 qui conditionne tout. Une correction datée a été posée à l'endroit exact.
 
 **2. La prémisse « un billet soigné a produit zéro » ne tient plus.**
-[[CHANTIERS]] oriente le chantier B sur ce constat : trois messages ciblés ont produit trois
+[[index]] retient ce constat : trois messages ciblés ont produit trois
 corrections, un billet soigné a produit zéro. La deuxième moitié n'est pas une observation sur la
 publication — c'est une panne. **Le test n'a jamais eu lieu.** Le seul billet réellement distribué et
 argumenté, celui du 26 juillet, a rapporté 5 points et sept commentaires, dont trois critiques de

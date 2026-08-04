@@ -8,13 +8,6 @@ updated: 2026-08-01
 
 Conventions et règle des trois statuts (MESURÉ / RAPPORTÉ / DÉCLARÉ) : [[README]].
 
-**Plusieurs conversations travaillent en parallèle depuis le 2026-08-03.** Qui possède quoi, et ce
-qui reste à faire par chantier : **[[CHANTIERS]]**.
-
-**Ce que les autres viennent de trouver** se lit dans les quatre journaux : [[A-marche]] ·
-[[B-terrain]] · [[C-communication]] · [[D-produit]]. Un seul chantier écrit dans chacun, tous les
-lisent. À lire avant d''écrire quoi que ce soit ici.
-
 ## Table de routage — quelle question, quelle fiche
 
 Pour une IA qui arrive avec une question, ou un humain pressé. **Lire la fiche indiquée, pas
@@ -41,6 +34,7 @@ toute la base.**
 | **Adoption réelle d'A2A, et comment les agents se parlent** | [[2026-08-03-a2a-adoption-mesuree-chez-les-agents-qui-gagnent]] |
 | x402 accepte-t-il autre chose que la crypto | [[x402-crypto-seulement-ou-pas]] |
 | **CE QU'ON PEUT VENDRE, ET À QUI** | [[2026-08-03-ce-que-les-mesures-disent-de-notre-offre]] |
+| **Pourquoi notre billet est resté à zéro** | [[2026-08-03-un-billet-non-verifie-est-invisible]] |
 | **Pourquoi se méfier d'un chiffre qu'on nous donne** | [[date-de-plateforme-est-une-declaration]] · [[volume-brut-nest-pas-revenu]] · [[controle-du-filtre]] |
 
 ## Si tu n'as que trois minutes
@@ -93,6 +87,12 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
 - **[[2026-08-03-a2a-adoption-mesuree-chez-les-agents-qui-gagnent]]** — 10 % et non 0,29 %, et la
   raison : la communication entre agents est **courtière, pas pair-à-pair**
 
+## Diffusion — pourquoi ce qu'on publie porte ou ne porte pas
+
+- **[[2026-08-03-un-billet-non-verifie-est-invisible]]** — le billet du 1er août n'a pas été
+  ignoré : il n'a **jamais été distribué**. Statut « en attente de vérification », absent de tous
+  les tris de son forum. Le zéro mesurait notre échec de publication, pas l'accueil du contenu.
+
 ## Acteurs
 
 - [[virtuals-acp]] — la place de marché mesurée, et les défauts de ses données
@@ -112,17 +112,68 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
   témoin**, et l'enquête a trouvé bien plus important : **le revenu affiché mélange ventes et
   subventions**
 
-## Ce qui manque encore
+## Ce qui reste à faire
 
-**Le hors-crypto et les autres places sont traités**
-([[2026-08-01-hors-crypto-existe-t-il-un-marche]], [[2026-08-01-autres-places-agent-a-agent]]).
+Par ordre d'utilité. Le découpage en chantiers parallèles a été **abandonné le 2026-08-03** —
+essayé, jugé prématuré pour l'outillage actuel, et le travail reprend de façon linéaire ici.
 
-**La sonde est faite** ([[2026-08-03-sonde-endpoints-segment-confiance]]) et c'est la mesure la
-plus exploitable du corpus : elle transforme une déclaration en observation, en une commande.
+### Mesurer, et surtout re-mesurer
 
-À faire en priorité : **revérifier l'écart de livraison d'Olas** — 12,4 % des requêtes payées sans
-livraison — avant tout usage public, car c'est le chiffre le plus exploitable du corpus. Puis
-confirmer en direct la place agent-à-agent à zéro dollar, aujourd'hui seulement rapportée.
+**Une mesure prise une fois n'est pas une tendance.** La vraie valeur de cette base naîtra de la
+répétition datée, que personne d'autre ne publie. Les deux séries à ouvrir en premier :
 
-Manquent aussi : les acteurs d'arbitrage annoncés pour fin 2026. Et surtout **la série** : une mesure prise une fois n'est pas une tendance, et
-c'est la répétition datée qui produira ce que personne d'autre ne publie.
+- **L'adoption d'A2A** chez les agents qui encaissent — ligne de base **9,8 %**, le 2026-08-03
+  ([[2026-08-03-a2a-adoption-mesuree-chez-les-agents-qui-gagnent]]). C'est l'indicateur qui dira si
+  le commerce entre agents devient réel.
+- **La sonde des points d'accès** — ligne de base **67 % de muets** le 2026-08-03
+  ([[2026-08-03-sonde-endpoints-segment-confiance]]). C'est la mesure la moins chère et la plus
+  exploitable du corpus : elle transforme une déclaration en observation, en une commande.
+
+Puis, dans l'ordre :
+
+- **Séparer vente et subvention** dans le revenu déclaré — la question ouverte par
+  [[deux-grappes-anormales-verification-on-chain]], et la seule qui rendrait le total citable.
+- **Revérifier l'écart de livraison d'Olas** (12,4 % des requêtes payées sans livraison) avant tout
+  usage public, et confirmer en direct la place agent-à-agent à zéro dollar, aujourd'hui seulement
+  rapportée.
+- Les acteurs d'arbitrage annoncés pour fin 2026.
+
+### Parler aux gens — et c'est ce qui a le mieux marché
+
+**Le constat qui doit orienter l'effort** : toutes nos avancées relationnelles sont venues de
+**réponses à des personnes précises**, jamais d'une publication. Trois messages ciblés ont produit
+trois corrections de produit ; un billet soigné a produit zéro.
+
+- **Qui a tué AgentPulse** — question envoyée le 2026-08-03, réponse attendue ([[agentpulse]]).
+- **Tester le co-paiement** : proposer à un vendeur de co-payer un rapport sur lui-même. C'est le
+  mécanisme adopté le 2026-08-01 et **jamais proposé à personne**. Candidat naturel :
+  [[markus-dropspace]], qui nous a déjà corrigés trois fois.
+- Continuer à répondre dans les fils ouverts plutôt qu'à publier.
+
+### ~~Comprendre pourquoi la publication ne porte pas~~ — TRANCHÉ le 2026-08-03
+
+**C'était technique, pas éditorial.** Le billet du 1er août n'a jamais été distribué : statut « en
+attente de vérification », absent de tous les tris de son forum, alors que ses voisins immédiats à
+une heure d'écart y sont. Personne ne l'a ignoré — personne n'a pu le voir.
+→ [[2026-08-03-un-billet-non-verifie-est-invisible]]
+
+**Ce qui reste à faire de ce côté** : comprendre ce qui déclenche la vérification, et pourquoi nos
+deux billets antérieurs l'ont obtenue. Tant que ce n'est pas su, **toute publication est un coup
+dans le vide** — et c'est donc le blocage le plus urgent de la liste.
+
+### Trancher ce qu'on vend, et à qui
+
+[[2026-08-03-ce-que-les-mesures-disent-de-notre-offre]] pose l'arbitrage laissé ouvert par Samy :
+le marché où l'argent se trouve n'est pas celui que la doctrine vise. **Il faut plus d'information
+avant de trancher** — c'est la raison d'être des deux sections précédentes.
+
+Le site n'est **pas** refait : brief suspendu (`docs/2026-08-03-brief-refonte-site.md`). Au plus,
+un changement de couleurs et une page propre pour un premier article.
+
+## Ce qui ne bouge pas
+
+- La doctrine (`docs/DOCTRINE.md`) fait autorité et ne se modifie que sur arbitrage de Samy.
+- Aucun chiffre ne se publie sans sa source, sa date et sa méthode — y compris les nôtres.
+- Une mesure fausse se corrige **en public et de façon datée**, jamais en silence.
+- Avant de publier une régularité : **mesurer la même chose sur un témoin** qui n'a aucune raison
+  de la présenter ([[deux-grappes-anormales-verification-on-chain]] explique ce que ça a évité).
