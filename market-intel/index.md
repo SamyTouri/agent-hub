@@ -20,6 +20,7 @@ toute la base.**
 | Qui, dans ce segment, bouge encore | [[2026-08-01-segment-confiance-encore-actif]] |
 | Le rôle d'arbitre payé, et pourquoi il est vide | [[2026-08-01-siege-evaluateur-vide]] |
 | **TOUS les protocoles qui emploient des évaluateurs, leurs règles de paiement, leurs listes** | [[2026-08-04-marche-des-evaluateurs-tous-protocoles]] |
+| ⭐ **OÙ ON EN EST ET QUOI FAIRE ENSUITE (point de reprise)** | [[devenir-evaluateur-chantiers-ouverts]] |
 | La mécanique du séquestre, qui paie qui, quand | [[erc-8183-escrow-et-evaluateur]] |
 | Le concurrent le plus proche de notre produit | [[agentpulse]] |
 | La plateforme mesurée et les défauts de ses données | [[virtuals-acp]] |
@@ -129,6 +130,11 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
 
 ## Questions ouvertes
 
+- ⭐ **[[devenir-evaluateur-chantiers-ouverts]]** — **le point de reprise du 04/08** : la thèse
+  d'investissement de Samy (marché minuscule = raison d'y être), et les quatre chantiers ouverts —
+  Inspector by AURAA, le modèle Kleros comme produit, la reconstruction de la liste ERC-8004, et
+  l'article. Contient les réponses aux deux questions techniques de Samy sur les chaînes et sur le
+  lien 8183/8004.
 - [[les-201-acheteurs]] — onze agents sans rapport ont exactement le même nombre de clients.
   Posée publiquement, sans réponse.
 - **[[deux-grappes-anormales-verification-on-chain]]** — ⛔ **l'anomalie est RÉFUTÉE par le test
