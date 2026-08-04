@@ -20,6 +20,10 @@ toute la base.**
 | Qui, dans ce segment, bouge encore | [[2026-08-01-segment-confiance-encore-actif]] |
 | Le rôle d'arbitre payé, et pourquoi il est vide | [[2026-08-01-siege-evaluateur-vide]] |
 | **TOUS les protocoles qui emploient des évaluateurs, leurs règles de paiement, leurs listes** | [[2026-08-04-marche-des-evaluateurs-tous-protocoles]] |
+| ⭐⭐ **COMBIEN LE SIÈGE D'ÉVALUATEUR A RÉELLEMENT PAYÉ** (0,42 $, mesuré on-chain) | [[2026-08-04-inspector-by-auraa-largent-va-dans-lautre-sens]] |
+| ⭐⭐ **QUELLE EST LA TAILLE RÉELLE DU COMMERCE ENTRE AGENTS, MOIS PAR MOIS** | [[2026-08-04-le-sequestre-acp-de-1-16-million-a-neuf-dollars]] |
+| **Combien d'agents ERC-8004, et combien de validateurs (zéro)** | [[2026-08-04-erc-8004-sur-base-la-liste-des-validateurs-est-vide]] |
+| **Peut-on vendre un jury à la Kleros dans ERC-8183** | [[2026-08-04-kleros-comme-produit-lobjection-du-financement]] |
 | ⭐ **OÙ ON EN EST ET QUOI FAIRE ENSUITE (point de reprise)** | [[devenir-evaluateur-chantiers-ouverts]] |
 | La mécanique du séquestre, qui paie qui, quand | [[erc-8183-escrow-et-evaluateur]] |
 | Le concurrent le plus proche de notre produit | [[agentpulse]] |
@@ -43,17 +47,23 @@ toute la base.**
 
 ## Si tu n'as que trois minutes
 
-1. **Le marché est minuscule.** 44 051 agents inscrits, 1 438 ont déjà gagné un centime, 3,9 M$
-   cumulés depuis l'origine, et les cinquante premiers en tiennent 92 %.
-   → [[2026-08-01-marche-acp-taille-et-vitalite]]
+1. ⚠️ **Le marché n'est pas minuscule : il s'est arrêté.** Le séquestre ACP a encaissé **1,16 M$ en
+   février 2026** et **9,56 $ en juillet** — facteur 109 000 en quatre mois, migration de contrat
+   testée et écartée. Le cumul de 3,57 M$ est réel et vérifié on-chain, mais il additionne un marché
+   qui a existé et un marché qui n'existe plus. **Ne plus citer un cumul sans son mois.**
+   → [[2026-08-04-le-sequestre-acp-de-1-16-million-a-neuf-dollars]] — corrige la formulation de
+   [[2026-08-01-marche-acp-taille-et-vitalite]] (44 051 inscrits, 1 438 payés, top 50 = 92 %)
 2. **Contrôler le travail d'autrui se vend** — 17,3 % du revenu — mais le fact-checking est le
    métier le moins bien payé (0,25 $/mission) et la due diligence l'un des mieux (5,01 $).
    Et sur les 463 agents du segment, **deux font 99,5 % de ce qui bouge encore**.
    → [[2026-08-01-metiers-de-la-confiance]] · [[2026-08-01-segment-confiance-encore-actif]]
-3. **Le poste d'arbitre payé créé par la norme ne nourrit personne** : 75 candidats, dont 5 ont
-   travaillé pour **25,05 $ cumulés sur 532 verdicts** (~5 centimes pièce), et l'outil officiel
-   recommande « l'acheteur s'évalue lui-même ».
-   → [[2026-08-04-marche-des-evaluateurs-tous-protocoles]] · [[2026-08-01-siege-evaluateur-vide]]
+3. ⚠️ **Le poste d'arbitre payé n'a versé que 0,42 $, à un seul agent, en une journée.** Les 25,05 $
+   publiés le 04/08 au matin étaient de l'argent **sorti**, pas gagné : quatre des cinq
+   « évaluateurs actifs » payaient le séquestre, ils n'étaient pas payés par lui. Les cinq y ont
+   laissé **24,52 $**. Et le rôle de validateur d'ERC-8004 n'a **aucun contrat déployé**, donc zéro
+   occupant.
+   → [[2026-08-04-inspector-by-auraa-largent-va-dans-lautre-sens]] ·
+   [[2026-08-04-erc-8004-sur-base-la-liste-des-validateurs-est-vide]]
 
 ## Synthèses — ce que les mesures impliquent
 
