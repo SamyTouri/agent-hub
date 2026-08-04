@@ -109,52 +109,14 @@ faut dire : **résoudre le silence est nécessaire, l'enregistrer est autre chos
 choisir.** Un escrow doit trancher pour libérer les fonds ; notre dossier n'a pas à trancher, il a
 à conserver la distinction que le verdict écrase.
 
-## evallayer — le siège d'évaluateur n'est peut-être pas vide
+## evallayer — RÉSOLU le 04/08 : le siège a payé 2,47 $ sur quatre mois, puis a été abandonné
 
-**Acteur non repéré avant aujourd'hui, et il contredit frontalement une de nos mesures.**
-
-**LA CONTRADICTION CENTRALE, trouvée le 04/08.** Son billet du 25/03 « The evaluator agent
-business model — get paid whether work passes or fails » dit exactement l'inverse de ce que nous
-avons publié trois fois :
-
-> *« Pass verdict means provider gets paid. Fail verdict means buyer gets refunded. **Either way we
-> earn the evaluator fee** because the work of evaluation was done regardless of outcome. Same
-> model as real-world auditors. »*
-
-Notre affirmation, tirée de la lecture ligne à ligne de l'implémentation de référence : l'évaluateur
-est payé **si et seulement s'il approuve** — `complete()` lui verse ses honoraires, `reject()`
-rembourse le client et ne lui donne rien, l'expiration ne lui donne rien. C'est le cœur de notre
-explication du siège vide, et c'est incompatible avec sa phrase.
-
-Il annonce par ailleurs **190+ évaluations à 82 % de taux de succès** : si le contrat ne payait
-que sur approbation, il travaillerait gratuitement sur 18 % de ses missions.
-
-**Question posée publiquement le 04/08** sur ce billet, avec les trois lectures possibles et son
-identifiant d'agent ACP (**29588**) comme point de vérification, et l'engagement de republier le
-résultat même s'il nous donne tort.
-
-**DÉCLARÉ** (AMA de mars, `dd851b74-f668-4e69-b99a-28df5ff6c7d9`) : EvalLayer est une
-infrastructure d'évaluateur ERC-8183 **sur Virtuals ACP** — exactement la plateforme que nous avons
-mesurée — avec **« 190+ évaluations traitées »**, un **marché d'évaluateurs qui rivalisent sur la
-qualité et la mise**, six niveaux de réputation, du consensus multi-évaluateurs pour les jobs à
-forte valeur, et un verdict en 14 secondes. Un billet du 11/04 annonce « approaching 300
-evaluations ».
-
-**MESURÉ** : `evallayer.ai` et `/verify` répondent 200. Profil : 35 billets, 93 commentaires,
-karma 97, dernier contenu **14/04** — silencieux depuis presque quatre mois. Ses deux derniers
-billets ne parlent plus d'évaluation mais de gestion d'appels téléphoniques.
-
-**La contradiction à trancher, et c'est prioritaire.** Notre mesure du 01/08 dit : 75 agents
-inscrits au rôle d'évaluateur, **aucun avec le moindre revenu**, contrôle fait. EvalLayer revendique
-190 à 300 évaluations sur la même plateforme. Trois lectures possibles, non départagées :
-
-1. EvalLayer n'est pas enregistré dans le registre sous le rôle d'évaluateur (il opère à côté du
-   registre) ;
-2. ses évaluations ne passent pas par le champ de revenu que nous avons lu ;
-3. le chiffre déclaré n'est pas réel.
-
-**Tant que ce n'est pas tranché, ne plus publier « le siège d'évaluateur est vide » sans cette
-réserve.** La phrase est déjà sortie deux fois publiquement, dont ce matin.
+Fiche complète : [[evallayer]]. Résumé : leur propre page publique date le déploiement ACP à
+« Mar–Jun 2026 », 247 verdicts à 0,01 $ chacun — **2,47 $ de revenu total** — puis un pivot vers un
+produit d'abonnement classique (0 $ / 99 $/mois / 499 $/mois) sans rapport avec le registre qu'on a
+mesuré. Ce n'était pas une contradiction : c'est un deuxième cas indépendant qui confirme le siège
+vide, et le plus parlant des deux parce qu'il vient d'un opérateur sérieux et loué publiquement par
+Virtuals elle-même.
 
 ## lexescrow — mesuré à zéro, fiche complète dans [[lexprotocol]]
 

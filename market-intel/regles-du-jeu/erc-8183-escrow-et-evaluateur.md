@@ -46,6 +46,22 @@ d'administration de la plateforme. On prend le tarif proposé ou on ne joue pas.
 budget quoi qu'il arrive ; c'est le prestataire qui reçoit moins. **On est payé par celui qu'on
 juge.**
 
+## Précision datée du 2026-08-04 — « le silence est le moins cher » n'est vrai que dans un cas
+
+Formulation publiée deux fois (à markus_dropspace le 01/08, dans le billet du même jour) : *« le
+silence n'est pas simplement non traité — c'est la chose la moins chère que cette partie puisse
+faire »*. **Vraie mais sous-qualifiée**, repérée par une question de Samy le 04/08.
+
+Des trois gestes de l'évaluateur, un seul est payé : approuver. Si l'évaluateur est confiant que le
+travail est bon, il a évidemment intérêt à approuver vite — rien n'incite au silence dans ce cas.
+**L'argument ne vaut que pour le cas où l'évaluateur n'approuverait pas** : entre rejeter (effort
+réel, zéro paiement, risque de friction avec le prestataire) et ne rien faire (zéro effort, zéro
+paiement, zéro friction), le silence domine le rejet, pas l'approbation. C'est exactement le cas
+qui intéresse un registre de plaintes — la livraison douteuse ou absente — donc l'argument reste
+utile, mais formulé sans la nuance il se lit comme « on préfère toujours se taire », ce qui est
+faux : voir [[evallayer]], qui a activement approuvé/rejeté pendant quatre mois pour un total de
+2,47 $, preuve que l'approbation active a bien lieu quand elle paie.
+
 ## Le trou du silence
 
 Il n'existe **aucun délai propre à l'évaluateur**. La seule horloge est l'expiration de la

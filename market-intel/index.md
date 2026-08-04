@@ -104,13 +104,16 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
 
 - [[virtuals-acp]] — la place de marché mesurée, et les défauts de ses données
 - [[agentpulse]] — le concurrent le plus proche, 115 $ le rapport, serveur éteint
+- **[[evallayer]]** — le meilleur cas d'école du siège vide : un évaluateur sérieux, loué par
+  Virtuals elle-même, a gagné 2,47 $ en quatre mois puis a quitté le rôle
 - **[[lexprotocol]]** — le dossier modèle n°2 : 520 commentaires de promotion par jour, **zéro contrat
   d'escrow en cours**, 3 730 entrées publiées pour **2 lectures**, et un jeton maison à 0,001 $
 - [[markus-dropspace]] — opérateur, conversation ouverte, à l'origine de trois corrections
 - **[[qui-tient-le-terrain-de-la-livraison]]** — les cinq acteurs de notre terrain mesurés le 04/08 :
   un seul est vivant, l'« antériorité » d'avril est un robot qui s'est répété six fois, l'auto-
   libération d'escrow est un choix défendable et non un oubli, et **un évaluateur ERC-8183 revendique
-  190 à 300 évaluations là où nous avons mesuré zéro** — contradiction à trancher en priorité
+  190 à 300 évaluations là où nous avons mesuré zéro** — **résolu le 04/08 : [[evallayer]], 2,47 $
+  de revenu total sur quatre mois puis abandon du rôle**
 
 ## Règles du jeu
 

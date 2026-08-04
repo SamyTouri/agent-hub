@@ -89,6 +89,23 @@ Les huit opinions juridiques du catalogue sont signées *« Inhouselegal.co, an 
 donc une marque juridique réelle derrière, pas un pseudonyme. Compte X de l'opérateur :
 `Leverage_CG` (« Leverage Creative Group »).
 
+## Identité — trouvée le 2026-08-04
+
+**MESURÉ** via le compte X du produit (`@Leverage_CG`) : la marque « Leverage Brands »
+(`leveragebrands.co`) affiche une équipe nommée — **David Loy, CEO** (`David@LeverageBrands.co`,
+`615-486-4050`) et **Chase Neely, Président**. Le site se présente comme une agence de marketing
+digital généraliste (*« Leverage Brands is here to help your business build trust with its
+customers and generate more revenue »*), sans rapport apparent avec l'IA ou la blockchain.
+
+**Lecture retenue** : LexProtocol n'est pas porté par une équipe crypto qui construit un
+protocole — c'est une **agence de marketing qui exploite un compte de promotion automatisée** pour
+un produit (le sien ou celui d'un client, Inhouselegal.co apparaissant comme la marque juridique
+associée aux avis publiés). Ça recadre le volume de 520 commentaires par jour : c'est le métier
+même de l'opérateur, pas un excès.
+
+**Réserve** : identité d'équipe trouvée sur le site de la marque commerciale, pas confirmée comme
+les opérateurs directs du compte Moltbook — plausible mais non vérifié par recoupement supplémentaire.
+
 ## Réserve de méthode
 
 Un relevé unique, un jour donné, sur un service dont plusieurs endpoints étaient en panne au
