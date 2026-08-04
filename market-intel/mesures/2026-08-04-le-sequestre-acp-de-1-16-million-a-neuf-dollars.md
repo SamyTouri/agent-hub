@@ -103,11 +103,54 @@ position est bon marché et l'information n'appartient à personne. Ce qui chang
 cesser d'expliquer les petits chiffres par la jeunesse du marché : **ils s'expliquent par un
 retrait**, et la question utile devient *pourquoi les 23 840 déposants sont partis*.
 
-## 6. Ce que ça ouvre
+## 6. La rupture, datée au jour et caractérisée
 
-- **Pourquoi mars ?** La rupture est nette entre mars (1,04 M$) et avril (34 k$). Chercher
-  l'événement : fin d'un programme d'incitation, changement de règles, ou tarissement d'une
-  subvention. C'est la question ouverte la plus riche du dépôt.
+Priorité arbitrée par Samy le 2026-08-04. Premier passage, même jeu de données.
+
+**La falaise est le 22 → 23 mars 2026 :**
+
+| jour | dépôts | USDC |
+|---|---:|---:|
+| 2026-03-21 | 21 289 | 42 405 |
+| **2026-03-22** | 8 313 | **79 836** |
+| **2026-03-23** | 3 683 | **2 401** |
+| 2026-03-24 | 2 402 | 396 |
+
+La **valeur** chute de 97 % en une nuit ; le **nombre** de dépôts, lui, ne fait que se diviser par
+deux puis décroître pendant des semaines. Ce ne sont donc pas les agents qui s'arrêtent d'un coup :
+**c'est une classe de montants qui disparaît.**
+
+### Ce n'est pas une baleine qui part
+
+Sur le 1–22 mars, 990 884 $ déposés par **6 580 déposants**. Le premier d'entre eux pèse 97 000 $
+(un dépôt unique, 9,8 %), le deuxième 3 133 $. Un seul gros déposant (>5 000 $) présent avant est
+totalement absent après. **La chute n'est pas imputable au départ d'une adresse.**
+
+### C'est la tranche 10–100 $ qui s'évapore
+
+| tranche de dépôt | 1–22 mars | 23 mars–30 avril | juillet |
+|---|---:|---:|---:|
+| < 0,02 $ | 89 293 dépôts | 52 028 | **376** |
+| 0,1–1 $ | 95 611 | 14 259 | 25 |
+| 1–10 $ | 90 735 | 11 618 | 1 |
+| **10–100 $** | **32 326 dépôts · 635 246 $ · 64 % de la valeur** | **1 123 · 17 730 $** | **0** |
+| 100–1 000 $ | 649 | 312 | 0 |
+
+**Le marché qui meurt est celui des missions à 10–100 $** : −96,5 % en nombre, et il portait les
+deux tiers de la valeur. Ce qui survit le plus longtemps, c'est la poussière : en juillet, **376 des
+428 dépôts font moins de deux centimes**, et plus une seule mission ne dépasse dix dollars.
+
+**Formulation prudente, parce que la cause n'est pas établie** : ce qui s'est arrêté le 23 mars,
+c'est la mission de valeur réelle, pas l'activité automatisée. Une disparition sélective par tranche
+de montant, simultanée sur des milliers d'adresses, est **compatible** avec la fin d'un programme
+qui finançait ces missions — et **incompatible** avec un départ d'acteur ou une migration technique
+(toutes deux déjà écartées, §4). L'événement du 22–23 mars reste à nommer.
+
+## 7. Ce que ça ouvre
+
+- **Nommer l'événement du 22–23 mars 2026.** La date est désormais bornée à la journée et la forme
+  est caractérisée ; il reste à trouver l'annonce, le changement de règles ou la fin de programme
+  qui lui correspond. Question posée publiquement le 04/08, sans réponse à ce jour.
 - **La part de subvention.** [[deux-grappes-anormales-verification-on-chain]] soupçonnait que le
   revenu affiché mélange ventes et subventions. Une chute de cette forme — verticale, synchrone,
   totale — est la signature d'un robinet qu'on ferme, pas d'une demande qui faiblit. **À instruire

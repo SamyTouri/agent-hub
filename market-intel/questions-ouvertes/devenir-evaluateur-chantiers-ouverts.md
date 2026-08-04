@@ -93,25 +93,31 @@ des cinq corrections qu'il apporte à nos propres publications.
 **Non publié** : il faut décider où (site, Moltbook, les deux) et l'arbitrage doctrinal ci-dessous
 touche à ce qu'il annonce de nous.
 
-## ⚠️ CE QUI ATTEND SAMY — arbitrage doctrinal
+## ✅ ARBITRAGE RENDU PAR SAMY — 2026-08-04
 
-Notre position publique est **« nous ne sommes pas un adjudicateur »**. Or occuper le siège
-ERC-8183, même pour quelques centimes, c'est rendre des verdicts : la norme ne connaît que
-`complete` et `reject`, et ils déplacent l'argent.
+**« Séparer les métiers. »** Le registre de faits ne juge pas ; un agent évaluateur qui juge est
+annoncé comme un métier distinct, avec sa propre adresse et sa propre page. La promesse publiée
+n'est **pas** réécrite — elle est rendue vérifiable de l'extérieur. Inscrit dans `docs/DOCTRINE.md`
+sous *Not an adjudicator*.
 
-Trois sorties, détaillées dans [[2026-08-04-kleros-comme-produit-lobjection-du-financement]] §6 :
+*Précision honnête : la doctrine avait déjà fait la moitié du chemin le 2026-08-01 en distinguant
+attester des faits (permis) de trancher un litige (interdit). L'arbitrage du 04/08 ajoute la
+réponse d'organisation — deux métiers visibles — que cette distinction laissait ouverte.*
 
-1. **Séparer les métiers** — le registre de faits ne juge pas, l'agent évaluateur juge, et c'est
-   annoncé comme un métier distinct. *(préférence de Claude, parce qu'elle ne réécrit aucune
-   promesse déjà publiée et se vérifie de l'extérieur)*
-2. **Requalifier la doctrine** — pas adjudicateur *de nos propres dossiers*.
-3. **Renoncer au siège** — cohérence maximale, option perdue.
+**Priorité arbitrée pour la suite : élucider mars 2026.**
 
 ## Ce qui reste ouvert, par ordre d'intérêt
 
-1. **Que s'est-il passé en mars 2026 ?** La rupture est verticale : 1,04 M$ puis 34 k$. C'est la
-   forme d'un robinet qu'on ferme. Question posée publiquement le 04/08, sans réponse à ce jour.
-   **C'est la question la plus riche du dépôt.**
+1. ⭐ **Nommer l'événement du 22–23 mars 2026** — priorité choisie par Samy. **Premier passage fait**
+   ([[2026-08-04-le-sequestre-acp-de-1-16-million-a-neuf-dollars]] §6) :
+   - la falaise est datée **au jour** : 79 836 $ le 22 mars, 2 401 $ le 23 ;
+   - **la valeur chute de 97 % en une nuit, le nombre de dépôts seulement de moitié** ;
+   - ce n'est **pas** un gros déposant qui part (6 580 déposants avant, le premier ne pèse que 9,8 %) ;
+   - **c'est la tranche 10–100 $ qui s'évapore** : −96,5 % en nombre, et elle portait 64 % de la
+     valeur. En juillet, 376 des 428 dépôts font moins de deux centimes.
+   - **Reste à faire** : trouver l'annonce, le changement de règles ou la fin de programme du 22–23
+     mars. Chercher côté Virtuals (communications, changelog), côté Moltbook (fils de cette
+     semaine-là), et demander directement aux déposants de la tranche 10–100 $ qui ont cessé.
 2. **Séparer ventes et subventions** dans le total de 3,57 M$ — la chute de mars en fait une
    urgence, pas un raffinement ([[deux-grappes-anormales-verification-on-chain]]).
 3. **Le registre de validation ERC-8004**, annoncé « later this year ». Population zéro, norme en

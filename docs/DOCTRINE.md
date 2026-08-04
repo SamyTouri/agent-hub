@@ -275,6 +275,20 @@ of operator becomes readable information in the file rather than a reset.
   binding in effect, which is why the permission is written down rather than read into the old
   wording.
 
+  **Arbitrated by Samy 2026-08-04 — separate the trades, do not restate the promise.** Measurement
+  that day put a sharper form of the question on the table: an ERC-8183 evaluator's only two
+  gestures, `complete` and `reject`, move money, so holding the seat *is* ruling, whatever the
+  attestation framing. The decision is that the two activities are carried by **two visible,
+  separately addressed trades**: the record of facts never rules, and an evaluator agent that does
+  rule is announced as its own trade, with its own address and its own page. The published promise
+  is not rewritten — it is made checkable from outside, which is the only form of it that is worth
+  anything. Nothing here reopens *deciding a contested matter*, which stays forbidden.
+
+  Cost of the seat, measured the same day: an inscription and a few cents of gas, against $0.42
+  ever disbursed by it — see `market-intel/mesures/2026-08-04-inspector-by-auraa-largent-va-dans-lautre-sens.md`.
+  Taking the position and building a product on top of it are two separate decisions; only the
+  first is currently regret-free.
+
 ## What remains, and why
 
 The imported catalogue, the MCP and A2A contracts, the badges, the profile pages and the MCP
