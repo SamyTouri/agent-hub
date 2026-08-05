@@ -194,6 +194,74 @@ est donc un agrégat **ventes + récompenses réclamées**, en proportion inconn
 perdants depuis ce distributeur Merkle ou ses successeurs. Si on les trouve, la bulle est documentée
 de bout en bout et ce n'est plus une inférence.
 
+### La chasse au distributeur Merkle : échec, et ce qu'elle a trouvé à la place
+
+*(Ajouté le 2026-08-05 sur instruction de Samy — piste ouverte par Codex.)*
+
+**Ce que je cherchais** : le contrat de distribution à preuve Merkle qui, dans une mesure antérieure,
+versait 1 803,81 USDC à un agent dont les vrais jobs pesaient 8 $. Si nos gros déposants perdants
+figuraient parmi ses bénéficiaires, la bulle était documentée de bout en bout.
+
+**Je ne l'ai pas trouvé, et je le dis plutôt que de le suggérer.** Méthode : j'ai indexé toutes les
+entrées de jetons, tous jetons confondus, vers les adresses des cinq plus gros propriétaires
+déposants (1 462 transferts, janvier→août 2026), puis testé chaque émetteur important en comptant
+ses destinataires distincts — un distributeur en paie des milliers, un portefeuille personnel en
+paie deux.
+
+Les deux meilleurs candidats se sont révélés être de l'infrastructure générique :
+
+| contrat | sorties mesurées | verdict |
+|---|---|---|
+| `0xee7ae85f…4055` | 108 888 transferts, **1,43 md$**, 52 434 destinataires | trop gros de trois ordres de grandeur — routeur ou pont |
+| `0x0a2854fb…9330` | 899 242 transferts, **79 M$ d'USDC** + des dizaines d'autres jetons, 65 502 destinataires | agrégateur multi-jetons, pas un programme |
+
+**Statut : piste non conclue.** Ce qui la fermerait : retrouver la transaction exacte de 1 803,81 $
+décrite dans notre fiche du 3 août, dont l'adresse n'avait pas été consignée — leçon au passage,
+**une mesure qui ne note pas l'adresse qu'elle a lue n'est pas reproductible**.
+
+**Deux faits utiles au passage.** Sur mes cinq plus gros propriétaires déposants, **deux ont en
+réalité gagné de l'argent** — `0x70cd50ed…` a déposé 77 920 $ et reçu 126 247 $ (**+48 327 $**),
+`0xec140041…` a déposé 37 373 $ et reçu 60 986 $ (**+23 613 $**) — tandis que les trois autres ont
+tout perdu (321 $, 25 $ et 20 $ reçus pour 30 à 37 000 $ déposés). L'idée que « les gros déposants
+perdaient tous » était fausse.
+
+### En revanche, l'objection de Codex est maintenant démontrée, pas seulement plausible
+
+En suivant ces flux, je suis tombé sur un cas qui règle la question de la limite de mon test à
+2,7 %.
+
+**Le propriétaire `0x0e59260dd59dc5a5feb99c597eb0f6162a11d464` exploite 6 agents ACP.** Cinq d'entre
+eux affichent un `grossAgenticAmount` remarquablement uniforme : **21 885 · 21 932 · 22 035 ·
+22 200 · 22 998 $** — une fourchette de 5 % sur cinq agents, ce qui ne ressemble pas à de la demande.
+
+Mesuré sur tous leurs portefeuilles plus celui du propriétaire, février→mai 2026 :
+
+| flux | montant | transactions |
+|---|---:|---:|
+| déposé dans le séquestre ACP | **0,00 $** | **0** |
+| reçu du séquestre ACP | **143 289,61 $** | 9 007 |
+| **circulation interne entre leurs propres portefeuilles, HORS séquestre** | **174 938,15 $** | **75** |
+| argent frais reçu de l'extérieur | 49 100,31 $ | 183 |
+| sorti vers l'extérieur | 196 186,01 $ | 110 |
+
+**Le chiffre qui compte est celui du milieu.** Ces agents ont fait circuler **174 938 $ entre leurs
+propres portefeuilles en 75 virements, entièrement en dehors du séquestre.** Mon test de
+circularité mesurait les flux *du séquestre* : il ne pouvait pas voir un seul de ces dollars.
+
+**Donc : « le lavage est écarté à 2,7 % » était une conclusion trop large, et Codex avait raison de
+le dire.** La formulation juste est : *la circularité passant par le séquestre est de 2,7 % ; la
+circularité hors séquestre existe, elle est documentée sur au moins un opérateur, et son ampleur
+totale n'est pas mesurée.*
+
+**Ce que ce cas n'est pas** : ce n'est pas du lavage au sens strict. Cet anneau **n'a rien déposé**
+dans le séquestre et en a **extrait 143 290 $** — c'est un vendeur net, payé par l'argent d'autres
+déposants. Ce qui est anormal, c'est l'uniformité des montants déclarés et la circulation interne
+massive en si peu de virements.
+
+**Et un troisième chiffre qui ne se réconcilie avec rien** : la plateforme déclare 111 050 $ de
+`grossAgenticAmount` cumulé pour ces six agents, alors qu'ils ont reçu 143 290 $ du séquestre. Ni
+égal, ni proportionnel. Une raison de plus de ne jamais traiter ce champ comme une mesure.
+
 ### Et un piège de vocabulaire qui invalide les comparaisons faciles
 
 L'**aGDP** n'est pas un chiffre d'affaires. Virtuals le définit comme **toute valeur traitée par
@@ -514,10 +582,16 @@ positif.
    c'est une limite de configuration levable, la place peut porter notre marché ; si c'est
    structurel, elle ne le pourra jamais et il faut regarder ailleurs. **C'est devenu la question
    technique n°1.**
-3. **Vérifier où atterrissaient les récompenses du Revenue Network.** Suivre les adresses des gros
-   déposants perdants : si elles ont reçu des versements d'un distributeur Virtuals, la bulle est
-   documentée de bout en bout et ce n'est plus une inférence.
-3. ✅ **Nommé** (§4bis) — fin de l'Epoch 5 du programme aGDP. **Reste à faire** : retrouver la page X
+3. ⚠️ **Essayé le 05/08, NON CONCLU** — le distributeur Merkle n'a pas été retrouvé : les deux
+   candidats sérieux se sont révélés être de l'infrastructure générique (1,43 md$ / 52 434
+   destinataires, et 79 M$ multi-jetons / 65 502 destinataires). **Pour fermer la piste** : localiser
+   la transaction de 1 803,81 USDC de notre fiche du 03/08, dont l'adresse n'avait pas été notée.
+4. ⭐ **Mesurer l'ampleur de la circulation HORS séquestre** — la vraie découverte du 05/08. Le cas
+   `0x0e59260d…` montre **174 938 $ tournant entre les portefeuilles d'un seul opérateur en 75
+   virements**, totalement invisibles à une mesure faite sur le séquestre. Généraliser aux 211
+   flottes donnerait la part réelle de volume fabriqué. Lourd, et c'est la mesure qui manque à tout
+   le monde — y compris à Virtuals.
+5. ✅ **Nommé** (§4bis) — fin de l'Epoch 5 du programme aGDP. **Reste à faire** : retrouver la page X
    originale de `@virtuals_io` plutôt que son miroir, et une source officielle donnant la fenêtre
    exacte de l'Epoch 5. Tant que ces deux pièces manquent, c'est une inférence forte, pas un fait
    établi.
