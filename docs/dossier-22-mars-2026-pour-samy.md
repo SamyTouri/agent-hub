@@ -15,7 +15,7 @@ Réponse courte à chacune, puis le détail.
 
 | ta question | réponse courte |
 |---|---|
-| **Pourquoi ?** | Un programme de subvention de 1 M$/mois lancé le 12 février a multiplié le volume par 20. Quelque chose l'a interrompu dans la nuit du 22 au 23 mars. **La cause exacte n'est pas établie** — je sais quoi, quand et comment, pas encore pourquoi. |
+| **Pourquoi ?** | **L'événement est nommé** (§4bis, apport de Codex, corroboré par une mesure à moi) : le 22 mars 2026 était le dernier jour de l'**Epoch 5**, que Virtuals a annoncée comme **la dernière du programme d'incitations aGDP**. Ce qui reste inconnu est la *part* de la chute imputable à l'arrêt des récompenses. |
 | **A-t-il été remplacé ?** | **Oui, partiellement.** ACP v2 tourne depuis avril sur un nouveau contrat. Il fait 1 072 $ en juillet et **il croît de 39 % par mois**. |
 | **ACP est-il encore l'essentiel du marché ?** | **La question est mal posée** — corrigé sur ton objection, §6. x402 est un compteur d'API (données, inférence), pas un marché de services entre agents ; il n'a même pas de catégorie « agent à agent ». ACP reste **le seul endroit où il existe du travail commandé avec obligation de livraison** — et ce marché-là vaut ~1 082 $/mois. |
 | **Bulle éclatée ? Sommes-nous en avance ?** | **Oui pour la bulle** (subventionnée, à moitié peuplée de flottes fictives). **Et oui, nous sommes en avance** — mais pas pour la raison qu'on croyait. Voir §7, c'est la partie qui compte. |
@@ -155,36 +155,130 @@ une seule mission — `grossAgenticAmount: 0`, `successfulJobCount: 0`.
 le monde publie, est **à moitié composé de flottes créées en un mois pour un programme
 d'incitation**. Il faut cesser de le citer nu.
 
-### Ce que j'ai cherché et NON trouvé — c'est important
+### Ce que j'ai cherché et NON trouvé — avec la limite que Codex y a mise
 
 L'hypothèse évidente est le lavage : des agents d'un même propriétaire se payant entre eux pour
 fabriquer du volume. **Je l'ai testée et elle est fausse à cette échelle.** En mappant chaque
 déposant et chaque bénéficiaire vers son propriétaire ACP, l'argent qui revient au même
 propriétaire ne représente que **2,7 %** du volume de la période subventionnée.
 
-Autre chose que je n'explique pas : le premier déposant a mis **77 920 $** dans le séquestre et n'en
-a reçu que **11 569 $**. Il perd 66 000 $. Ça n'a de sens que si le gain est **ailleurs** — dans le
-programme de récompenses, versé hors séquestre. **Je n'ai pas vérifié ce point**, et c'est la
-première chose à faire pour clore le dossier.
+**Codex a raison de dire que ce test prouve moins que je ne le lui faisais dire.** Il réfute une
+boucle naïve entre agents *déclarés sous le même propriétaire dans le registre ACP*. Il ne teste pas
+le **contrôle économique commun de portefeuilles acheteurs non attribués** — deux adresses pilotées
+par la même personne mais jamais enregistrées comme agents du même propriétaire passent au travers.
 
-### Et ce que je ne sais toujours pas : la date du 22 mars
+Et ce n'est pas théorique. Un service public, **ClawBoost**, commercialise aujourd'hui exactement
+ça : des agents acheteurs multi-portefeuilles, la création de vrais jobs ACP, le recyclage
+automatique du capital, et environ **4,8× le budget initial en volume aGDP**, avec 20 % perdus par
+tour en frais ACP. Leur exemple : 5 000 $ transformés en 23 995 $ de volume brut. *(Observé
+aujourd'hui — ça ne prouve pas que ce service opérait en février-mars.)*
 
-Le changelog officiel de Virtuals a une entrée le **10 mars** (bascule job privé) et une le
-**18 mars** (paliers d'abonnement). **Rien le 22 ni le 23.**
+La borne mathématique est cohérente : avec 20 % de friction par tour, une boucle fermée plafonne à
+`B + 0,8B + 0,8²B + … = 5B`. Le « 4,8× » annoncé est une boucle finie proche de cette limite.
 
-Donc : je sais **quoi** (la tranche 10–100 $), **quand** (nuit du 22 au 23 mars), **comment**
-(brutalement, sur des milliers d'adresses), et **dans quel contexte** (six semaines après le
-lancement d'un programme de la taille du volume observé). **Je ne sais pas nommer l'événement.**
+**Formulation corrigée** : le lavage entre agents d'un même propriétaire déclaré est marginal
+(2,7 %). **Le volume fabriqué par des acheteurs contrôlés en commun mais non attribués n'est pas
+mesuré, et il est industriellement faisable.**
 
-Les hypothèses restantes, par ordre de vraisemblance :
+### Le gain du gros perdant : Codex donne la piste
 
-1. **Fin, épuisement ou resserrement du budget du Revenue Network** — cohérent avec la forme, la
-   date à six semaines, et la sélectivité par montant. **Non confirmé.**
-2. **Changement de règles d'éligibilité** (anti-farming) non consigné au changelog public.
-3. **Décision interne non annoncée** — plafond atteint, ou coupure après détection d'abus.
+Le premier déposant a mis **77 920 $** dans le séquestre pour n'en retirer que **11 569 $**. Il perd
+66 000 $ — ce qui n'a de sens que si le gain est ailleurs.
 
-Les deux explications que j'ai pu **écarter par la mesure** : ce n'est pas un gros acteur qui part
-(6 580 déposants, le premier ne pèse que 9,8 %), et ce n'est pas une migration de chaîne (§5).
+Codex pointe une mesure déjà dans `market-intel/` que j'avais oubliée : sur un autre agent, une
+transaction verse **1 803,81 USDC depuis un contrat de distribution à preuve Merkle**, réclamée par
+le propriétaire, alors que les jobs réels du même agent pèsent **8 $**. Le champ `revenue` de l'API
+est donc un agrégat **ventes + récompenses réclamées**, en proportion inconnue.
+
+**La vérification à faire est donc précise** : chercher les versements reçus par nos gros déposants
+perdants depuis ce distributeur Merkle ou ses successeurs. Si on les trouve, la bulle est documentée
+de bout en bout et ce n'est plus une inférence.
+
+### Et un piège de vocabulaire qui invalide les comparaisons faciles
+
+L'**aGDP** n'est pas un chiffre d'affaires. Virtuals le définit comme **toute valeur traitée par
+l'agent** : fonds reçus, fonds retransmis, frais payés et reçus, et **le notionnel des jobs de
+trading**. Leur propre exemple : un agent qui reçoit 10 $ et en reverse 3 $ produit **13 $** d'aGDP ;
+un agent qui gère 5 000 $ de trading pour 10 $ de frais produit **5 010 $** d'aGDP.
+
+De même, un `job ID` compte pour une transaction même s'il contient plusieurs mouvements de fonds.
+**Les « 2 millions de jobs » annoncés ne sont donc pas comparables à mes 1,38 million de transferts
+USDC.**
+
+**Quatre grandeurs différentes qu'il ne faut jamais confondre** : l'aGDP annoncé, les 3,57 M$ entrés
+dans le coffre (mesurés), les frais réellement gagnés par les vendeurs, et les récompenses
+distribuées.
+
+## 4bis. L'événement est nommé — apport de Codex, et ce que ma mesure y ajoute
+
+*(Ajouté le 2026-08-05 après lecture de `.exchange/codex/complement-dossier-22-mars-2026-codex.md`.
+La version précédente de ce dossier disait « je ne sais pas nommer l'événement ». C'est levé.)*
+
+### La pièce trouvée par Codex
+
+Une archive d'une publication du compte officiel `@virtuals_io` annonce que **l'Epoch 5 est la
+dernière epoch du programme d'incitations aGDP**, avec ce bilan : jusqu'à 4 M$ de revenu
+agent-à-agent, plus de 2 millions de jobs, plus de 32 951 agents lancés, **plus de 1 M$
+d'incitations distribuées**, et le passage annoncé à une nouvelle structure.
+
+La documentation officielle décrit les epochs comme des semaines **lundi 00:00 → dimanche 23:59
+(UTC+4)**. **Le 22 mars 2026 était un dimanche** — je l'ai vérifié. La séquence hebdomadaire depuis
+le lancement du 12 février place donc l'Epoch 5 finale sur le **16–22 mars**.
+
+**Statut : RAPPORTÉ par Virtuals via un miroir tiers, la fenêtre exacte de l'Epoch 5 étant une
+inférence forte de Codex, pas une page officielle.**
+
+### Ce que ma mesure y ajoute — et c'est plus fort que la concordance de date
+
+Une date qui tombe bien reste une coïncidence tant qu'on n'a pas montré que l'arrêt est **collectif**.
+Je l'ai mesuré.
+
+**Les dépôts de 10 $ et plus, du 15 au 22 mars : 19 341 dépôts, 371 881 $, émis par 116
+propriétaires distincts.** Les trois premiers ne pèsent que **15,9 %** de la valeur. Ce n'est pas un
+opérateur qui range ses affaires : **c'est 116 acteurs indépendants qui s'arrêtent en même temps.**
+
+Et « en même temps » est littéral. Après recalage sur des horodatages de blocs réels (mon
+extrapolation dérivait de +30 min, ce qui ne se voit pas au jour mais fausse une lecture horaire) :
+
+| heure UTC, dimanche 22 mars | USDC déposés |
+|---|---:|
+| 12:00 | 18 141 |
+| **13:00** | **22 460** |
+| 14:00 | 9 510 |
+| **15:00** | **101** |
+| 16:00 | 28 |
+| 17:00 | 10 |
+
+**Le décrochage est à ~14:32 UTC**, à la minute près : les dépôts par multiples de 60 $ s'arrêtent
+net, et il ne reste que de la poussière sub-dollar.
+
+**Un arrêt simultané de 116 opérateurs indépendants à la même minute, un dimanche, ne peut pas être
+une somme de décisions individuelles.** C'est une échéance commune. La pièce de Codex dit laquelle.
+
+### La réserve que je maintiens
+
+**14:32 UTC = 18:32 UTC+4, soit environ cinq heures et demie AVANT la frontière d'epoch inférée
+(23:59 UTC+4 = 19:59 UTC).** Les deux ne coïncident pas exactement.
+
+Lecture la plus simple, mais **c'est une inférence de ma part** : on n'envoie pas ses derniers jobs à
+la seconde d'une échéance qu'il faut que le système ait le temps de compter. Cinq heures de marge
+avant une date-limite, c'est un comportement ordinaire. Autres lectures possibles : le fuseau de
+l'aGDP n'est pas celui de l'ACP Score (14:32 UTC = 22:32 à Singapour, siège de Virtuals), ou le
+budget de l'epoch était épuisé avant sa clôture.
+
+**Ce que ça ne dit pas** : la part exacte de la chute imputable à l'arrêt des récompenses, le préavis
+donné aux participants, et la proportion d'activité qui existait indépendamment.
+
+### Les explications concurrentes, toutes écartées
+
+| explication | statut |
+|---|---|
+| un gros acteur part | **écarté** — 6 580 déposants, le premier pèse 9,8 % ; et 116 opérateurs sur les gros dépôts |
+| migration de chaîne | **écarté** — aucun contrat ACP sur Arbitrum, BNB, Optimism, Polygon (§5) |
+| migration vers un autre contrat | **écarté puis nuancé** — v1-bis fait 29,78 $ ; v2 existe mais démarre en avril et à 157 $ |
+| panne de Base | **écarté** (Codex) — l'incident le plus proche commence le **24 mars ~12:00 UTC**, après la falaise, et n'affecte pas la production de blocs |
+| contexte macro | **insuffisant** (Codex) — semaine risquée, mais Bitcoin était encore +1,5 % sur 24 h le matin du 23 ; n'explique ni l'alignement sur l'epoch, ni la sélectivité par tranche, ni l'absence de rebond |
+| changelog produit | **non pertinent** — entrées les 10 et 18 mars, rien le 22 : une fin de campagne se publie dans la communication du programme, pas dans les notes de version |
 
 ---
 
@@ -195,9 +289,14 @@ Optimism et Polygon : **aucun n'y est déployé**. L'annonce Arbitrum du 24 mars
 on-chain à ce jour. (En revanche, les registres ERC-8004, eux, sont bien déployés sur Arbitrum, BNB
 et Optimism — l'identité voyage, pas le commerce.)
 
-**Sur Base, par ACP v2 : oui.** Nouveau contrat `0x238E541BfefD82238730D00a2208E5497F1832E0`,
-déployé en avril, qui détient l'USDC directement (j'ai vérifié le chemin complet de l'argent cette
-fois) :
+**Sur Base, par ACP v2 : oui.** Contrat `0x238E541BfefD82238730D00a2208E5497F1832E0`, qui détient
+l'USDC directement (j'ai vérifié le chemin complet de l'argent cette fois) :
+
+> **Précision de Codex, et elle est juste** : le changelog documente un **SDK ACP v2 dès le 15
+> octobre 2025**. Ma phrase « ACP v2 déployé en avril » doit donc se lire « **ce contrat Core-là
+> devient actif en avril 2026** ». Version produit, version de SDK et contrat de règlement sont trois
+> choses distinctes. Ça ne change pas la mesure de la reprise, seulement ce qu'on a le droit d'en
+> dire.
 
 | mois | v2 |
 |---|---:|
@@ -272,10 +371,25 @@ usage engageant. ACP : MESURÉ.)*
    dont la plupart n'ont jamais rien fait.
 3. La chute est **sélective par montant** et **instantanée** — la signature d'un financement coupé,
    pas d'une demande qui s'érode.
-4. Après la coupure, il reste **0,07 % du pic** (778 $ contre 1,16 M$).
+4. **116 opérateurs indépendants s'arrêtent dans la même heure**, un dimanche, au dernier jour de la
+   dernière epoch du programme.
+5. Après la coupure, il reste **0,07 % du pic** (778 $ contre 1,16 M$).
+6. **Virtuals le savait et le disait.** Dès le bilan de l'Epoch 1, la plateforme reconnaissait
+   publiquement observer de l'**activité de service artificielle**, des **flux auto-dirigés** et des
+   **distorsions de prix**, et introduisait `Agent Score` puis des règles anti-farming resserrées à
+   chaque epoch. *(RAPPORTÉ par Virtuals via miroirs secondaires — apport de Codex.)*
+7. **L'économie du farming était positive.** Plus de 1 M$ de récompenses pour 3,57 M$ entrés dans le
+   coffre, soit ~**28 centimes de récompense par dollar déposé** — au-dessus des **20 %** de friction
+   ACP par tour. Un participant bien classé pouvait donc gagner de l'argent **sans aucune demande
+   extérieure**. *(Ordre de grandeur, pas rendement individuel : périmètres et pondérations
+   diffèrent.)*
 
-**Verdict : oui, une bulle subventionnée, et son ampleur réelle était d'environ un millième de ce
-qu'affichaient les compteurs.**
+**Verdict : oui, une bulle subventionnée, avec une incitation dont la mécanique rendait le farming
+rentable, et que l'éditeur combattait déjà sans y parvenir.**
+
+**Ce que ça n'établit pas** : que tout le volume était fictif. La proportion d'activité réellement
+demandée par un tiers indépendant **n'est pas mesurée**, et je ne vois pas comment la mesurer avec
+les données publiques.
 
 ### Que nous ne sommes pas en retard : ce qui l'établit
 
@@ -403,9 +517,10 @@ positif.
 3. **Vérifier où atterrissaient les récompenses du Revenue Network.** Suivre les adresses des gros
    déposants perdants : si elles ont reçu des versements d'un distributeur Virtuals, la bulle est
    documentée de bout en bout et ce n'est plus une inférence.
-3. **Nommer l'événement du 22 mars** : Discord et annonces Virtuals de cette semaine-là, fils
-   Moltbook, et demander directement aux déposants de la tranche 10–100 $ qui ont cessé. La question
-   est posée publiquement depuis aujourd'hui.
+3. ✅ **Nommé** (§4bis) — fin de l'Epoch 5 du programme aGDP. **Reste à faire** : retrouver la page X
+   originale de `@virtuals_io` plutôt que son miroir, et une source officielle donnant la fenêtre
+   exacte de l'Epoch 5. Tant que ces deux pièces manquent, c'est une inférence forte, pas un fait
+   établi.
 4. **Établir une série datée récurrente** sur v2 et sur x402. Nous serions les seuls à publier la
    valeur unitaire, et c'est la mesure qui commande notre calendrier d'entrée.
 
