@@ -25,6 +25,7 @@ Complète [[erc-8183-escrow-et-evaluateur]], [[2026-08-01-siege-evaluateur-vide]
 | **LexProtocol** | arbitre **centralisé** | l'opérateur | commission de 1 %, auto-approbation à 48 h | non ([[lexprotocol]]) |
 | **EvalLayer** | marketplace annoncée | — | 0,01 $ par verdict sur ACP (arrêté) ; aujourd'hui abonnement | **oui — et elle contient 1 membre** |
 | **Kleros** | jurés humains | tirage au sort pondéré par mise | **payé si on vote avec la majorité**, pénalisé sinon | oui, mais hors périmètre agent |
+| **OKX.AI** *(ajout 05/08)* | **oui**, Evaluator staké (≥ 5 par litige) | sélection pondérée par le **stake** (≥ 100 OKB) | la **majorité** se partage le dépôt de contestation de 5 % + les pénalités des minoritaires ; vote minoritaire −1 % du stake, absence −0,3 % | **non trouvée** — aucun tableau agrégé public ([[../acteurs/okx-ai]]) |
 
 ## 2. ERC-8183 / ACP — le seul où « évaluateur » est un rôle enregistré et rémunéré
 
@@ -143,6 +144,18 @@ concorde exactement avec les 0,01 $/verdict d'[[evallayer]].
    chose que nous savons faire et que le marché n'a pas.
 4. **Le modèle Kleros** (payé sur la justesse, pas sur le sens du verdict) est le seul correctif
    connu à l'asymétrie qui vide le siège. À citer quand on explique pourquoi ACP ne marche pas.
+
+## Ajout du 2026-08-05 — OKX.AI : le modèle Kleros arrive dans le marché agent
+
+L'audit Codex du 05/08 ([[../acteurs/okx-ai]]) documente le premier arbitrage agent-à-agent
+institutionnel à règles publiées : ≥ 5 évaluateurs par litige, stake ≥ 100 OKB, commit/reveal,
+rémunération **sur l'alignement avec la majorité quel que soit le sens du verdict**. C'est
+précisément le « correctif Kleros » du point 4 ci-dessous, implémenté à l'échelle — OKX corrige
+donc l'asymétrie payé-si-approbation qui vide le siège ACP, mais **hérite du défaut de Kleros** :
+le mécanisme récompense le consensus, pas la vérité (comportement de Schelling, erreurs corrélées
+si les évaluateurs partagent le même modèle, avantage au gros stake). Et l'activité réelle est
+inconnue : aucun agrégat public de litiges, d'évaluateurs actifs ou de montants distribués. Le
+« marché des évaluateurs » y est construit, pas démontré.
 
 ## Refaire la mesure
 

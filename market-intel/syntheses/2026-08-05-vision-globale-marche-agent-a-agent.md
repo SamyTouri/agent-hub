@@ -62,9 +62,10 @@ faible, décollage possible.* **Elle est confirmée sur l'essentiel, avec trois 
 
 1. **« ACP est la seule plateforme mesurable proprement » → ACP est la plus LISIBLE, pas la
    seule.** Olas Mech est mesurable (compteurs publics + chaîne : ~108 k$ de paiements cumulés,
-   8 Mechs actifs/jour) mais sa demande est endogène à 98 % (Predict). OKX AI publie escrow,
-   réputation et évaluateurs stakés depuis fin juin — **jamais mesuré par nous**, à sonder avant
-   de le compter pour zéro ou pour beaucoup.
+   8 Mechs actifs/jour) mais sa demande est endogène à 98 % (Predict). OKX.AI — audité par Codex
+   le 05/08 au soir ([[okx-ai]]) — affiche **4 035,77 $ de volume cumulé** pour 14 031 tâches et
+   1 050 agents en ligne : la tentative institutionnelle la plus complète du marché confirme le
+   verdict au lieu de l'affaiblir.
 2. **« Olas tourne autour de la spéculation et s'auto-entretient » → à affiner.** Le commerce Olas
    est réel (vraies requêtes, vraies livraisons, vrais paiements), mais **intégré, endogène et
    concentré** ; l'auto-achat n'est pas démontré et ne doit pas être affirmé
@@ -156,6 +157,7 @@ Ne se somme pas — trois économies non commensurables (cartographie Codex §1.
 | Microcommerce machine x402 | fourchette irréconciliable : 767 k$ (x402scan) à 24 M$ (CoinDesk) par 30 j selon source/méthode | commodités techniques 89 % ≤ 0,10 $, tiré par memecoins | rail exercé, organicité non démontrée (Gini > 0,98 ; 21 % fictif, 64 % intra-cluster) |
 | Économies verticales intégrées (Olas Mech) | ~108 k$ **cumulés**, 8 actifs/jour | réel, endogène à 98 %, concentré | prouve la mécanique, pas le marché ouvert |
 | Missions ouvertes avec escrow (ACP v2) | **1 082 $/mois** (juillet), médiane 0,05 $ | le seul marché ouvert lisible job par job | en croissance ×6,85 depuis avril, sur base minuscule ; flux subscriptions non mesuré |
+| Marketplace institutionnelle intégrée (OKX.AI) | **4 035,77 $ cumulés** (compteur plateforme, 05/08) | pile complète (escrow, arbitrage staké, réputation) sur volume minuscule, majoritairement x402 | bêta instrumentée, pas un marché validé — [[okx-ai]] |
 | Évaluation indépendante payée | **0,42 $ versés**, toute l'histoire du siège | le rôle existe dans les standards, pas dans l'économie | notre terrain, vide, coût d'occupation quasi nul |
 
 ## 5. Ce que ça implique pour le positionnement
@@ -203,9 +205,11 @@ séparé de la plateforme neutre* — sort **renforcée** de la conclusion :
 
 1. **Mesurer le flux subscriptions ACP** (SubscriptionHook) — condition pour réaffirmer ou lever
    le « plafond de fait à 10 $ ».
-2. **Sonder OKX AI marketplace** — escrow + évaluateurs stakés + ~50 fournisseurs institutionnels
-   annoncés fin juin : c'est la seule place nouvelle qui revendique exactement notre problème,
-   et nous ne l'avons jamais mesurée.
+2. ~~Sonder OKX AI marketplace~~ — **FAIT le 05/08 au soir** par l'audit Codex ([[okx-ai]]) :
+   4 035,77 $ cumulés, échantillon public dominé par le micro-paiement x402, arbitrage staké
+   construit mais sans activité agrégée publique. Le verdict global est renforcé. Reste ouvert :
+   l'expérience manuelle payante sur OKX (sous autorisation de dépense de Samy) pour mesurer la
+   profondeur de preuve à chaque étape.
 3. **Mesurer x402 nous-mêmes** — toujours vrai : tous nos chiffres x402 sont de seconde main.
 4. **La suite annoncée par Samy** : l'analyse des augmentations soudaines possibles du marché
    (objet d'une conversation dédiée, pas de celle-ci).

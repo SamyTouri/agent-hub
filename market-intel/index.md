@@ -30,6 +30,7 @@ toute la base.**
 | ⭐ Où en est le chantier « devenir évaluateur » | [[devenir-evaluateur-chantiers-ouverts]] |
 | La mécanique du séquestre, qui paie qui, quand | [[erc-8183-escrow-et-evaluateur]] |
 | Le concurrent le plus proche de notre produit | [[agentpulse]] |
+| **OKX.AI — la marketplace institutionnelle complète, auditée le 05/08** | [[okx-ai]] |
 | La plateforme mesurée et les défauts de ses données | [[virtuals-acp]] |
 | Un interlocuteur du terrain et ce qu'il nous a corrigé | [[markus-dropspace]] |
 | Une anomalie non expliquée | [[les-201-acheteurs]] · [[deux-grappes-anormales-verification-on-chain]] |
@@ -150,6 +151,9 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
 - [[markus-dropspace]] — opérateur, conversation ouverte, à l'origine de trois corrections
 - [[assurance-ia-entreprise]] — Microsoft, IBM, Palo Alto, PwC/Deloitte : la carte du marché
   humain (DÉCLARÉ), l'intervalle qu'ils laissent vide, et pourquoi on ne les affronte pas
+- **[[okx-ai]]** — audit 05/08 : la marketplace institutionnelle la plus complète (escrow,
+  arbitrage staké, réputation ERC-8004) et ses **4 035,77 $ de volume cumulé** ; l'arbitrage
+  récompense le consensus, pas la vérité ; l'espace qu'elle laisse vide est exactement le nôtre
 - **[[qui-tient-le-terrain-de-la-livraison]]** — les cinq acteurs de notre terrain mesurés le 04/08 :
   un seul est vivant, l'« antériorité » d'avril est un robot qui s'est répété six fois, l'auto-
   libération d'escrow est un choix défendable et non un oubli, et **un évaluateur ERC-8183 revendique
