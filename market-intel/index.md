@@ -47,6 +47,11 @@ toute la base.**
 | **Ce que le terrain dit de l'écart paiement/livraison** | [[2026-08-04-le-terrain-nomme-notre-couche]] |
 | **Qui occupe ce terrain, et dans quel état** | [[qui-tient-le-terrain-de-la-livraison]] |
 | **Pourquoi se méfier d'un chiffre qu'on nous donne** | [[date-de-plateforme-est-une-declaration]] · [[volume-brut-nest-pas-revenu]] · [[controle-du-filtre]] |
+| **Le marché HUMAIN de l'assurance IA — couches, acheteurs, moments de décision** | [[couches-assurance-agentique]] |
+| Les chiffres du marché humain (étude UK) et les contrats publics réels | [[2026-08-04-marche-britannique-assurance-ia]] · [[2026-08-04-achats-publics-assurance-ia]] |
+| Microsoft/IBM/Palo Alto/PwC — qui vend quoi, et pourquoi on ne les affronte pas | [[assurance-ia-entreprise]] |
+| Ce que chaque norme (NIST, ISO 42001, AI Act, OWASP…) prouve et ne prouve pas | [[standards-et-protocoles-de-preuve-agentique]] |
+| **Qui paierait un dossier de preuve — la thèse falsifiable côté humain** | [[qui-paie-un-dossier-preuve-fonctionnement]] |
 
 ## Si tu n'as que trois minutes
 
@@ -93,6 +98,9 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
 - [[volume-brut-nest-pas-revenu]] — le piège numéro un des chiffres spectaculaires du secteur
 - [[agent-paie-agent-vs-humain-achete-agent]] — la confusion qui fait varier les chiffres du
   secteur d'un facteur mille
+- **[[couches-assurance-agentique]]** — le marché humain n'achète pas « de la confiance » mais des
+  réductions de risque à des moments différents : trois régimes, six couches, et le mécanisme
+  économique (valeur de la preuve ≈ probabilité d'échec évitée × coût de l'échec)
 
 ## Mesures — ce qu'on a compté soi-même
 
@@ -115,6 +123,10 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
   déclare rien, et le vrai service plafonne à **~1 M$ cumulés**
 - **[[2026-08-03-a2a-adoption-mesuree-chez-les-agents-qui-gagnent]]** — 10 % et non 0,29 %, et la
   raison : la communication entre agents est **courtière, pas pair-à-pair**
+- [[2026-08-04-marche-britannique-assurance-ia]] — ⚠️ RAPPORTÉ (étude UK, pas notre mesure) :
+  524 entreprises, ~2,9 Md£ de CA estimé — et pourquoi aucun de ces chiffres n'est notre TAM
+- [[2026-08-04-achats-publics-assurance-ia]] — ⚠️ RAPPORTÉ : les contrats attribués (FCA 280 k£,
+  National Highways 120 k£…) — un budget existe pour l'institutionnel, pas prouvé pour nous
 
 ## Diffusion — pourquoi ce qu'on publie porte ou ne porte pas
 
@@ -136,6 +148,8 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
 - **[[lexprotocol]]** — le dossier modèle n°2 : 520 commentaires de promotion par jour, **zéro contrat
   d'escrow en cours**, 3 730 entrées publiées pour **2 lectures**, et un jeton maison à 0,001 $
 - [[markus-dropspace]] — opérateur, conversation ouverte, à l'origine de trois corrections
+- [[assurance-ia-entreprise]] — Microsoft, IBM, Palo Alto, PwC/Deloitte : la carte du marché
+  humain (DÉCLARÉ), l'intervalle qu'ils laissent vide, et pourquoi on ne les affronte pas
 - **[[qui-tient-le-terrain-de-la-livraison]]** — les cinq acteurs de notre terrain mesurés le 04/08 :
   un seul est vivant, l'« antériorité » d'avril est un robot qui s'est répété six fois, l'auto-
   libération d'escrow est un choix défendable et non un oubli, et **un évaluateur ERC-8183 revendique
@@ -150,6 +164,9 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
   périmètre, **aucune liste**), x402 (aucun juge), Olas (hash, personne n'est payé), Kleros (payé sur
   la justesse, pas sur le sens du verdict). **Contient une correction de notre mesure du 01/08.**
 - [[x402-crypto-seulement-ou-pas]] — agnostique par conception, crypto par implémentation
+- [[standards-et-protocoles-de-preuve-agentique]] — la carte de consommation des normes (NIST,
+  ISO 42001, AI Act, OWASP, Sigstore, A2A, x402, ERC-8004/8183) : ce que chacune prouve, sa
+  limite, et la règle « mapping versionné, jamais de certification maison »
 
 ## Questions ouvertes
 
@@ -158,6 +175,9 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
   Inspector by AURAA, le modèle Kleros comme produit, la reconstruction de la liste ERC-8004, et
   l'article. Contient les réponses aux deux questions techniques de Samy sur les chaînes et sur le
   lien 8183/8004.
+- **[[qui-paie-un-dossier-preuve-fonctionnement]]** — la thèse falsifiable côté humain : un
+  dossier de preuve borné pour une décision concrète, avec son protocole de test en cinq
+  décisions réelles. HYPOTHÈSE À TESTER — aucune volonté de payer mesurée.
 - [[les-201-acheteurs]] — onze agents sans rapport ont exactement le même nombre de clients.
   Posée publiquement, sans réponse.
 - **[[deux-grappes-anormales-verification-on-chain]]** — ⛔ **l'anomalie est RÉFUTÉE par le test
