@@ -17,7 +17,7 @@ Réponse courte à chacune, puis le détail.
 |---|---|
 | **Pourquoi ?** | Un programme de subvention de 1 M$/mois lancé le 12 février a multiplié le volume par 20. Quelque chose l'a interrompu dans la nuit du 22 au 23 mars. **La cause exacte n'est pas établie** — je sais quoi, quand et comment, pas encore pourquoi. |
 | **A-t-il été remplacé ?** | **Oui, partiellement.** ACP v2 tourne depuis avril sur un nouveau contrat. Il fait 1 072 $ en juillet et **il croît de 39 % par mois**. |
-| **ACP est-il encore l'essentiel du marché ?** | **Non, et de très loin.** x402 a réglé 41,2 M$ contre 3,6 M$ pour ACP en cumul, et x402 croît. ACP fait aujourd'hui **~0,1 % du volume quotidien de x402**. |
+| **ACP est-il encore l'essentiel du marché ?** | **La question est mal posée** — corrigé sur ton objection, §6. x402 est un compteur d'API (données, inférence), pas un marché de services entre agents ; il n'a même pas de catégorie « agent à agent ». ACP reste **le seul endroit où il existe du travail commandé avec obligation de livraison** — et ce marché-là vaut ~1 082 $/mois. |
 | **Bulle éclatée ? Sommes-nous en avance ?** | **Oui pour la bulle** (subventionnée, à moitié peuplée de flottes fictives). **Et oui, nous sommes en avance** — mais pas pour la raison qu'on croyait. Voir §7, c'est la partie qui compte. |
 
 ---
@@ -211,30 +211,54 @@ ne l'est pas. Il a redémarré ailleurs, propre, et petit.
 
 ---
 
-## 6. ACP est-il encore l'essentiel du marché ? — non, et pas près de l'être
+## 6. ACP est-il encore l'essentiel du marché ? — la question est mal posée, et je l'avais mal posée
 
-| protocole | volume réglé | état |
-|---|---:|---|
-| **x402** (Coinbase) | **41,2 M$** cumulés, **160,8 M** transactions, 7 chaînes, 18 facilitateurs | **en croissance** : ~5 M transactions de plus par mois ; volume de juin doublé par rapport à mai |
-| **ACP** (Virtuals) | **3,6 M$** cumulés | **0,1 % de son pic**, en reprise depuis mai |
+> **Correction, sur objection de Samy.** La première version de ce dossier comparait le volume ACP au
+> volume x402 et en concluait que « le marché a choisi le paiement sans la confiance, à onze contre
+> un ». **La comparaison était biaisée : je rapportais un dénominateur étroit à un dénominateur
+> large.** x402 est un rail de paiement HTTP, pas un marché de services entre agents.
 
-*(x402 : RAPPORTÉ, agenteconomy.to au 2026-08-05 et Chainalysis. ACP : MESURÉ par nos soins.)*
+### Ce que x402 vend réellement — RAPPORTÉ, sources ci-dessous
 
-En rythme quotidien : x402 tourne autour de **28 000 $/jour**, ACP autour de **36 $/jour**. **ACP
-fait environ un millième de x402.**
+Répartition des services x402 (décembre 2025) :
 
-Et le mouvement institutionnel est du côté de x402 : **Visa, Mastercard et Ripple** ont rejoint la
-x402 Foundation en juillet 2026.
+| catégorie | part |
+|---|---:|
+| Données | 30,9 % |
+| IA | 25,4 % |
+| Blockchain | 15,2 % |
+| Utilitaires | 11,7 % |
+| Trading | 6,2 % |
+| Recherche | 5,3 % |
+| Autre | 5,3 % |
 
-**Mais la comparaison est trompeuse si on s'arrête là**, et c'est le point le plus important de tout
-ce dossier :
+**Il n'y a pas de catégorie « commerce entre agents ».** Les premiers vendeurs sur 30 jours (au
+2026-05-30) : **StableEnrich** (revente d'APIs Apollo, Google Maps, Serper), **BlockRun YOPO**
+(passerelle vers 55+ modèles LLM), **HYRE Agent** (données DeFi), **twit.sh** (données X). La source
+la plus détaillée le dit sans détour : ce sont *« pas des transactions pair-à-pair ou d'agent à agent
+au sens traditionnel, mais de la facturation de consommation d'API »*.
 
-> **x402 ne fait que le paiement. Il n'a ni séquestre, ni évaluateur, ni vérification de livraison.**
-> Son *facilitator* vérifie une signature de paiement et ne regarde jamais ce qui a été livré.
->
-> **ACP, lui, avait la couche de confiance** — séquestre, phase d'évaluation, arbitre payé.
->
-> **Le marché a massivement choisi le paiement sans la confiance.**
+**La bonne lecture** : x402 est un **compteur**, pas une place de marché. On appelle une API, on paie
+à l'appel, la livraison est la réponse HTTP — **immédiate, autoévidente, et à 1–10 centimes**. Il
+n'y a rien à vérifier parce qu'il n'y a rien qui puisse être livré à moitié.
+
+ACP fait autre chose : **commander un travail** à un agent, avec obligation de livraison, séquestre,
+et un tiers qui dit si c'est fait. Ce sont **deux marchés différents**, pas deux concurrents.
+
+### Donc, la réponse corrigée
+
+**ACP n'a jamais été « la majorité du marché des paiements entre agents »** — ce marché-là est
+dominé par la facturation d'API et vaut ~1,11 M$/mois. **Mais ACP est, à notre connaissance, le seul
+endroit où existe du travail commandé avec obligation de livraison**, et ce marché-là vaut
+aujourd'hui **~1 082 $/mois**.
+
+C'est un fait plus dur que celui que j'avais écrit, et plus honnête : **le marché où la confiance
+sert à quelque chose ne fait pas onze fois moins que l'autre — il fait mille fois moins, et il est
+presque seul de son espèce.**
+
+*(x402 : RAPPORTÉ — agenteconomy.to au 2026-08-05, recherche BlockRun décembre 2025, note x402inc
+au 2026-05-30. **Aucun de ces chiffres n'est mesuré par nous** ; à refaire nous-mêmes avant tout
+usage engageant. ACP : MESURÉ.)*
 
 ---
 
@@ -277,27 +301,62 @@ et nous serons là ». Elle est plus intéressante que ça.
 
 ### La lecture que j'en fais pour « créer de la valeur économique grâce à la création de confiance »
 
-Le fait le plus dur du dossier est celui-ci : **entre une place avec séquestre, évaluation et
-arbitre payé (ACP) et une place sans aucune vérification (x402), le marché a choisi la seconde à
-onze contre un.**
+*(Réécrite après l'objection de Samy. La version précédente disait « le marché a choisi le paiement
+sans la confiance, onze contre un » — c'était une inférence tirée d'une comparaison faussée.)*
 
-Ce n'est pas un verdict contre la confiance. C'est un verdict sur **le prix auquel la confiance
-devient achetable**. La transaction médiane x402 est **sub-dollar** ; la mission médiane ACP des
-trente derniers jours vaut **0,01 $**. À ces montants, aucune vérification ne peut se financer :
-notre propre mesure du chantier B le dit crûment — une commission d'évaluateur médiane vaut
-**0,0005 $**, soit trois ordres de grandeur sous le coût d'une inférence.
+Il n'y a pas eu de choix entre confiance et absence de confiance. **Il y a deux marchés qui n'ont
+pas le même problème.**
 
-**La confiance ne se vend pas parce que rien n'a encore assez de valeur pour mériter d'être
-vérifié.**
+**Deux conditions doivent être réunies pour que quelqu'un paie pour de la vérification :**
 
-D'où la formulation opérationnelle que je te propose, et qui est falsifiable :
+1. **Il faut assez de valeur en jeu** — le coût d'une erreur doit dépasser le coût du contrôle.
+2. **Il faut que le livrable ne soit pas autoévident** — s'il suffit de regarder pour savoir si
+   c'est fait, il n'y a rien à vérifier.
+
+Appliquons-les :
+
+| | valeur en jeu | livrable autoévident ? | besoin de confiance |
+|---|---|---|---|
+| **x402** — appel d'API, inférence, données | 1 à 10 centimes | **oui** — la réponse HTTP arrive ou n'arrive pas | **structurellement nul** |
+| **ACP** — travail commandé, livré plus tard | 0,05 $ médian, plafonné à 10 $ | **non** — un rapport peut être livré et mauvais | **réel, mais trop petit pour se financer** |
+
+**x402 n'est pas un marché qu'on nous a pris : c'est un marché qui n'a pas notre problème.** Sa
+croissance n'est ni une bonne ni une mauvaise nouvelle pour nous — elle est **hors sujet**, et je
+n'aurais pas dû la traiter comme un verdict.
+
+Ce qui reste vrai, et qui est le fait dur du dossier : **le marché qui a notre problème vaut
+aujourd'hui environ mille dollars par mois.** À 0,05 $ la mission, une commission d'évaluateur
+médiane vaut **0,0005 $** — trois ordres de grandeur sous le coût d'une inférence. **La confiance
+ne se vend pas encore parce que rien n'a encore assez de valeur pour mériter d'être vérifié.**
+
+D'où la formulation opérationnelle, qui survit à la correction et en sort précisée :
 
 > Notre marché n'apparaît pas quand le **nombre** de transactions entre agents augmente. Il apparaît
-> quand leur **valeur unitaire** franchit le seuil où le coût d'une erreur dépasse le coût de la
-> vérification.
+> quand se rencontrent **une valeur unitaire suffisante** et **un livrable dont la qualité n'est pas
+> évidente à la livraison**.
 >
-> **L'indicateur à suivre n'est donc pas le volume, c'est la valeur médiane par transaction.** Et
-> c'est exactement la tranche 10–100 $ qui s'est évaporée le 22 mars.
+> **L'indicateur à suivre est donc la valeur médiane par transaction, sur les places où le livrable
+> est jugeable** — pas le volume, et pas le volume des compteurs d'API.
+
+Et c'est exactement la tranche **10–100 $** qui s'est évaporée le 22 mars : le seul endroit du
+marché où les deux conditions étaient réunies.
+
+### Une piste que la correction fait apparaître, et que je n'avais pas vue
+
+Sur x402, **la valeur unitaire monte aussi**, et bien plus vite que sur ACP : les transactions à 1 $
+et plus représentaient 49 % du volume début 2025 et **95 % début 2026** (RAPPORTÉ, source unique, à
+vérifier). En décembre 2025, **11,7 % des transactions dépassaient déjà 1 $**, et 2,2 % dépassaient
+10 $ — soit de l'ordre de **80 000 transactions par mois au-dessus de 10 $**, c'est-à-dire un
+plafond qu'ACP n'atteint jamais.
+
+**Attention à ne pas surinterpréter** : la deuxième condition ne suit pas automatiquement. Un appel
+d'inférence à 12 $ reste autoévident, et n'a pas plus besoin de nous qu'un appel à 12 centimes. Ce
+qu'il faut aller regarder, ce n'est pas le montant : c'est **s'il apparaît sur x402 des services dont
+le livrable est jugeable** — audit, recherche, rédaction, analyse. C'est mesurable, et personne ne
+le publie.
+
+**Ça devient la question de marché n°1**, devant la reprise d'ACP : *où, aujourd'hui, un agent
+paie-t-il plus de dix dollars pour quelque chose qui peut être mal fait sans que ça se voie ?*
 
 C'est aussi ce qui rend la reprise sur v2 intéressante au-delà de sa taille : il faut regarder **si
 la valeur unitaire y remonte**, pas seulement le total.
@@ -331,8 +390,12 @@ positif.
 
 ## 8. Ce que je ferais ensuite, par ordre d'utilité
 
+0. ⭐ **Chercher, sur x402, les services dont le livrable est jugeable** — audit, recherche,
+   rédaction, analyse — et mesurer leur valeur unitaire. C'est la question que fait apparaître ton
+   objection, et elle passe devant tout le reste : là est le seul endroit où les deux conditions du
+   §7 pourraient se rencontrer à une échelle qui compte. **Personne ne publie cette décomposition.**
 1. ✅ **Fait dans ce dossier** : la médiane v2 a quintuplé (0,01 → 0,05 $) et tient depuis deux mois.
-   **À reprendre chaque mois** — c'est notre indicateur d'entrée.
+   **À reprendre chaque mois** — c'est notre indicateur d'entrée sur ACP.
 2. **Élucider le plafond de 10,00 $ sur v2.** Aucun dépôt ne le dépasse, quatre mois de suite. Si
    c'est une limite de configuration levable, la place peut porter notre marché ; si c'est
    structurel, elle ne le pourra jamais et il faut regarder ailleurs. **C'est devenu la question
@@ -351,8 +414,13 @@ positif.
 - Il ne prouve pas que le Revenue Network a causé la bulle. Il montre une coïncidence de date, de
   taille et de composition du registre qui rend l'hypothèse forte — pas une preuve de causalité.
 - Il ne prouve pas que la coupure du 22 mars vient du programme. **La cause reste inconnue.**
-- Il ne mesure pas x402 par nos soins : ces chiffres sont RAPPORTÉS, pas MESURÉS. À vérifier
-  nous-mêmes avant tout usage engageant.
+- Il ne mesure pas x402 par nos soins : **tous** les chiffres x402 sont RAPPORTÉS, pas MESURÉS, et
+  proviennent de sources dont l'une (BlockRun) est partie prenante du marché qu'elle décrit. La
+  décomposition par catégorie date de décembre 2025 et porte sur le **nombre de services**, pas sur
+  le volume. **À refaire nous-mêmes avant tout usage engageant.**
+- Il ne prouve pas qu'aucun commerce entre agents ne passe par x402 — il montre que les vendeurs
+  qui dominent son volume sont des passerelles d'API et de données, et qu'aucune source publique ne
+  sépare les deux. **L'absence de catégorie n'est pas l'absence du phénomène.**
 - La reprise sur v2 fait trois mois. Ce n'est pas encore une tendance.
 
 ## 10. Reproduire
