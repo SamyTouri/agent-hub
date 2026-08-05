@@ -1,7 +1,7 @@
 ---
 title: État du marché agent-à-agent au 2026-08-05 — point de reprise pour la conversation de conclusion
 type: question-ouverte
-statut: POINT DE REPRISE — à ouvrir en premier
+statut: CLOS le 2026-08-05 au soir — la conversation de conclusion a eu lieu, son résultat est [[2026-08-05-vision-globale-marche-agent-a-agent]]. Ce fichier reste pour ses interdits (§6, toujours actifs) et l'historique.
 updated: 2026-08-05
 ---
 

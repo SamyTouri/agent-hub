@@ -25,7 +25,8 @@ toute la base.**
 | ⭐⭐⭐ **POURQUOI LE MARCHÉ A GONFLÉ PUIS CHUTÉ — le programme, le distributeur, la flotte** | [[2026-08-05-le-22-mars-anatomie-dune-bulle-subventionnee]] |
 | **Combien d'agents ERC-8004, et combien de validateurs (zéro)** | [[2026-08-04-erc-8004-sur-base-la-liste-des-validateurs-est-vide]] |
 | **Peut-on vendre un jury à la Kleros dans ERC-8183** | [[2026-08-04-kleros-comme-produit-lobjection-du-financement]] |
-| ⭐⭐⭐ **OÙ ON EN EST — ÉTAT DU MARCHÉ ET POINT DE REPRISE** | [[etat-du-marche-agent-a-agent-2026-08-05]] |
+| ⭐⭐⭐ **LA CONCLUSION — VISION GLOBALE DU MARCHÉ, VERDICT ET POSITIONNEMENT** | [[2026-08-05-vision-globale-marche-agent-a-agent]] |
+| Le point de reprise qui a mené à cette conclusion (interdits de rédaction §6 toujours actifs) | [[etat-du-marche-agent-a-agent-2026-08-05]] |
 | ⭐ Où en est le chantier « devenir évaluateur » | [[devenir-evaluateur-chantiers-ouverts]] |
 | La mécanique du séquestre, qui paie qui, quand | [[erc-8183-escrow-et-evaluateur]] |
 | Le concurrent le plus proche de notre produit | [[agentpulse]] |
@@ -73,6 +74,12 @@ toute la base.**
 
 ## Synthèses — ce que les mesures impliquent
 
+- ⭐⭐⭐ **[[2026-08-05-vision-globale-marche-agent-a-agent]]** — **LA CONCLUSION du 05/08** :
+  le marché A2A autonome est réel, naissant et minuscule (milliers de $/mois une fois l'incentive
+  et la spéculation isolées) ; le livrable jugeable cher n'existe nulle part (première
+  décomposition du Bazaar x402) ; le plafond ACP de 10 $ est un fait de demande, pas de protocole
+  (+ angle mort subscriptions) ; le goulot du décollage est autorisation/responsabilité/confiance,
+  pas la capacité des modèles. Positionnement d'analyste de référence validé.
 - **[[2026-08-03-ce-que-les-mesures-disent-de-notre-offre]]** — la confrontation entre ce qu'on a
   mesuré et ce qu'on prévoit de vendre. Contient **un arbitrage à rendre par Samy** : le marché où
   l'argent est présent n'est pas celui que la doctrine vise.
