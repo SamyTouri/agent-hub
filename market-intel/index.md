@@ -22,9 +22,11 @@ toute la base.**
 | **TOUS les protocoles qui emploient des évaluateurs, leurs règles de paiement, leurs listes** | [[2026-08-04-marche-des-evaluateurs-tous-protocoles]] |
 | ⭐⭐ **COMBIEN LE SIÈGE D'ÉVALUATEUR A RÉELLEMENT PAYÉ** (0,42 $, mesuré on-chain) | [[2026-08-04-inspector-by-auraa-largent-va-dans-lautre-sens]] |
 | ⭐⭐ **QUELLE EST LA TAILLE RÉELLE DU COMMERCE ENTRE AGENTS, MOIS PAR MOIS** | [[2026-08-04-le-sequestre-acp-de-1-16-million-a-neuf-dollars]] |
+| ⭐⭐⭐ **POURQUOI LE MARCHÉ A GONFLÉ PUIS CHUTÉ — le programme, le distributeur, la flotte** | [[2026-08-05-le-22-mars-anatomie-dune-bulle-subventionnee]] |
 | **Combien d'agents ERC-8004, et combien de validateurs (zéro)** | [[2026-08-04-erc-8004-sur-base-la-liste-des-validateurs-est-vide]] |
 | **Peut-on vendre un jury à la Kleros dans ERC-8183** | [[2026-08-04-kleros-comme-produit-lobjection-du-financement]] |
-| ⭐ **OÙ ON EN EST ET QUOI FAIRE ENSUITE (point de reprise)** | [[devenir-evaluateur-chantiers-ouverts]] |
+| ⭐⭐⭐ **OÙ ON EN EST — ÉTAT DU MARCHÉ ET POINT DE REPRISE** | [[etat-du-marche-agent-a-agent-2026-08-05]] |
+| ⭐ Où en est le chantier « devenir évaluateur » | [[devenir-evaluateur-chantiers-ouverts]] |
 | La mécanique du séquestre, qui paie qui, quand | [[erc-8183-escrow-et-evaluateur]] |
 | Le concurrent le plus proche de notre produit | [[agentpulse]] |
 | La plateforme mesurée et les défauts de ses données | [[virtuals-acp]] |
@@ -47,12 +49,16 @@ toute la base.**
 
 ## Si tu n'as que trois minutes
 
-1. ⚠️ **Le marché n'est pas minuscule : il s'est arrêté.** Le séquestre ACP a encaissé **1,16 M$ en
-   février 2026** et **9,56 $ en juillet** — facteur 109 000 en quatre mois, migration de contrat
-   testée et écartée. Le cumul de 3,57 M$ est réel et vérifié on-chain, mais il additionne un marché
-   qui a existé et un marché qui n'existe plus. **Ne plus citer un cumul sans son mois.**
-   → [[2026-08-04-le-sequestre-acp-de-1-16-million-a-neuf-dollars]] — corrige la formulation de
-   [[2026-08-01-marche-acp-taille-et-vitalite]] (44 051 inscrits, 1 438 payés, top 50 = 92 %)
+1. ⚠️ **Le marché a été gonflé par une subvention, il a éclaté, et il repousse à 0,1 % de son pic.**
+   Séquestre ACP : **1,16 M$ en février 2026**, **778 $ en mai** (plancher), **1 082 $ en juillet** et
+   en hausse depuis trois mois — entièrement sur le contrat v2. Le cumul de 3,57 M$ est réel et
+   vérifié on-chain, mais **il additionne un marché qui a existé et un marché qui n'existe plus :
+   ne jamais citer un cumul sans son mois.** La cause de la chute est datée et documentée : fin du
+   programme aGDP (jusqu'à 1 M$/mois annoncé), dernier jour le 22 mars.
+   → [[2026-08-05-le-22-mars-anatomie-dune-bulle-subventionnee]] ·
+   [[2026-08-04-le-sequestre-acp-de-1-16-million-a-neuf-dollars]]
+   ⚠️ **Et 47,9 % des 44 051 agents inscrits sont des flottes de ~100 agents créées en février** —
+   ne plus citer ce total nu ([[2026-08-01-marche-acp-taille-et-vitalite]]).
 2. **Contrôler le travail d'autrui se vend** — 17,3 % du revenu — mais le fact-checking est le
    métier le moins bien payé (0,25 $/mission) et la due diligence l'un des mieux (5,01 $).
    Et sur les 463 agents du segment, **deux font 99,5 % de ce qui bouge encore**.

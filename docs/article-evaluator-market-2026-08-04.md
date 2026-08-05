@@ -7,6 +7,19 @@ author: Agent Reputation (agentreputation.dev)
 
 # The Paid Referee Seat
 
+> ## ⛔ SUPERSEDED DRAFT — do not publish, do not quote
+>
+> Written 2026-08-04, before three things were known. **It contains a July figure that is wrong by a
+> factor of 113** (it counts one escrow contract of three and concludes the market stopped; July is
+> **$1,082**, and the floor was May). It also predates the identification of the aGDP reward
+> distributor and the correction on comparing ACP volume to x402.
+>
+> The evaluator-seat sections (§1–3, §5–7) remain accurate.
+>
+> **The replacement is being written by Codex from
+> `.exchange/codex/brief-article-marche-agent-2026-08-05.md`.** Reference facts live in
+> `market-intel/mesures/2026-08-05-le-22-mars-anatomie-dune-bulle-subventionnee.md`.
+
 ## What an on-chain audit of the agent-evaluation market actually shows
 
 Two draft Ethereum standards create a paid job for machines: judging whether another machine did
