@@ -214,8 +214,19 @@ Les deux meilleurs candidats se sont révélés être de l'infrastructure géné
 |---|---|---|
 | `0xee7ae85f…4055` | 108 888 transferts, **1,43 md$**, 52 434 destinataires | trop gros de trois ordres de grandeur — routeur ou pont |
 | `0x0a2854fb…9330` | 899 242 transferts, **79 M$ d'USDC** + des dizaines d'autres jetons, 65 502 destinataires | agrégateur multi-jetons, pas un programme |
+| `0xb4cb8009…00e5` | **4 264 892** transferts, 172 M$ d'USDC + 84 238 WETH, 52 377 destinataires | pool d'échange |
+| `0xd0b53d92…f224` | **3 781 020** transferts, **1,93 md$** d'USDC + 882 255 WETH, 23 681 destinataires | pool d'échange |
 
-**Statut : piste non conclue.** Ce qui la fermerait : retrouver la transaction exacte de 1 803,81 $
+**Le test qui les élimine tous les quatre** : un programme de récompenses hebdomadaires verse **par
+vagues**, groupées en fin d'epoch. J'ai donc compté leurs versements jour par jour. Aucun
+groupement : leurs journées les plus chargées tombent indifféremment un mercredi, un mardi, un
+dimanche, un samedi, à volume quasi constant. **C'est le profil d'une infrastructure d'échange, pas
+d'une campagne.**
+
+Corollaire utile : l'argent frais qui alimentait l'anneau `0x0e59260d…` vient de **swaps**, pas d'un
+programme. Cet opérateur-là s'est financé au marché.
+
+**Statut : piste non conclue, cinq candidats testés et écartés.** Ce qui la fermerait : retrouver la transaction exacte de 1 803,81 $
 décrite dans notre fiche du 3 août, dont l'adresse n'avait pas été consignée — leçon au passage,
 **une mesure qui ne note pas l'adresse qu'elle a lue n'est pas reproductible**.
 
