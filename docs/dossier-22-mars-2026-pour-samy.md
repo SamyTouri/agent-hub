@@ -15,7 +15,7 @@ Réponse courte à chacune, puis le détail.
 
 | ta question | réponse courte |
 |---|---|
-| **Pourquoi ?** | **L'événement est nommé** (§4bis, apport de Codex, corroboré par une mesure à moi) : le 22 mars 2026 était le dernier jour de l'**Epoch 5**, que Virtuals a annoncée comme **la dernière du programme d'incitations aGDP**. Ce qui reste inconnu est la *part* de la chute imputable à l'arrêt des récompenses. |
+| **Pourquoi ?** | **Établi, et désormais documenté transaction par transaction** (§4bis et §4ter). Le 22 mars était le dernier jour de l'**Epoch 5**, annoncée par Virtuals comme la dernière du programme aGDP. Le distributeur de récompenses est identifié (`0xD4D1e8F0…`, `CumulativeMerkleDrop`), **alimenté quatre mardis de suite** — 3, 10, 17 et 24 mars. Et une flotte créée le 22 mars à 08:10 en 5 min 42 s pèse **78 % du volume du dernier jour**. Ce qui reste inconnu : la *part* de toute l'activité ACP qui relevait de ce mécanisme. |
 | **A-t-il été remplacé ?** | **Oui, partiellement.** ACP v2 tourne depuis avril sur un nouveau contrat. Il fait 1 072 $ en juillet et **il croît de 39 % par mois**. |
 | **ACP est-il encore l'essentiel du marché ?** | **La question est mal posée** — corrigé sur ton objection, §6. x402 est un compteur d'API (données, inférence), pas un marché de services entre agents ; il n'a même pas de catégorie « agent à agent ». ACP reste **le seul endroit où il existe du travail commandé avec obligation de livraison** — et ce marché-là vaut ~1 082 $/mois. |
 | **Bulle éclatée ? Sommes-nous en avance ?** | **Oui pour la bulle** (subventionnée, à moitié peuplée de flottes fictives). **Et oui, nous sommes en avance** — mais pas pour la raison qu'on croyait. Voir §7, c'est la partie qui compte. |
@@ -194,21 +194,105 @@ est donc un agrégat **ventes + récompenses réclamées**, en proportion inconn
 perdants depuis ce distributeur Merkle ou ses successeurs. Si on les trouve, la bulle est documentée
 de bout en bout et ce n'est plus une inférence.
 
-### La chasse au distributeur Merkle : échec, et ce qu'elle a trouvé à la place
+### La chasse au distributeur Merkle : je l'avais sous les yeux et je l'ai écarté
 
-*(Ajouté le 2026-08-05 sur instruction de Samy — piste ouverte par Codex.)*
+*(Ajouté le 2026-08-05. Piste ouverte par Codex, **trouvée par Codex**, et je dois expliquer
+pourquoi je suis passé à côté alors que le contrat figurait dans mes propres résultats.)*
 
-**Ce que je cherchais** : le contrat de distribution à preuve Merkle qui, dans une mesure antérieure,
-versait 1 803,81 USDC à un agent dont les vrais jobs pesaient 8 $. Si nos gros déposants perdants
-figuraient parmi ses bénéficiaires, la bulle était documentée de bout en bout.
+**Le distributeur est `0xD4D1e8F000BCE71b2fe89d59989FcD2Cd5128275`**, un contrat vérifié nommé
+`CumulativeMerkleDrop`, dont le propriétaire, le poseur de racine et le financeur sont une seule
+adresse (`0xd290…209f`).
 
-**Je ne l'ai pas trouvé, et je le dis plutôt que de le suggérer.** Méthode : j'ai indexé toutes les
-entrées de jetons, tous jetons confondus, vers les adresses des cinq plus gros propriétaires
-déposants (1 462 transferts, janvier→août 2026), puis testé chaque émetteur important en comptant
-ses destinataires distincts — un distributeur en paie des milliers, un portefeuille personnel en
-paie deux.
+**Il était en tête de ma propre liste des financeurs externes de l'anneau** — 27 852,44 $ en
+11 transferts — et je l'ai testé. Mon test a répondu « 143 destinataires distincts en mars », et
+**je l'ai écarté parce que je cherchais des milliers de destinataires.**
 
-Les deux meilleurs candidats se sont révélés être de l'infrastructure générique :
+**L'erreur est dans l'heuristique, pas dans la mesure.** J'avais posé qu'« un distributeur paie des
+milliers de bénéficiaires, un portefeuille personnel en paie deux ». C'est faux : **un distributeur
+de programme ciblé paie des centaines** — celui-ci en a payé 264 en tout. Les contrats qui paient des
+dizaines de milliers d'adresses sont précisément ceux qui ne sont *pas* des programmes : ce sont des
+pools d'échange. **Mon critère sélectionnait exactement les mauvais candidats.**
+
+Second défaut, plus subtil : j'ai cherché un **groupement hebdomadaire des versements**. Il n'y en a
+pas, et il ne pouvait pas y en avoir — dans un Merkle drop, chacun réclame quand il veut. **Le rythme
+hebdomadaire est du côté des alimentations et des poses de racine, pas des réclamations.** Et il y
+est, très net (§ ci-dessous).
+
+### Ma mesure du distributeur — et elle corrige celle de Codex
+
+Indexé sur les blocs 41 000 000 → 47 000 000, toutes tranches relancées jusqu'à succès :
+
+| | Codex | **ma mesure** |
+|---|---:|---:|
+| alimentations | 3 | **4** |
+| total financé | 211 863,52 $ | **272 778,16 $** |
+| total distribué | 205 015,34 $ | **257 339,15 $** |
+| transferts | 251 | **315** |
+| bénéficiaires | 219 | **264** |
+
+**Codex a manqué une alimentation, celle du 10 mars (60 914,64 $)**, et sous-compte donc d'environ
+61 k$ au financement et 52 k$ à la distribution. Fenêtre de balayage plus étroite, très probablement.
+
+**Et voici le rythme que je cherchais au mauvais endroit :**
+
+| alimentation | montant |
+|---|---:|
+| **mardi 3 mars** | 96 054,64 $ |
+| **mardi 10 mars** | 60 914,64 $ |
+| **mardi 17 mars** | 68 670,37 $ |
+| **mardi 24 mars** | 47 138,51 $ |
+
+**Quatre alimentations, quatre mardis consécutifs, une par semaine.** C'est la cadence d'epoch,
+lisible directement sur la chaîne. Et **la dernière tombe le 24 mars, deux jours après la falaise** :
+c'est le solde du programme clos.
+
+### Ce que ma propre mesure du coffre apporte à la démonstration de Codex
+
+Codex documente une flotte (`0xf197…b456`) créée le 22 mars en 5 min 42 s, produisant 956 jobs
+presque tous à **60 USDC**, réglés à **48 USDC** (friction de 20 %). J'ai testé cette signature
+contre l'intégralité du coffre, sans rien savoir de sa flotte :
+
+| dénomination | occurrences sur **toute la vie** du coffre | dont le **22 mars** |
+|---|---:|---:|
+| dépôts de **60 $** | 1 143 | **1 043 (91 %)** |
+| règlements de **48 $** | 1 019 | **1 017 (99,8 %)** |
+
+**Quatre-vingt-onze pour cent de tous les jobs à 60 dollars jamais passés par ACP ont eu lieu le
+22 mars**, et le ratio 48/60 confirme la friction de 20 % de bout en bout.
+
+Et l'ordre de grandeur est saisissant : **1 043 × 60 = 62 580 $ sur une journée qui en a pesé
+79 836 $ au total. Une flotte créée à 08:10 ce matin-là représente 78 % du volume du dernier jour du
+programme.**
+
+Enfin, le 60 $ **n'existe pas après** : dans la tranche 10–100 $ postérieure à la falaise, les
+dénominations dominantes sont 10, 100, 50, 20 — **le 60 a totalement disparu**.
+
+### Ce que ça change, et ce que ça ne change pas
+
+**La boucle est fermée sur un opérateur** : argent du bénéficiaire → relais payeurs → coffre ACP →
+règlement de sa flotte → réclamation Merkle. Ce n'est plus une inférence, c'est une chaîne de
+transactions.
+
+**Ce que ça ne dit pas** : la part de l'activité ACP totale qui était de ce type. Codex la borne par
+le bas (35 financements par 3 propriétaires récompensés) et le dit lui-même : **borne basse, pas
+recensement**.
+
+**Correction à accepter, et elle porte contre un chiffre que j'avais repris** : le calcul « 1 M$
+d'incitations / 3,57 M$ déposés = 28 centimes par dollar, donc le farming était rentable » est une
+borne grossière, pas une rentabilité démontrée. Sur la flotte mesurée, récompense + règlement =
+96,4 % du brut — donc **si l'opérateur avait financé lui-même tout son volume, il aurait perdu de
+l'argent**. Les rails d'incitation ne sont pas réconciliés avec les bases de volume.
+
+**Et une borne dure que ce contrat pose** : il n'a été financé qu'à **272 778 $**, très loin du
+« plus de 1 M$ » annoncé par Virtuals. Soit le programme passait par d'autres rails, d'autres actifs
+ou d'autres contrats, soit le chiffre annoncé n'est pas un montant USDC. **Ne pas traiter le million
+annoncé comme une somme démontrée.**
+
+---
+
+### Pour mémoire : les quatre candidats que mon heuristique avait retenus à tort
+
+Tous se sont révélés être de l'infrastructure d'échange :
 
 | contrat | sorties mesurées | verdict |
 |---|---|---|
@@ -217,16 +301,11 @@ Les deux meilleurs candidats se sont révélés être de l'infrastructure géné
 | `0xb4cb8009…00e5` | **4 264 892** transferts, 172 M$ d'USDC + 84 238 WETH, 52 377 destinataires | pool d'échange |
 | `0xd0b53d92…f224` | **3 781 020** transferts, **1,93 md$** d'USDC + 882 255 WETH, 23 681 destinataires | pool d'échange |
 
-**Le test qui les élimine tous les quatre** : un programme de récompenses hebdomadaires verse **par
-vagues**, groupées en fin d'epoch. J'ai donc compté leurs versements jour par jour. Aucun
-groupement : leurs journées les plus chargées tombent indifféremment un mercredi, un mardi, un
-dimanche, un samedi, à volume quasi constant. **C'est le profil d'une infrastructure d'échange, pas
-d'une campagne.**
+Ils étaient bien à écarter — mais pour la mauvaise raison. Je les avais retenus **parce qu'**ils
+payaient des dizaines de milliers d'adresses, ce qui est le signe qu'ils ne sont pas des programmes.
 
-Corollaire utile : l'argent frais qui alimentait l'anneau `0x0e59260d…` vient de **swaps**, pas d'un
-programme. Cet opérateur-là s'est financé au marché.
-
-**Statut : piste non conclue, cinq candidats testés et écartés.** Ce qui la fermerait : retrouver la transaction exacte de 1 803,81 $
+**Ce qui reste vrai malgré tout** : l'anneau `0x0e59260d…` recevait aussi de l'argent de ces pools,
+donc il se finançait **au marché par swaps** — en plus des 27 852 $ qu'il a réclamés au distributeur. Ce qui la fermerait : retrouver la transaction exacte de 1 803,81 $
 décrite dans notre fiche du 3 août, dont l'adresse n'avait pas été consignée — leçon au passage,
 **une mesure qui ne note pas l'adresse qu'elle a lue n'est pas reproductible**.
 
