@@ -17,6 +17,11 @@ machine d'état à onze statuts, documentation dense, cadence de build inhabitue
 > **Verdict de l'audit : une bêta instrumentée de commerce agentique, pas encore un marché
 > autonome validé.**
 
+> ⭐ **Vérifié on-chain par nous le 2026-08-06** :
+> [[../mesures/2026-08-06-okx-ai-mesure-on-chain-independante]] — le vendeur vitrine aux 21 711
+> usages détient **4,78 $** et encaisse **0,04 $ en 83 minutes** ; le rail est captif de X Layer ;
+> tous les agents partagent le portefeuille d'OKX (EIP-7702 vers la même implémentation).
+
 ## Les chiffres publics au 05/08 (MESURÉ sur okx.ai — périmètres de plateforme)
 
 | Indicateur | Valeur | Piège de lecture |
@@ -82,10 +87,14 @@ l'agent partout » est une ancre portable (ERC-8004) avec un score et des règle
    x402 direct, n'existe pas chez eux.
 4. **À ne pas inférer** : 14 031 tâches ≠ 14 031 prospects ; 4 036 $ ne prouvent aucun budget pour
    la réputation indépendante ; des évaluateurs rémunérés ≠ un marché de l'évaluation.
-5. **Expérience recommandée avant toute construction** (sous autorisation de dépense explicite de
-   Samy) : acheter un service x402 minime, passer une tâche sous séquestre, tester un rejet
-   légitime, et mesurer **ce qui subsiste publiquement** à chaque étape — la profondeur de preuve,
-   pas l'interface.
+5. **Expérience §16.5 — exécutée le 06/08 dans sa partie non payante**
+   ([[../mesures/2026-08-06-okx-ai-mesure-on-chain-independante]]). Ce qu'OKX rend vérifiable de
+   l'extérieur : identité ERC-8004, bénéficiaire (le `payTo` du challenge est bien l'adresse du
+   catalogue), prix, et les paiements `exact` unitaires. Ce qui reste invérifiable : le lien entre
+   `usageCount` et paiements, la part d'agrégation `aggr_deferred`, le sampling, l'identité des
+   payeurs et **tout l'historique** (RPC plafonné à 100 blocs, six autres RPC X Layer en 403).
+   Restent à faire, et **réservés à Samy** : l'achat réel (exige un bridge vers X Layer, coût sans
+   rapport avec un service à 0,02 $) et la tâche sous séquestre (exige un compte + Agentic Wallet).
 
 ## Le point de bascule à surveiller (série mensuelle)
 

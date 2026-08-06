@@ -31,6 +31,7 @@ toute la base.**
 | La mécanique du séquestre, qui paie qui, quand | [[erc-8183-escrow-et-evaluateur]] |
 | Le concurrent le plus proche de notre produit | [[agentpulse]] |
 | **OKX.AI — la marketplace institutionnelle complète, auditée le 05/08** | [[okx-ai]] |
+| ⭐ **CE QU'OKX.AI AFFICHE vs CE QUE LA CHAÎNE MONTRE (mesuré par nous)** | [[2026-08-06-okx-ai-mesure-on-chain-independante]] |
 | La plateforme mesurée et les défauts de ses données | [[virtuals-acp]] |
 | Un interlocuteur du terrain et ce qu'il nous a corrigé | [[markus-dropspace]] |
 | Une anomalie non expliquée | [[les-201-acheteurs]] · [[deux-grappes-anormales-verification-on-chain]] |
@@ -128,6 +129,9 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
   524 entreprises, ~2,9 Md£ de CA estimé — et pourquoi aucun de ces chiffres n'est notre TAM
 - [[2026-08-04-achats-publics-assurance-ia]] — ⚠️ RAPPORTÉ : les contrats attribués (FCA 280 k£,
   National Highways 120 k£…) — un budget existe pour l'institutionnel, pas prouvé pour nous
+- ⭐ **[[2026-08-06-okx-ai-mesure-on-chain-independante]]** — la vitrine contre la chaîne : 21 711
+  usages affichés, **4,78 $ détenus, 0,04 $ encaissés en 83 min** ; le rail OKX est captif de
+  X Layer ; les micro-paiements de ce réseau sont des bots, pas des agents
 
 ## Diffusion — pourquoi ce qu'on publie porte ou ne porte pas
 
