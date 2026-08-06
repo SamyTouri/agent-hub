@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img" aria-labelledby="title desc">
+  <title id="title">Monthly ACP settlement inflow</title>
+  <desc id="desc">A log-scale line chart showing a million-dollar peak in February and March 2026, a floor of 778 dollars in May, and a rise to 1,082 dollars in July.</desc>
+  <rect width="960" height="520" rx="18" fill="#fbfaf7"/>
+  <style>
+    text { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: #12233f; }
+    .title { font-size: 24px; font-weight: 760; letter-spacing: -0.02em; }
+    .subtitle { font-size: 13px; fill: #617087; }
+    .axis { font-size: 12px; fill: #617087; }
+    .label { font-size: 13px; font-weight: 700; }
+    .small { font-size: 11px; fill: #617087; }
+  </style>
+<text class="title" x="48" y="45">The first boom, the floor, and the restart</text>
+<text class="subtitle" x="48" y="70">Monthly USDC entering three ACP settlement addresses · logarithmic vertical scale</text>
+<line x1="88" y1="401.6" x2="908" y2="401.6" stroke="#dce3ea" stroke-width="1"/>
+<text class="axis" x="74" y="405.6" text-anchor="end">$1k</text>
+<line x1="88" y1="307.3" x2="908" y2="307.3" stroke="#dce3ea" stroke-width="1"/>
+<text class="axis" x="74" y="311.3" text-anchor="end">$10k</text>
+<line x1="88" y1="212.9" x2="908" y2="212.9" stroke="#dce3ea" stroke-width="1"/>
+<text class="axis" x="74" y="216.9" text-anchor="end">$100k</text>
+<line x1="88" y1="118.6" x2="908" y2="118.6" stroke="#dce3ea" stroke-width="1"/>
+<text class="axis" x="74" y="122.6" text-anchor="end">$1m</text>
+<rect x="353.5" y="102" width="186.5" height="328" rx="10" fill="#f8e9e6" opacity="0.8"/>
+<text class="small" x="446.8" y="160" text-anchor="middle">Revenue Network peak</text>
+<rect x="665.0" y="102" width="261.0" height="328" rx="10" fill="#e4f3f0" opacity="0.75"/>
+<text class="small" x="786.5" y="119" text-anchor="middle">post-floor growth</text>
+<path d="M 88.0 176.9 L 190.5 120.6 L 293.0 200.2 L 395.5 112.5 L 498.0 117.0 L 600.5 256.9 L 703.0 411.9 L 805.5 410.8 L 908.0 398.4" fill="none" stroke="#2867a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="88.0" cy="176.9" r="6" fill="#fbfaf7" stroke="#2867a8" stroke-width="4"/>
+<text class="axis" x="88.0" y="456" text-anchor="middle">Nov</text>
+<circle cx="190.5" cy="120.6" r="6" fill="#fbfaf7" stroke="#2867a8" stroke-width="4"/>
+<text class="axis" x="190.5" y="456" text-anchor="middle">Dec</text>
+<circle cx="293.0" cy="200.2" r="6" fill="#fbfaf7" stroke="#2867a8" stroke-width="4"/>
+<text class="axis" x="293.0" y="456" text-anchor="middle">Jan</text>
+<circle cx="395.5" cy="112.5" r="6" fill="#fbfaf7" stroke="#d9564a" stroke-width="4"/>
+<text class="axis" x="395.5" y="456" text-anchor="middle">Feb</text>
+<circle cx="498.0" cy="117.0" r="6" fill="#fbfaf7" stroke="#d9564a" stroke-width="4"/>
+<text class="axis" x="498.0" y="456" text-anchor="middle">Mar</text>
+<circle cx="600.5" cy="256.9" r="6" fill="#fbfaf7" stroke="#2867a8" stroke-width="4"/>
+<text class="axis" x="600.5" y="456" text-anchor="middle">Apr</text>
+<circle cx="703.0" cy="411.9" r="6" fill="#fbfaf7" stroke="#16877c" stroke-width="4"/>
+<text class="axis" x="703.0" y="456" text-anchor="middle">May</text>
+<circle cx="805.5" cy="410.8" r="6" fill="#fbfaf7" stroke="#16877c" stroke-width="4"/>
+<text class="axis" x="805.5" y="456" text-anchor="middle">Jun</text>
+<circle cx="908.0" cy="398.4" r="6" fill="#fbfaf7" stroke="#16877c" stroke-width="4"/>
+<text class="axis" x="908.0" y="456" text-anchor="middle">Jul</text>
+<text class="label" x="387.5" y="94.5" text-anchor="middle" fill="#d9564a" style="fill:#d9564a">$1.16m</text>
+<text class="label" x="498.0" y="142.0" text-anchor="middle" fill="#d9564a" style="fill:#d9564a">$1.04m</text>
+<text class="label" x="701.0" y="435.9" text-anchor="middle" fill="#16877c" style="fill:#16877c">$778 floor</text>
+<text class="label" x="906.0" y="380.4" text-anchor="middle" fill="#16877c" style="fill:#16877c">$1,082</text>
+<text class="small" x="908" y="492" text-anchor="end">Source: raw Base USDC Transfer logs · values rounded to nearest dollar</text>
+</svg>

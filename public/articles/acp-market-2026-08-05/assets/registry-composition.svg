@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img" aria-labelledby="title desc">
+  <title id="title">ACP registry composition by owner fleet size</title>
+  <desc id="desc">A stacked bar shows that 47.9 percent of 44,051 ACP agents are held by 211 owners with fleets of at least 100 agents.</desc>
+  <rect width="960" height="520" rx="18" fill="#fbfaf7"/>
+  <style>
+    text { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: #12233f; }
+    .title { font-size: 24px; font-weight: 760; letter-spacing: -0.02em; }
+    .subtitle { font-size: 13px; fill: #617087; }
+    .axis { font-size: 12px; fill: #617087; }
+    .label { font-size: 13px; font-weight: 700; }
+    .small { font-size: 11px; fill: #617087; }
+  </style>
+<text class="title" x="48" y="45">Registration is not the same as independent supply</text>
+<text class="subtitle" x="48" y="70">Ownership composition of 44,051 ACP agent records</text>
+<rect x="60.0" y="145" width="100.2" height="92" fill="#2867a8"/>
+<text x="110.1" y="184" text-anchor="middle" style="font-size:16px;font-weight:750;fill:white">1 agent</text>
+<text x="110.1" y="210" text-anchor="middle" style="font-size:14px;fill:white">11.9%</text>
+<rect x="160.2" y="145" width="257.3" height="92" fill="#5d8fc0"/>
+<text x="288.9" y="184" text-anchor="middle" style="font-size:16px;font-weight:750;fill:white">2–20</text>
+<text x="288.9" y="210" text-anchor="middle" style="font-size:14px;fill:white">30.6%</text>
+<rect x="417.5" y="145" width="80.0" height="92" fill="#d79a2b"/>
+<text x="457.5" y="184" text-anchor="middle" style="font-size:12px;font-weight:750;fill:white">21–99</text>
+<text x="457.5" y="210" text-anchor="middle" style="font-size:11px;fill:white">9.5%</text>
+<rect x="497.5" y="145" width="402.5" height="92" fill="#d9564a"/>
+<text x="698.7" y="184" text-anchor="middle" style="font-size:16px;font-weight:750;fill:white">100+</text>
+<text x="698.7" y="210" text-anchor="middle" style="font-size:14px;fill:white">47.9%</text>
+<rect x="60" y="145" width="840" height="92" rx="14" fill="none" stroke="#fbfaf7" stroke-width="3"/>
+<rect x="475" y="286" width="425" height="118" rx="16" fill="#f8e9e6"/>
+<text x="506" y="322" style="font-size:14px;font-weight:700;fill:#d9564a">FACTORY-SIZED FLEETS</text>
+<text x="506" y="358" style="font-size:29px;font-weight:800">211 owners → 21,108 agents</text>
+<text class="subtitle" x="506" y="385">Nearly one record in two sits in a 100+ fleet.</text>
+<rect x="60" y="286" width="365" height="118" rx="16" fill="#e9f1f8"/>
+<text x="90" y="322" style="font-size:14px;font-weight:700;fill:#2867a8">SINGLE-AGENT OWNERS</text>
+<text x="90" y="358" style="font-size:29px;font-weight:800">5,254 agents</text>
+<text class="subtitle" x="90" y="385">11.9% of the registry.</text>
+<text class="small" x="910" y="492" text-anchor="end">Source: public ACP registry · ownership by address</text>
+</svg>

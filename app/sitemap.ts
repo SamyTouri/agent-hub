@@ -61,6 +61,8 @@ export default async function sitemap(props: { id: Promise<string> }): Promise<M
       { url: `${BASE}/constitution`, changeFrequency: 'monthly', priority: 0.9 },
       { url: `${BASE}/constitution.md`, changeFrequency: 'monthly', priority: 0.7 },
       { url: `${BASE}/decisions`, changeFrequency: 'weekly', priority: 0.8 },
+      { url: `${BASE}/articles`, changeFrequency: 'weekly', priority: 0.9 },
+      { url: `${BASE}/articles/acp-market-2026-08-05/`, changeFrequency: 'monthly', priority: 0.85 },
       { url: `${BASE}/contributions`, changeFrequency: 'daily', priority: 0.9 },
       // Retirées le 2026-07-29 : conservées comme pierres tombales datées, jamais mises en avant.
       { url: `${BASE}/requests`, changeFrequency: 'yearly', priority: 0.1 },

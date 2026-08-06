@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img" aria-labelledby="title desc">
+  <title id="title">Measured incentive optimisation loop</title>
+  <desc id="desc">A flow diagram shows one owner creating twenty agents, funding six buyer relays, relays depositing 60 USDC, the vault settling 48 USDC to providers, and a final Merkle claim of 9,385 USDC.</desc>
+  <rect width="960" height="520" rx="18" fill="#fbfaf7"/>
+  <style>
+    text { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: #12233f; }
+    .title { font-size: 24px; font-weight: 760; letter-spacing: -0.02em; }
+    .subtitle { font-size: 13px; fill: #617087; }
+    .axis { font-size: 12px; fill: #617087; }
+    .label { font-size: 13px; font-weight: 700; }
+    .small { font-size: 11px; fill: #617087; }
+  </style>
+<text class="title" x="48" y="45">A directly observed incentive-optimisation loop</text>
+<text class="subtitle" x="48" y="70">One operator · 22–24 March 2026 · measured registry events and USDC transfers</text>
+<path d="M230 182 H340" stroke="#2867a8" stroke-width="4" marker-end="url(#arrow-blue)"/>
+<path d="M510 182 H620" stroke="#2867a8" stroke-width="4" marker-end="url(#arrow-blue)"/>
+<path d="M790 222 V316 H610" stroke="#16877c" stroke-width="4" fill="none" marker-end="url(#arrow-teal)"/>
+<path d="M440 376 H260" stroke="#d9564a" stroke-width="4" marker-end="url(#arrow-coral)"/>
+<defs><marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#2867a8"/></marker><marker id="arrow-teal" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#16877c"/></marker><marker id="arrow-coral" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#d9564a"/></marker></defs>
+<rect x="50" y="126" width="180" height="112" rx="15" fill="#e9f1f8" stroke="#2867a8" stroke-width="1.5"/>
+<text x="68" y="156" style="font-size:12px;font-weight:800;fill:#2867a8;letter-spacing:.06em">ONE OWNER</text>
+<text x="68" y="188" style="font-size:16px;font-weight:750">creates 20 agents</text>
+<text x="68" y="212" class="subtitle">in 5m 42s</text>
+<rect x="340" y="126" width="170" height="112" rx="15" fill="#e9f1f8" stroke="#2867a8" stroke-width="1.5"/>
+<text x="358" y="156" style="font-size:12px;font-weight:800;fill:#2867a8;letter-spacing:.06em">6 BUYER RELAYS</text>
+<text x="358" y="188" style="font-size:16px;font-weight:750">funded with $60</text>
+<text x="358" y="212" class="subtitle">then deposit $60</text>
+<rect x="620" y="126" width="290" height="112" rx="15" fill="#e4f3f0" stroke="#16877c" stroke-width="1.5"/>
+<text x="638" y="156" style="font-size:12px;font-weight:800;fill:#16877c;letter-spacing:.06em">ACP VAULT → PROVIDERS</text>
+<text x="638" y="188" style="font-size:16px;font-weight:750">955 × $60 gross</text>
+<text x="638" y="212" class="subtitle">955 × $48 settled</text>
+<rect x="440" y="320" width="350" height="112" rx="15" fill="#f8e9e6" stroke="#d9564a" stroke-width="1.5"/>
+<text x="458" y="350" style="font-size:12px;font-weight:800;fill:#d9564a;letter-spacing:.06em">FINAL MERKLE CLAIM</text>
+<text x="458" y="382" style="font-size:16px;font-weight:750">19 claims in 44 seconds</text>
+<text x="458" y="406" class="subtitle">$9,385.03 received</text>
+<rect x="50" y="320" width="210" height="112" rx="15" fill="#f1ede2" stroke="#d79a2b" stroke-width="1.5"/>
+<text x="68" y="350" style="font-size:12px;font-weight:800;fill:#d79a2b;letter-spacing:.06em">WHAT WE KNOW</text>
+<text x="68" y="382" style="font-size:16px;font-weight:750">6 self-funded deposits</text>
+<text x="68" y="406" class="subtitle">not every buyer wallet</text>
+<text class="small" x="285" y="168" text-anchor="middle" style="fill:#2867a8">funding</text>
+<text class="small" x="565" y="168" text-anchor="middle" style="fill:#2867a8">escrow</text>
+<text class="small" x="822" y="282" text-anchor="middle" style="fill:#16877c">settlement</text>
+<text class="small" x="350" y="362" text-anchor="middle" style="fill:#d9564a">reward</text>
+<text class="small" x="910" y="492" text-anchor="end">Measured sequence; off-chain deliverable quality was not observable</text>
+</svg>

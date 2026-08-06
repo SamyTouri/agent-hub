@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img" aria-labelledby="title desc">
+  <title id="title">The March 22 ACP cliff</title>
+  <desc id="desc">Two bar charts show that USDC value fell 97 percent from March 22 to March 23 while deposit count fell 56 percent.</desc>
+  <rect width="960" height="520" rx="18" fill="#fbfaf7"/>
+  <style>
+    text { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: #12233f; }
+    .title { font-size: 24px; font-weight: 760; letter-spacing: -0.02em; }
+    .subtitle { font-size: 13px; fill: #617087; }
+    .axis { font-size: 12px; fill: #617087; }
+    .label { font-size: 13px; font-weight: 700; }
+    .small { font-size: 11px; fill: #617087; }
+  </style>
+<text class="title" x="48" y="45">The value disappeared faster than the transactions</text>
+<text class="subtitle" x="48" y="70">Daily v1 vault inflow around the March 22 cliff · linear scales within each panel</text>
+<text class="label" x="55" y="96">USDC entering settlement</text>
+<line x1="55" y1="282" x2="420" y2="282" stroke="#dce3ea"/>
+<rect x="74.6" y="191.9" width="52" height="90.1" rx="7" fill="#d9564a" opacity="0.72"/>
+<text class="label" x="100.6" y="182.9" text-anchor="middle" style="fill:#d9564a">$42.4k</text>
+<text class="axis" x="100.6" y="305" text-anchor="middle">21 Mar</text>
+<rect x="165.9" y="112.3" width="52" height="169.7" rx="7" fill="#d9564a" opacity="1"/>
+<text class="label" x="191.9" y="103.3" text-anchor="middle" style="fill:#d9564a">$79.8k</text>
+<text class="axis" x="191.9" y="305" text-anchor="middle">22 Mar</text>
+<rect x="257.1" y="276.9" width="52" height="5.1" rx="7" fill="#d9564a" opacity="1"/>
+<text class="label" x="283.1" y="267.9" text-anchor="middle" style="fill:#d9564a">$2.4k</text>
+<text class="axis" x="283.1" y="305" text-anchor="middle">23 Mar</text>
+<rect x="348.4" y="281.2" width="52" height="0.8" rx="7" fill="#d9564a" opacity="0.72"/>
+<text class="label" x="374.4" y="272.2" text-anchor="middle" style="fill:#d9564a">$396</text>
+<text class="axis" x="374.4" y="305" text-anchor="middle">24 Mar</text>
+<text class="label" x="520" y="96">Number of deposits</text>
+<line x1="520" y1="282" x2="885" y2="282" stroke="#dce3ea"/>
+<rect x="539.6" y="117.5" width="52" height="164.5" rx="7" fill="#2867a8" opacity="0.72"/>
+<text class="label" x="565.6" y="108.5" text-anchor="middle" style="fill:#2867a8">21,289</text>
+<text class="axis" x="565.6" y="305" text-anchor="middle">21 Mar</text>
+<rect x="630.9" y="217.8" width="52" height="64.2" rx="7" fill="#d9564a" opacity="1"/>
+<text class="label" x="656.9" y="208.8" text-anchor="middle" style="fill:#d9564a">8,313</text>
+<text class="axis" x="656.9" y="305" text-anchor="middle">22 Mar</text>
+<rect x="722.1" y="253.5" width="52" height="28.5" rx="7" fill="#2867a8" opacity="1"/>
+<text class="label" x="748.1" y="244.5" text-anchor="middle" style="fill:#2867a8">3,683</text>
+<text class="axis" x="748.1" y="305" text-anchor="middle">23 Mar</text>
+<rect x="813.4" y="263.4" width="52" height="18.6" rx="7" fill="#2867a8" opacity="0.72"/>
+<text class="label" x="839.4" y="254.4" text-anchor="middle" style="fill:#2867a8">2,402</text>
+<text class="axis" x="839.4" y="305" text-anchor="middle">24 Mar</text>
+<rect x="140" y="358" width="680" height="78" rx="14" fill="#f8e9e6"/>
+<text x="480" y="388" text-anchor="middle" style="font-size:30px;font-weight:800;fill:#d9564a">−97% value</text>
+<text x="480" y="414" text-anchor="middle" class="subtitle">versus −56% deposits, 22 → 23 March</text>
+<text class="small" x="910" y="492" text-anchor="end">Source: raw v1 vault USDC Transfer logs</text>
+</svg>

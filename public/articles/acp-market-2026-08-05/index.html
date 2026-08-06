@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="index,follow">
+  <meta name="description" content="An on-chain investigation of Virtuals ACP, the March 22 cliff, the aGDP incentive program and the market's small restart.">
+  <meta property="og:title" content="ACP's First Boom Wasn't What It Seemed. That May Be the Best News Yet.">
+  <meta property="og:description" content="What happened to the agent-to-agent market on March 22, 2026 — and what the chain says comes next.">
+  <meta property="og:type" content="article">
+  <meta name="author" content="Samy Touri">
+  <title>ACP's First Boom Wasn't What It Seemed — Samy Touri</title>
+  <style>
+:root {
+  --paper: #f7f3eb;
+  --paper-deep: #eee7da;
+  --ink: #17202a;
+  --muted: #5e6872;
+  --rule: #cfc5b5;
+  --blue: #0b5f89;
+  --blue-dark: #073f5c;
+  --teal: #168c86;
+  --coral: #e26a4f;
+  --gold: #c5962e;
+  --white: #fffefa;
+  --mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --sans: Inter, "Segoe UI", Helvetica, Arial, sans-serif;
+  --serif: Georgia, "Times New Roman", serif;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; background: var(--paper); }
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 12% 2%, rgba(22,140,134,.10), transparent 25rem),
+    linear-gradient(180deg, #fbf8f2 0, var(--paper) 36rem);
+  font-family: var(--serif);
+  font-size: 19px;
+  line-height: 1.72;
+  text-rendering: optimizeLegibility;
+}
+
+#reading-progress {
+  position: fixed;
+  inset: 0 auto auto 0;
+  width: 0;
+  height: 4px;
+  z-index: 50;
+  background: linear-gradient(90deg, var(--coral), var(--gold), var(--teal));
+}
+
+.draft-ribbon {
+  position: absolute;
+  top: 22px;
+  right: 0;
+  padding: .4rem 1.1rem .45rem;
+  color: #fff;
+  background: var(--coral);
+  font: 700 11px/1 var(--sans);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  box-shadow: 0 5px 18px rgba(0,0,0,.12);
+}
+
+main { overflow: hidden; }
+article {
+  width: min(760px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 76px 0 110px;
+}
+
+.article-kicker {
+  margin-bottom: 24px;
+  color: var(--coral);
+  font: 800 12px/1.2 var(--sans);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+h1 {
+  max-width: 900px;
+  margin: 0 0 24px;
+  color: #102f41;
+  font: 700 clamp(2.8rem, 7.4vw, 5.45rem)/.98 var(--serif);
+  letter-spacing: -.045em;
+}
+h1 em { color: var(--blue); font-weight: 400; }
+.deck {
+  max-width: 720px;
+  margin: 0 0 25px;
+  color: #34434c;
+  font: 400 clamp(1.18rem, 2.3vw, 1.46rem)/1.47 var(--serif);
+}
+.byline {
+  margin: 0 0 34px;
+  color: var(--muted);
+  font: 500 .78rem/1.5 var(--sans);
+  letter-spacing: .02em;
+}
+.byline strong { color: var(--ink); }
+
+p { margin: 0 0 1.28em; }
+a { color: var(--blue); text-decoration-thickness: 1px; text-underline-offset: .16em; }
+a:hover { color: var(--coral); }
+strong { font-weight: 700; }
+
+h2 {
+  margin: 3.5rem 0 1.15rem;
+  padding-top: 1.1rem;
+  border-top: 3px solid var(--ink);
+  color: #102f41;
+  font: 700 clamp(1.8rem, 4vw, 2.55rem)/1.12 var(--serif);
+  letter-spacing: -.025em;
+}
+h3 {
+  margin: 2.5rem 0 1rem;
+  color: var(--blue-dark);
+  font: 700 1.32rem/1.25 var(--sans);
+}
+
+.status-legend {
+  display: grid;
+  gap: 9px;
+  margin: 0 0 38px;
+  padding: 18px 20px;
+  border: 1px solid var(--rule);
+  border-left: 5px solid var(--blue);
+  border-radius: 4px;
+  background: rgba(255,254,250,.66);
+  color: var(--muted);
+  font: 500 .72rem/1.45 var(--sans);
+}
+.status {
+  display: inline-block;
+  margin-right: .28rem;
+  padding: .22em .55em;
+  border-radius: 3px;
+  color: white;
+  font: 800 .66em/1.25 var(--sans);
+  letter-spacing: .06em;
+  vertical-align: .13em;
+  white-space: nowrap;
+}
+.status.measured { background: var(--teal); }
+.status.reported { background: var(--blue); }
+.status.inferred { background: var(--gold); color: #221b0a; }
+
+.takeaway-grid {
+  width: min(1050px, calc(100vw - 40px));
+  margin: 2.4rem 50% 2.7rem;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  border: 1px solid var(--rule);
+  background: var(--rule);
+  box-shadow: 0 14px 35px rgba(42,48,52,.08);
+}
+.takeaway {
+  min-height: 150px;
+  padding: 24px 22px;
+  background: var(--white);
+  font-family: var(--sans);
+}
+.takeaway strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--coral);
+  font: 750 2rem/1 var(--sans);
+  letter-spacing: -.045em;
+}
+.takeaway span { color: #46515a; font-size: .78rem; line-height: 1.45; }
+
+.toc {
+  margin: 2.5rem 0 3.2rem;
+  padding: 24px 28px 18px;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--sans);
+}
+.toc strong {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--coral);
+  font-size: .76rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.toc ol { columns: 2; column-gap: 48px; margin: 0; padding-left: 1.35rem; }
+.toc li { break-inside: avoid; margin: 0 0 .38rem; color: var(--muted); font-size: .8rem; line-height: 1.45; }
+.toc a { color: var(--blue-dark); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+
+blockquote {
+  margin: 2rem 0;
+  padding: 1.2rem 1.5rem 1.25rem;
+  border-left: 5px solid var(--coral);
+  background: rgba(226,106,79,.075);
+  color: #26343d;
+  font-size: 1.08rem;
+  line-height: 1.58;
+}
+blockquote p:last-child { margin-bottom: 0; }
+
+.evidence-box, .closing-callout, .author-note {
+  margin: 2rem 0;
+  padding: 1.25rem 1.45rem;
+  border-radius: 5px;
+  background: var(--white);
+  box-shadow: 0 8px 28px rgba(34,46,53,.07);
+}
+.evidence-box { border-left: 5px solid var(--teal); }
+.closing-callout { border: 2px solid var(--blue); }
+.author-note { border-top: 4px solid var(--ink); font-size: .92rem; }
+.evidence-box p:last-child, .closing-callout p:last-child, .author-note p:last-child { margin-bottom: 0; }
+
+figure.wide {
+  width: min(1080px, calc(100vw - 32px));
+  margin: 2.5rem 50%;
+  transform: translateX(-50%);
+}
+figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--rule);
+  background: var(--white);
+  box-shadow: 0 14px 36px rgba(34,46,53,.10);
+}
+figcaption {
+  max-width: 920px;
+  margin: .7rem auto 0;
+  color: var(--muted);
+  font: 500 .7rem/1.55 var(--sans);
+}
+
+table {
+  width: 100%;
+  margin: 2rem 0 2.3rem;
+  border-collapse: collapse;
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  background: rgba(255,254,250,.55);
+  font: 500 .72rem/1.38 var(--sans);
+  font-variant-numeric: tabular-nums;
+}
+th, td { padding: .72rem .62rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { color: var(--blue-dark); background: var(--paper-deep); font-weight: 800; text-align: left; }
+th[align="right"], td[align="right"] { text-align: right; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover { background: rgba(11,95,137,.045); }
+
+hr { margin: 4rem 0 2.3rem; border: 0; border-top: 1px solid var(--rule); }
+sup { font: 700 .62em/1 var(--sans); }
+sup a { text-decoration: none; }
+code { font-family: var(--mono); }
+pre {
+  overflow: auto;
+  margin: 1rem 0 0;
+  padding: 20px;
+  border-radius: 4px;
+  color: #e8f2f5;
+  background: #14252d;
+  font: 500 .68rem/1.6 var(--mono);
+}
+.footnotes { padding-left: 1.25rem; color: #46515a; font: 500 .72rem/1.58 var(--sans); }
+.footnotes li { margin-bottom: .85rem; }
+.machine-summary {
+  margin-top: 2rem;
+  border: 1px solid var(--rule);
+  background: var(--white);
+  font-family: var(--sans);
+}
+.machine-summary summary { cursor: pointer; padding: 1rem 1.15rem; color: var(--blue-dark); font-weight: 750; }
+.machine-summary[open] summary { border-bottom: 1px solid var(--rule); }
+.machine-summary pre { margin: 0; border-radius: 0; }
+
+.page-footer {
+  padding: 28px 20px 36px;
+  border-top: 1px solid var(--rule);
+  color: var(--muted);
+  text-align: center;
+  font: 500 .68rem/1.5 var(--sans);
+}
+
+@media (max-width: 820px) {
+  body { font-size: 17px; }
+  article { width: min(680px, calc(100% - 30px)); padding-top: 58px; }
+  .draft-ribbon { top: 12px; font-size: 9px; }
+  .takeaway-grid { grid-template-columns: repeat(2, 1fr); }
+  .takeaway { min-height: 125px; }
+  .toc ol { columns: 1; }
+  table { display: block; overflow-x: auto; white-space: nowrap; }
+  #claim-register + table, #trust ~ table { white-space: normal; }
+}
+
+@media (max-width: 480px) {
+  h1 { font-size: 2.45rem; }
+  .takeaway-grid { grid-template-columns: 1fr; }
+  .takeaway { min-height: auto; }
+  th, td { padding: .58rem .48rem; }
+}
+
+@media print {
+  @page { size: A4; margin: 18mm 16mm 20mm; }
+  body { background: white; color: black; font-size: 10.5pt; }
+  article { width: auto; padding: 0; }
+  .draft-ribbon { position: static; display: inline-block; margin-bottom: 10mm; }
+  #reading-progress { display: none; }
+  h1 { font-size: 38pt; }
+  h2 { break-after: avoid; }
+  .takeaway-grid, figure.wide { width: 100%; margin-left: 0; margin-right: 0; transform: none; box-shadow: none; }
+  .takeaway { min-height: 0; }
+  figure, table, blockquote, .evidence-box { break-inside: avoid; }
+  a { color: black; }
+  .page-footer { display: none; }
+}
+</style>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"ACP's First Boom Wasn't What It Seemed. That May Be the Best News Yet.","description":"What happened inside a major publicly observable agent-to-agent market on March 22, 2026 — and what the chain says comes next.","dateCreated":"2026-08-05","dateModified":"2026-08-05","inLanguage":"en","author":{"@type":"Person","name":"Samy Touri"}}</script>
+</head>
+<body>
+  <div id="reading-progress" aria-hidden="true"></div>
+  <main><article><div class="article-kicker">THE AGENT-TO-AGENT MARKET · AN ON-CHAIN INVESTIGATION</div>
+
+<h1>ACP&#39;s First Boom Wasn&#39;t What It Seemed. <em>That May Be the Best News Yet.</em></h1>
+<p class="deck">On March 22, 2026, the dollar value entering the main open-escrow rail of a major publicly observable market for work between AI agents fell 97% overnight. Following the money reveals a subsidy-shaped boom, a factory-built final day and a trust layer that arrived out of sequence. It also reveals something more encouraging: the infrastructure survived, the new open market is growing, and the first incentive experiment left us a map.</p>
+
+<p class="byline"><strong>By Samy Touri</strong> · Founder, Agent Reputation · 5 August 2026</p>
+
+<div class="status-legend" aria-label="Evidence status legend">
+  <span><b class="status measured">MEASURED</b> calculated from Base or the public ACP registry</span>
+  <span><b class="status reported">REPORTED</b> stated by a named primary or archived source</span>
+  <span><b class="status inferred">INFERRED</b> interpretation from converging evidence</span>
+</div>
+
+<p>On 12 February 2026, Virtuals Protocol announced an audacious experiment: a <strong>Revenue Network</strong> in which autonomous agents could discover one another, negotiate work, place payment in escrow, deliver and settle on-chain. The launch promised to distribute <strong>up to $1 million per month</strong> to agents selling services through the Agent Commerce Protocol, or ACP.<sup id="ref-1"><a href="#note-1">1</a></sup></p>
+<p>The idea was — and remains — excellent. Most &quot;agent economies&quot; are presentations, directories or payment demos. ACP attempted the difficult thing: a full commercial loop with a public monetary trace.</p>
+<p>Four months later, the trace told a far less flattering story than the headline numbers. We re-indexed the USDC settlement flows on Base, reconstructed the weekly incentive distributor, inspected the ownership structure of all 44,051 registered ACP agents, and followed one reward recipient from fleet creation to buyer funding to final claim.</p>
+<p>The result is not a fraud story, and it is not a eulogy. It is a <strong>market-design story</strong>.</p>
+<div class="takeaway-grid" aria-label="Key findings">
+  <div class="takeaway"><strong>$3.57M</strong><span>combined open-escrow settlement inflow observed across three ACP addresses</span></div>
+  <div class="takeaway"><strong>−97%</strong><span>value entering the main vault from 22 to 23 March</span></div>
+  <div class="takeaway"><strong>≥72%</strong><span>of final-day value produced by one 20-agent fleet; the $60 denomination reached 78%</span></div>
+  <div class="takeaway"><strong>$1,082</strong><span>July open-escrow inflow, 39% above June — tiny, but no longer falling</span></div>
+</div>
+
+<p>The first ACP boom was heavily shaped by an incentive program. At least one directly observed operator industrialised activity around that program. When the final epoch ended, the valuable transaction band vanished almost instantly. Yet the primary vault still independently corroborates the platform&#39;s roughly $3.9 million historical claim, and a newer Core contract has now grown for three consecutive months.</p>
+<p>That combination — <strong>a real protocol, distorted early activity, an abrupt reset and a small organic-looking restart</strong> — is more useful than either a victory lap or a takedown.</p>
+<nav class="toc" aria-label="Article contents">
+  <strong>In this investigation</strong>
+  <ol>
+    <li><a href="#experiment">Why ACP deserves to be taken seriously</a></li>
+    <li><a href="#curve">The boom, the floor and the restart</a></li>
+    <li><a href="#march-22">What changed on March 22</a></li>
+    <li><a href="#incentive-rail">The incentive rail hidden in plain sight</a></li>
+    <li><a href="#operator">One operator, end to end</a></li>
+    <li><a href="#registry">What 44,051 registered agents really means</a></li>
+    <li><a href="#trust">The trust layer arrived out of sequence</a></li>
+    <li><a href="#errors">How we almost published the wrong story</a></li>
+    <li><a href="#beginning">Why this may be only the beginning</a></li>
+  </ol>
+</nav>
+
+<h2 id="experiment">1. Why ACP deserves to be taken seriously</h2>
+
+<p>ACP is not merely a payment rail. Its documented lifecycle covers discovery, scope, negotiation, escrow, delivery, evaluation and settlement.<sup id="ref-2"><a href="#note-2">2</a></sup> That distinction matters. A paid API response may be self-evident — the bytes arrive or they do not. A commissioned analysis, audit or piece of software can be delivered and still be wrong. Agent-to-agent work therefore needs both <strong>payment</strong> and <strong>judgement</strong>.</p>
+<p>Virtuals did something unusually valuable: it put much of that economic coordination on a public chain. The off-chain deliverables are not public, so the chain cannot tell us whether an answer was useful. But it can tell us when money moved, in what amount, between which addresses and under which contract.</p>
+<p>That makes ACP a rare object: an ambitious market whose early mistakes can be studied rather than mythologised.</p>
+<blockquote>
+<p><strong>The positive finding comes first.</strong> <span class="status measured">MEASURED</span> The primary ACP v1 vault alone received <strong>$3,565,277</strong> in 1,377,726 deposits from 23,840 distinct depositors and paid 8,183 distinct recipients. That independently supports the platform&#39;s approximately $3.9 million historical headline. The total is not invented; the question is what economic behaviour produced it.</p>
+</blockquote>
+<h2 id="curve">2. The boom, the floor and the open-escrow restart</h2>
+
+<p>The monthly series below combines the original v1 vault, a minor second v1 address and the newer ACP Core settlement contract. Values are rounded to the nearest dollar; they are <strong>USDC entering open-escrow settlement</strong>, not profit, demand, quality or &quot;agentic GDP&quot;. ACP subscription payments are not included; that blind spot matters below.</p>
+<figure class="chart wide">
+  <img src="assets/acp-monthly-log.svg" alt="Log-scale chart of monthly ACP settlement inflows: 240,934 dollars in November 2025, 952,560 in December, 136,551 in January 2026, 1,161,073 in February, 1,039,248 in March, 34,212 in April, 778 in May, 799 in June and 1,082 in July." loading="lazy">
+  <figcaption><strong>Figure 1.</strong> Combined ACP settlement inflow, three Base addresses. Logarithmic scale makes both the million-dollar boom and the sub-$1,100 restart visible. <span class="status measured">MEASURED</span></figcaption>
+</figure>
+
+<table>
+<thead>
+<tr>
+<th>Month</th>
+<th align="right">v1 vault</th>
+<th align="right">v1-bis</th>
+<th align="right">new Core contract</th>
+<th align="right"><strong>Combined</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Nov. 2025</td>
+<td align="right">$240,934</td>
+<td align="right">—</td>
+<td align="right">—</td>
+<td align="right"><strong>$240,934</strong></td>
+</tr>
+<tr>
+<td>Dec. 2025</td>
+<td align="right">$952,560</td>
+<td align="right">—</td>
+<td align="right">—</td>
+<td align="right"><strong>$952,560</strong></td>
+</tr>
+<tr>
+<td>Jan. 2026</td>
+<td align="right">$136,551</td>
+<td align="right">—</td>
+<td align="right">—</td>
+<td align="right"><strong>$136,551</strong></td>
+</tr>
+<tr>
+<td><strong>Feb. 2026</strong></td>
+<td align="right"><strong>$1,161,073</strong></td>
+<td align="right">—</td>
+<td align="right">—</td>
+<td align="right"><strong>$1,161,073</strong></td>
+</tr>
+<tr>
+<td><strong>Mar. 2026</strong></td>
+<td align="right"><strong>$1,039,223</strong></td>
+<td align="right">$24</td>
+<td align="right">—</td>
+<td align="right"><strong>≈$1,039,248</strong></td>
+</tr>
+<tr>
+<td>Apr. 2026</td>
+<td align="right">$34,050</td>
+<td align="right">$5</td>
+<td align="right">$157</td>
+<td align="right"><strong>$34,212</strong></td>
+</tr>
+<tr>
+<td><strong>May 2026</strong></td>
+<td align="right">$474</td>
+<td align="right">$1</td>
+<td align="right">$303</td>
+<td align="right"><strong>$778 — floor</strong></td>
+</tr>
+<tr>
+<td>Jun. 2026</td>
+<td align="right">$29</td>
+<td align="right">&lt;$1</td>
+<td align="right">$770</td>
+<td align="right"><strong>$799</strong></td>
+</tr>
+<tr>
+<td><strong>Jul. 2026</strong></td>
+<td align="right">$10</td>
+<td align="right">&lt;$1</td>
+<td align="right"><strong>$1,072</strong></td>
+<td align="right"><strong>$1,082</strong></td>
+</tr>
+</tbody></table>
+<p>Three statements can all be true:</p>
+<ol>
+<li><span class="status measured">MEASURED</span> ACP cleared more than <strong>$1 million per month</strong> in February and March.</li>
+<li><span class="status measured">MEASURED</span> It then fell roughly <strong>1,500-fold</strong>, reaching a $778 floor in May.</li>
+<li><span class="status measured">MEASURED</span> It has risen since that floor: $778 → $799 → $1,082, with <strong>99% of July&#39;s value on the new Core contract</strong>.</li>
+</ol>
+<p>Calling ACP &quot;dead&quot; is false. Calling its measured open-escrow market healthy would be equally false. The accurate description of this series is: <strong>the subsidised open-escrow market collapsed, and a much smaller successor is growing from the floor</strong>.</p>
+<p>The quality of that successor matters more than its current size. On the new contract, the median deposit rose from <strong>$0.01 in April–May to $0.05 in June–July</strong>. The average rose roughly sevenfold. But no observed open-escrow deposit exceeded <strong>$10.00</strong> in any of those four months.</p>
+<p>That is an observed ceiling, not a protocol limit. ACP also supports on-chain subscription packages; current listings reach $199 per month. They activate through a <code>SubscriptionHook</code> while the associated job can carry a zero escrow budget, making this deposit series structurally blind to the subscription payment itself.<sup id="ref-9"><a href="#note-9">9</a></sup> We have not yet measured that separate flow. The defensible statement is therefore narrow: <strong>open-escrow activity is growing, but no high-value open-escrow work is visible yet</strong>.</p>
+<h2 id="march-22">3. What changed on March 22</h2>
+
+<p>The monthly curve hides the actual event. At daily resolution, the rupture has a date.</p>
+<figure class="chart wide">
+  <img src="assets/march-cliff.svg" alt="Two-panel chart comparing ACP deposit value and deposit count from March 21 to March 24. Value is 42,405 dollars, 79,836 dollars, 2,401 dollars and 396 dollars. Deposit count is 21,289, 8,313, 3,683 and 2,402. Value falls much faster than transaction count." loading="lazy">
+  <figcaption><strong>Figure 2.</strong> The value cliff is much sharper than the activity cliff. What disappeared was not every transaction; it was a class of larger transactions. <span class="status measured">MEASURED</span></figcaption>
+</figure>
+
+<table>
+<thead>
+<tr>
+<th>UTC day</th>
+<th align="right">Deposits</th>
+<th align="right">USDC entering v1</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>21 March</td>
+<td align="right">21,289</td>
+<td align="right">$42,405</td>
+</tr>
+<tr>
+<td><strong>22 March</strong></td>
+<td align="right">8,313</td>
+<td align="right"><strong>$79,836</strong></td>
+</tr>
+<tr>
+<td><strong>23 March</strong></td>
+<td align="right">3,683</td>
+<td align="right"><strong>$2,401</strong></td>
+</tr>
+<tr>
+<td>24 March</td>
+<td align="right">2,402</td>
+<td align="right">$396</td>
+</tr>
+</tbody></table>
+<p>From the 22nd to the 23rd, dollar value fell <strong>97%</strong>. Deposit count fell <strong>56%</strong> — large, but not remotely the same event. Small automated activity continued. The money did not.</p>
+<p>The missing band is unusually clear:</p>
+<table>
+<thead>
+<tr>
+<th>Deposit band</th>
+<th align="right">1–22 March</th>
+<th align="right">23 March–30 April</th>
+<th align="right">Change in count</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>$10–$100</strong></td>
+<td align="right"><strong>32,326 deposits · $635,246</strong></td>
+<td align="right"><strong>1,123 deposits · $17,730</strong></td>
+<td align="right"><strong>−96.5%</strong></td>
+</tr>
+</tbody></table>
+<p>Before the break, the $10–$100 band represented <strong>64% of all value</strong>. After the break, it almost vanished.</p>
+<p>This was not one whale leaving. In the final week, <strong>116 distinct ACP owners</strong> sat behind deposits of at least $10; the top three represented only 15.9% of that activity. Their larger deposits stopped in the same hour, around <strong>14:32 UTC on Sunday, 22 March</strong>.</p>
+<div class="evidence-box">
+  <strong>What the shape establishes</strong>
+  <p><span class="status measured">MEASURED</span> A shared deadline is a better explanation than one actor, a gradual loss of demand or a simple migration. It does <em>not</em> establish that all pre-cliff jobs were artificial.</p>
+</div>
+
+<h2 id="incentive-rail">4. The incentive rail hidden in plain sight</h2>
+
+<p>The obvious next question was whether the cliff aligned with the end of the Revenue Network&#39;s aGDP incentive program.</p>
+<p>An archive of a post attributed to the official <code>@virtuals_io</code> account describes <strong>Epoch 5 as the final epoch</strong> of the initial program and says a successor structure would follow.<sup id="ref-3"><a href="#note-3">3</a></sup> The official Virtuals FAQ defines an epoch as a week running from Monday to Sunday; 22 March 2026 was a Sunday.<sup id="ref-4"><a href="#note-4">4</a></sup></p>
+<p>That is reported evidence, not a cryptographic proof of causality. The chain provides the corroboration.</p>
+<p>We identified the verified Base contract <a href="https://base.blockscout.com/address/0xD4D1e8F000BCE71b2fe89d59989FcD2Cd5128275?tab=contract"><code>0xD4D1…8275</code></a>, named <code>CumulativeMerkleDrop</code>. Its owner, root setter and funder resolve to the same address, <a href="https://base.blockscout.com/address/0xd2903bd69321496c9af3f72bd812ab8d3688209f"><code>0xd290…209f</code></a>.</p>
+<table>
+<thead>
+<tr>
+<th>Tuesday funding</th>
+<th align="right">USDC received</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>3 March</td>
+<td align="right">$96,054.635647</td>
+<td><a href="https://base.blockscout.com/tx/0x035e7c3492fe6415baf365850da4255c0ba30657135e8fc285fb03155c87177a">transaction</a></td>
+</tr>
+<tr>
+<td><strong>10 March</strong></td>
+<td align="right"><strong>$60,914.642347</strong></td>
+<td><a href="https://base.blockscout.com/tx/0xda97f5259b44b6eb3f3e3d3382dda36078722965bf574c984d9d225e9d73fd95">transaction</a></td>
+</tr>
+<tr>
+<td>17 March</td>
+<td align="right">$68,670.370304</td>
+<td><a href="https://base.blockscout.com/tx/0xf792deb44fb3fcf604853dfc1d6d5d5b32a2597315ca4e1ccc1f189b3af12cad">transaction</a></td>
+</tr>
+<tr>
+<td><strong>24 March</strong></td>
+<td align="right"><strong>$47,138.513882</strong></td>
+<td><a href="https://base.blockscout.com/tx/0x44eda5cabe136d5bf3feb3e8c029f46231d62373b5874ca5dcd9b5420e2068b7">transaction</a></td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td align="right"><strong>$272,778.162180</strong></td>
+<td><span class="status measured">MEASURED</span> raw USDC logs</td>
+</tr>
+</tbody></table>
+<p>Four fundings. Four consecutive Tuesdays. The last arrives two days after the cliff, alongside a final Merkle root.</p>
+<p>Through Base block 47,000,000, the distributor had paid <strong>$257,339.152677 in 315 transfers to 264 distinct agent wallets</strong>. Eleven later claims through 3 August add only $0.298295; they do not alter the conclusion.</p>
+<p>The amount announced by Virtuals and the amount visible in this contract must not be conflated. Virtuals reported more than $1 million of incentives across the program. The single USDC distributor we can prove received $272,778. Other assets, contracts, valuation conventions or distribution channels may exist. <strong>The million is reported; $272,778 is measured here.</strong></p>
+<p>Taken together, the final-epoch announcement, the Sunday cliff, the four weekly fundings and the Tuesday settlement make the explanation <strong>high confidence</strong>:</p>
+<blockquote>
+<p><span class="status inferred">INFERRED · HIGH CONFIDENCE</span> The end of the initial aGDP incentive program triggered the disappearance of an incentive-dependent component of ACP volume. The exact share of genuinely independent demand that also left remains unknown.</p>
+</blockquote>
+<h2 id="operator">5. One operator, end to end</h2>
+
+<p>Aggregate charts can suggest farming without proving it. The useful test is to follow one economic sequence all the way through.</p>
+<figure class="chart wide">
+  <img src="assets/operator-loop.svg" alt="Flow diagram: one owner creates 20 agents, funds six buyer relay wallets, those wallets deposit 60 USDC into the ACP vault, the vault pays 48 USDC to provider agents, and two days later 19 agent wallets claim 9,385 USDC from the Merkle distributor." loading="lazy">
+  <figcaption><strong>Figure 3.</strong> A directly observed incentive-optimisation loop. Arrows denote measured transfers or registry events; they do not establish that the off-chain deliverables were useless. <span class="status measured">MEASURED</span></figcaption>
+</figure>
+
+<p>The owner address <code>0xf197…b456</code> created <strong>20 ACP agents in 5 minutes 42 seconds</strong>, between 08:10:58 and 08:16:40 UTC on 22 March. Nineteen of them became active. The public ACP registry now attributes <strong>956 jobs</strong> and $57,301 of gross activity to the fleet: 955 jobs at exactly $60 and one at $1.</p>
+<p>The v1 vault then paid those 19 provider wallets <strong>955 transfers of exactly $48</strong>, for $45,840. The ratio is exact: $48 / $60 = 80%. It confirms a 20% friction between gross job value and provider settlement for this pattern.</p>
+<p>At 13:25 UTC, the owner funded six different buyer relay wallets with $60 each. Each relay sent exactly $60 into the ACP vault <strong>86 to 270 seconds later</strong>. This proves self-funding for those six deposits. It does not tell us who economically funded every other buyer wallet.</p>
+<p>On 24 March, after the final Merkle root was posted, the same owner claimed rewards for 19 agent wallets in <strong>44 seconds</strong>, receiving <strong>$9,385.03</strong>.</p>
+<p>An independent scan of the entire vault found <strong>1,043 deposits of $60 on 22 March</strong> — 91.3% of all $60 deposits in the vault&#39;s lifetime — and 1,017 matching $48 settlements. Two related but distinct facts follow:</p>
+<ul>
+<li>the <strong>identified 20-agent fleet itself</strong> produced $57,301, at least <strong>71.8%</strong> of the day&#39;s $79,836 inflow;</li>
+<li>the <strong>$60 denomination associated with that pattern</strong> totalled $62,580, or <strong>78.4%</strong> of the day.</li>
+</ul>
+<p>That distinction matters. It prevents the denomination from being silently attributed to one owner.</p>
+<p>Was the strategy profitable? We do not know. For the measured fleet, settlement plus the observed Merkle reward equals <strong>96.4% of gross job value</strong>. If the owner had self-funded the entire volume and received no other incentive, the loop would have lost money. We observed direct self-funding for $360, not for all $57,301, and the distributor may not represent the complete incentive package.</p>
+<p>Was the work useless? We do not know that either. The settlement structure is artificial; the off-chain deliverables are unavailable. Incentive farming is not, by itself, fraud, and the program terms expressly reserved the operator&#39;s right to exclude suspected wash activity, Sybil behaviour or manipulation.<sup id="ref-5"><a href="#note-5">5</a></sup></p>
+<p>The defensible conclusion is narrower and stronger:</p>
+<blockquote>
+<p><span class="status measured">MEASURED</span> A material part of the final day&#39;s activity was industrially produced by a newly created fleet and linked, for at least six payments, to the reward recipient&#39;s own funding path.</p>
+</blockquote>
+<h2 id="registry">6. What 44,051 registered agents really means</h2>
+
+<p>The headline registry count also needs a denominator.</p>
+<figure class="chart wide">
+  <img src="assets/registry-composition.svg" alt="Stacked bar showing ownership composition of 44,051 ACP agents: 11.9 percent held by one-agent owners, 30.6 percent in fleets of 2 to 20, 9.5 percent in fleets of 21 to 99, and 47.9 percent in fleets of 100 or more." loading="lazy">
+  <figcaption><strong>Figure 4.</strong> Nearly half of registered ACP agents sit in fleets of at least 100 under one owner. Registration is supply inventory, not evidence of independent operators or active demand. <span class="status measured">MEASURED</span></figcaption>
+</figure>
+
+<table>
+<thead>
+<tr>
+<th>Agents per owner</th>
+<th align="right">Owners</th>
+<th align="right">Agents held</th>
+<th align="right">Share of registry</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td align="right">5,254</td>
+<td align="right">5,254</td>
+<td align="right">11.9%</td>
+</tr>
+<tr>
+<td>2–20</td>
+<td align="right">3,184</td>
+<td align="right">13,495</td>
+<td align="right">30.6%</td>
+</tr>
+<tr>
+<td>21–99</td>
+<td align="right">76</td>
+<td align="right">4,194</td>
+<td align="right">9.5%</td>
+</tr>
+<tr>
+<td><strong>100+</strong></td>
+<td align="right"><strong>211</strong></td>
+<td align="right"><strong>21,108</strong></td>
+<td align="right"><strong>47.9%</strong></td>
+</tr>
+</tbody></table>
+<p>The large fleet sizes cluster around round targets — 100, 101, 104 — rather than a natural long tail. In a sample of six 100-agent fleets, <strong>590 of 600 agents were created in February 2026</strong>, and most had never completed a job.</p>
+<p>That sample must not be extrapolated to every fleet. But it is enough to change the language. &quot;44,051 agents&quot; is not &quot;44,051 independent businesses&quot; and not &quot;44,051 active services.&quot; It is a registry count whose composition was heavily influenced by a February incentive.</p>
+<p>This is not uniquely an ACP problem. Every open agent registry will face the same distinction between <strong>identity objects, operators, reachable services, transacting services and economically independent buyers</strong>. Counting them as one population is how an industry manufactures adoption by accident.</p>
+<h2 id="trust">7. The trust layer arrived out of sequence</h2>
+
+<p>The deeper lesson is not only about subsidies. The commercial and trust layers were bootstrapped in the wrong order.</p>
+<p>ACP includes an evaluator role: an address can approve delivery and release escrow. Seventy-five registered agents declare that role. Reading their wallet flows rather than the platform&#39;s field names shows that the role has paid only <strong>$0.42 in genuine evaluator commissions</strong>, to one agent on one day. Four of the five apparently &quot;active&quot; evaluators were paying the escrow and receiving refunds, not earning fees. Together, the five lost $24.52 net.</p>
+<p>Meanwhile, the separate ERC-8004 ecosystem is growing as an identity and feedback registry. On Base, we measured <strong>60,567 registrations and 434,995 raw feedback events</strong> through 4 August. But the official contracts repository lists Identity and Reputation deployments, not a mainnet Validation Registry; its own warning says that validation remains under active revision.<sup id="ref-6"><a href="#note-6">6</a></sup> A scan of 787,121 Base events found zero validation requests and zero validation responses.</p>
+<p>An empirical study of ERC-8004 independently warns that raw feedback is not equivalent to trust: it found 90.6% coordinated Sybil behaviour among reviewers on Base in its study window.<sup id="ref-7"><a href="#note-7">7</a></sup></p>
+<p>The two worlds barely touch. Only <strong>79 of 8,725 ACP owner addresses</strong> also own an ERC-8004 identity on Base: <strong>0.91%</strong>, and even that is a floor because an operator may use unrelated addresses.</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>What exists today</th>
+<th>What is still missing</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ACP commerce</td>
+<td>Registry, jobs, escrow, settlement, new Core contract</td>
+<td>High-value organic demand; funded independent evaluation</td>
+</tr>
+<tr>
+<td>ERC-8004 identity/reputation</td>
+<td>Growing registrations and feedback</td>
+<td>Deployed mainnet validation; Sybil-resistant interpretation</td>
+</tr>
+<tr>
+<td>Evidence of useful outcome</td>
+<td>Off-chain and usually controlled by a party to the job</td>
+<td>Independent, dated observation of what the buyer actually received</td>
+</tr>
+</tbody></table>
+<p>This is not evidence that trust is unwanted. Trust becomes economically fundable only when <strong>enough value is at risk</strong> and <strong>quality cannot be judged instantly</strong>. At a $0.05 median open-escrow job and a $10 observed open-escrow ceiling, the cost of serious evaluation exceeds the underlying transaction. The unmeasured subscription channel prevents us from extending that conclusion to every form of ACP commerce.</p>
+<h2 id="errors">8. How we almost published the wrong story</h2>
+
+<p>Serious measurement includes the mistakes that would otherwise disappear from the final prose.</p>
+<h3>Error one: we declared the market dead because we omitted the new contract</h3>
+<p>Our first analysis counted $9.56 in July on the original vault and concluded that the market had stopped. We had tested a minor second contract and four other chains. We had not started with the publisher&#39;s changelog, which documented ACP SDK v2 from October 2025; the newer Core settlement contract became active in April 2026.<sup id="ref-8"><a href="#note-8">8</a></sup></p>
+<p>Adding it changed July from $9.56 to <strong>$1,081.67</strong> — a factor of 113 — and revealed three months of growth. We corrected the claim publicly the same day.</p>
+<h3>Error two: a plausible heuristic excluded the real distributor</h3>
+<p>We assumed a genuine reward contract would pay thousands of beneficiaries. The real one paid 264 through the audited window. It sat at the top of our own candidate list and was discarded by our own threshold.</p>
+<p>There was a second trap inside the correction. Blockscout&#39;s address transfer API omitted the entire <strong>10 March funding of $60,914.64</strong> and most of that distribution window. Only the raw USDC event logs exposed it. Re-running every 10,000-block range with counted retries produced four fundings, 315 payments and 264 beneficiaries.</p>
+<p>The lesson is reusable: <strong>an indexer is a view, not the ledger; a sensible filter is still an untested hypothesis</strong>.</p>
+<h2 id="beginning">9. Why this may be only the beginning</h2>
+
+<p>It would be easy to end with a dramatic collapse chart. It would also miss the most important result.</p>
+<p>ACP proved that agents can be given a common commercial grammar and that thousands of wallets will coordinate around it. The first incentive design also produced the predictable Goodhart effect: once volume, breadth of buyers and registrations were rewarded, operators learned to manufacture volume, buyer breadth and registrations.</p>
+<p>That is not a reason to abandon ACP. It is exactly what a first market experiment is supposed to teach.</p>
+<p>Four encouraging facts remain:</p>
+<ol>
+<li><strong>The money is auditable.</strong> We can corroborate the historical total, identify settlement addresses and correct both the platform&#39;s interpretation and our own.</li>
+<li><strong>The protocol did not disappear with the program.</strong> The new Core contract is handling more value month by month, even though it remains tiny.</li>
+<li><strong>The distorted baseline has been cleared.</strong> Future growth can be compared with a known floor rather than a subsidy-inflated peak.</li>
+<li><strong>The missing product is now visible.</strong> The market needs higher-value work whose quality is not self-evident, plus independent evidence strong enough to justify its cost.</li>
+</ol>
+<p>The next milestone is not another count of agents or jobs. It is an open-escrow transaction in which an agent pays <strong>more than $10</strong> for something that can be done badly without the failure being immediately obvious — research, analysis, audit, software or another consequential deliverable — and in which somebody has both the evidence and the incentive to check the result. In parallel, the subscription cashflow must be measured before anyone claims to know ACP&#39;s total current ceiling.</p>
+<div class="closing-callout">
+  <p><strong>Two questions should guide the next chapter:</strong></p>
+  <ol>
+    <li>What happened on March 22 to the buyers and sellers who were <em>not</em> optimising the incentive?</li>
+    <li>Where, today, does an agent pay more than $10 for work that can fail invisibly?</li>
+  </ol>
+</div>
+
+<p>The first ACP boom was not the market we thought we were watching. It was the market&#39;s response to an incentive. The smaller system now emerging may be less spectacular, but it is a better starting point: measured, corrected and no longer confused with its subsidy.</p>
+<p><strong>If that restart grows, March 22 will not be remembered as the day the agent economy died. It will be remembered as the day its first honest baseline began.</strong></p>
+<hr>
+<h2 id="method">Method, scope and reproducibility</h2>
+
+<p><strong>Measurement dates.</strong> 4–5 August 2026. Base mainnet, chain ID 8453. Dollar amounts are Base USDC (<code>0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913</code>) at six-decimal token precision, treated as nominal US dollars. This is not an audit of token price, gas, tax treatment or off-chain deliverable quality.</p>
+<p><strong>Settlement addresses.</strong> We queried raw <code>Transfer(address,address,uint256)</code> logs through the public <code>https://mainnet.base.org</code> RPC endpoint.</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Base address</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ACP v1 contract called by agents</td>
+<td><a href="https://basescan.org/address/0xa6C9BA866992cfD7fd6460ba912bfa405adA9df0"><code>0xa6C9BA866992cfD7fd6460ba912bfa405adA9df0</code></a></td>
+</tr>
+<tr>
+<td><strong>ACP v1 USDC vault</strong></td>
+<td><a href="https://basescan.org/address/0xef4364fe4487353df46eb7c811d4fac78b856c7f"><code>0xef4364fe4487353df46eb7c811d4fac78b856c7f</code></a></td>
+</tr>
+<tr>
+<td>ACP v1-bis</td>
+<td><a href="https://basescan.org/address/0x6a1fe26d54ab0d3e1e3168f2e0c0cda5cc0a0a4a"><code>0x6a1fe26d54ab0d3e1e3168f2e0c0cda5cc0a0a4a</code></a></td>
+</tr>
+<tr>
+<td><strong>new ACP Core settlement contract</strong></td>
+<td><a href="https://basescan.org/address/0x238E541BfefD82238730D00a2208E5497F1832E0"><code>0x238E541BfefD82238730D00a2208E5497F1832E0</code></a></td>
+</tr>
+<tr>
+<td><strong>aGDP Merkle distributor</strong></td>
+<td><a href="https://base.blockscout.com/address/0xD4D1e8F000BCE71b2fe89d59989FcD2Cd5128275?tab=contract"><code>0xD4D1e8F000BCE71b2fe89d59989FcD2Cd5128275</code></a></td>
+</tr>
+</tbody></table>
+<p><strong>RPC discipline.</strong> Logs were requested in 10,000-block windows. Rate-limited calls were retried; oversized responses were bisected rather than skipped; failures were counted. Hour-level claims use actual block timestamps rather than a single extrapolated anchor. The Merkle total was independently re-run on 5 August: 414 ranges through block 47,000,000, 116 retry events, zero skipped ranges.</p>
+<p><strong>Registry data.</strong> Agent ownership, creation timestamps, roles and job aggregates came from the public <code>acpx.virtuals.io</code> API. Registry fields are treated as declarations until corroborated by chain flows. Unique owner counts are address counts, not verified legal persons or companies.</p>
+<p><strong>Key limitations.</strong> Off-chain job inputs and deliverables were not available. Address clustering gives a lower bound on common control. The settlement series excludes ACP&#39;s <code>SubscriptionHook</code> payment flow, which remains unmeasured; a zero escrow budget does not mean a free subscription. This study measures one ACP surface on Base, not a worldwide share of &quot;the agent market.&quot; x402, ERC-8004 and ACP count different layers and cannot be used as interchangeable denominators.</p>
+<h3 id="claim-register">Claim register</h3>
+
+<table>
+<thead>
+<tr>
+<th>Claim</th>
+<th>Status</th>
+<th>Scope / caveat</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Primary v1 vault received $3,565,277</td>
+<td><strong>MEASURED</strong></td>
+<td>Lifetime through 4 Aug.; excludes the other two addresses</td>
+</tr>
+<tr>
+<td>Combined market reached $1.16M in Feb. and $1.04M in Mar.</td>
+<td><strong>MEASURED</strong></td>
+<td>Three settlement addresses; nominal USDC inflow</td>
+</tr>
+<tr>
+<td>Value fell 97% from 22 to 23 Mar.</td>
+<td><strong>MEASURED</strong></td>
+<td>v1 vault; daily UTC buckets</td>
+</tr>
+<tr>
+<td>22 Mar. was the final aGDP epoch</td>
+<td><strong>REPORTED</strong></td>
+<td>Archived official-account post; original X post not independently preserved here</td>
+</tr>
+<tr>
+<td>Program end caused the cliff</td>
+<td><strong>INFERRED · HIGH CONFIDENCE</strong></td>
+<td>Strong timing and funding convergence; not causal proof for every job</td>
+</tr>
+<tr>
+<td>One fleet accounts for at least 71.8% of final-day value</td>
+<td><strong>MEASURED</strong></td>
+<td>Public registry gross; $60 denomination overall = 78.4%</td>
+</tr>
+<tr>
+<td>All pre-cliff ACP activity was artificial</td>
+<td><strong>NOT ESTABLISHED</strong></td>
+<td>Explicitly rejected</td>
+</tr>
+<tr>
+<td>Farming was profitable</td>
+<td><strong>NOT ESTABLISHED</strong></td>
+<td>Observed reward + settlement = 96.4% of gross for the traced fleet</td>
+</tr>
+<tr>
+<td>July open-escrow inflow = $1,082 and up 39% month-on-month</td>
+<td><strong>MEASURED</strong></td>
+<td>99% on new Core; excludes unmeasured subscriptions; still only 0.1% of peak</td>
+</tr>
+</tbody></table>
+<h2 id="sources">Sources and notes</h2>
+
+<ol class="footnotes">
+  <li id="note-1"><strong>Reported, primary announcement.</strong> Virtuals.IO, “<a href="https://www.prnewswire.com/news-releases/virtuals-protocol-launches-first-revenue-network-to-expand-agent-to-agent-ai-commerce-at-internet-scale-302686821.html">Virtuals Protocol Launches First Revenue Network</a>,” 12 Feb. 2026. The release states “up to $1 million per month”; it does not prove that amount was distributed. <a href="#ref-1" aria-label="Back to reference 1">↩</a></li>
+  <li id="note-2"><strong>Reported, official documentation.</strong> Virtuals Protocol, “<a href="https://whitepaper.virtuals.io/acp-product-resources">ACP Concepts, Terminologies and Architecture</a>” and “<a href="https://whitepaper.virtuals.io/acp-product-resources/acp-glossary">ACP Glossary</a>.” The glossary also explains that aGDP can include funds handled and trading notional, so it is not equivalent to seller revenue. <a href="#ref-2" aria-label="Back to reference 2">↩</a></li>
+  <li id="note-3"><strong>Reported through a third-party archive.</strong> Archived post attributed to `@virtuals_io`: “<a href="https://news.kiwistand.com/stories/%40virtuals_io%3A-aGDP-program-ends-after-dollar4M-agent-revenue-2M%2B-jobs-completed?index=0x69c7d079976822aba612707ba2c35890d8bcdea0a2707fe7f9303326799f8edc50144208">aGDP program ends after $4M agent revenue, 2M+ jobs completed</a>.” The original X status is linked by the archive but the archive is not the original surface. <a href="#ref-3" aria-label="Back to reference 3">↩</a></li>
+  <li id="note-4"><strong>Reported, official documentation.</strong> Virtuals Protocol, “<a href="https://whitepaper.virtuals.io/info-hub/virtuals-protocol-faq">Virtuals Protocol FAQ</a>,” epoch cadence Monday 00:00 to Sunday 23:59 UTC+4. Applying this cadence specifically to the archived aGDP epoch is a strong inference, not a quoted date mapping. <a href="#ref-4" aria-label="Back to reference 4">↩</a></li>
+  <li id="note-5"><strong>Reported, official legal terms.</strong> aGDP, “<a href="https://www.agdp.io/legal/terms-of-use.pdf">Terms of Use</a>,” eligibility, suspected abuse, wash activity, Sybil behaviour, manipulation, withholding and clawback provisions. Current terms were reviewed; we did not independently archive the version in force on 22 March. <a href="#ref-5" aria-label="Back to reference 5">↩</a></li>
+  <li id="note-6"><strong>Reported, primary code repository.</strong> ERC-8004, “<a href="https://github.com/erc-8004/erc-8004-contracts">Registry contracts curated by the 8004 team</a>.” Deployment tables list Identity and Reputation on Base; the Validation Registry warning says that portion remains under active update. See also <a href="https://eips.ethereum.org/EIPS/eip-8004">EIP-8004</a>. <a href="#ref-6" aria-label="Back to reference 6">↩</a></li>
+  <li id="note-7"><strong>Independent research.</strong> “<a href="https://arxiv.org/abs/2606.26028">Can Trustless Agents Be Trusted? An Empirical Study of the ERC-8004 Decentralized AI Agent Ecosystem</a>,” arXiv:2606.26028, 2026. <a href="#ref-7" aria-label="Back to reference 7">↩</a></li>
+  <li id="note-8"><strong>Reported, official product history.</strong> Virtuals Protocol, “<a href="https://whitepaper.virtuals.io/acp-product-resources/acp-changelogs">ACP Changelogs</a>,” release of ACP SDK v2 on 15 Oct. 2025. The April 2026 date in this article refers to observed activation of the newer Core settlement contract, not the birth of SDK v2. <a href="#ref-8" aria-label="Back to reference 8">↩</a></li>
+  <li id="note-9"><strong>Reported and measured.</strong> The official <a href="https://www.npmjs.com/package/@virtuals-protocol/acp-node-v2">ACP Node v2 package</a> documents jobs that activate or renew an on-chain <code>SubscriptionHook</code> package. The $199 listing maximum and zero associated job budgets came from the public ACP registry and recent job events on 5 Aug.; the separate subscription cashflow was not measured. <a href="#ref-9" aria-label="Back to reference 9">↩</a></li>
+</ol>
+
+<div class="author-note">
+  <strong>About the author.</strong> Samy Touri is the founder of <a href="https://agentreputation.dev">Agent Reputation</a>, an independent project that preserves dated commercial evidence about online services and agent transactions. This article is research, not an allegation of criminal conduct and not investment advice.
+</div>
+
+<details class="machine-summary">
+  <summary>Machine-readable research summary</summary>
+
+<pre><code class="language-json">
+{
+  "as_of": "2026-08-05",
+  "network": { "name": "Base", "chain_id": 8453 },
+  "asset": { "symbol": "USDC", "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", "decimals": 6 },
+  "evidence_statuses": ["MEASURED", "REPORTED", "INFERRED", "NOT_ESTABLISHED"],
+  "acp_monthly_usdc_combined_rounded": {
+    "2025-11": 240934,
+    "2025-12": 952560,
+    "2026-01": 136551,
+    "2026-02": 1161073,
+    "2026-03": 1039248,
+    "2026-04": 34212,
+    "2026-05": 778,
+    "2026-06": 799,
+    "2026-07": 1082
+  },
+  "march_cliff": {
+    "2026-03-22": { "deposits": 8313, "usdc": 79836 },
+    "2026-03-23": { "deposits": 3683, "usdc": 2401 },
+    "value_change_pct": -97
+  },
+  "merkle_distributor_through_block_47000000": {
+    "address": "0xD4D1e8F000BCE71b2fe89d59989FcD2Cd5128275",
+    "funding_transfers": 4,
+    "funded_usdc": 272778.162180,
+    "claim_transfers": 315,
+    "distributed_usdc": 257339.152677,
+    "distinct_beneficiaries": 264
+  },
+  "confidence_statement": "The end of the initial aGDP program is the high-confidence trigger for an incentive-dependent component of the March 22 cliff; the share of independent demand remains unknown."
+}
+</code></pre>
+</details>
+</article></main>
+  <footer class="page-footer">Samy Touri · 5 August 2026 · Agent Reputation — <a href="https://agentreputation.dev">agentreputation.dev</a></footer>
+  <script>
+    const bar = document.getElementById('reading-progress');
+    const updateProgress = () => {
+      const distance = document.documentElement.scrollHeight - innerHeight;
+      bar.style.width = (distance > 0 ? scrollY / distance * 100 : 0) + '%';
+    };
+    addEventListener('scroll', updateProgress, { passive: true });
+    updateProgress();
+  </script>
+</body>
+</html>
