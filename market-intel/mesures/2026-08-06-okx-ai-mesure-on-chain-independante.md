@@ -159,6 +159,46 @@ serait faux d'au moins un ordre de grandeur.** Le même piège que le volume bru
   d'explorateur — ce qui est en soi un fait sur l'auditabilité de ce réseau.
 - Les soldes ne prouvent pas l'absence de revenu : des fonds ont pu être retirés.
 
+## 6 bis. De l'intérieur : ce qu'on voit en devenant acheteur (06/08, après-midi)
+
+Samy ayant autorisé la dépense, nous sommes **entrés dans la place** : identité User
+**#10579 « Agent Reputation »**, enregistrée on-chain sur X Layer
+(tx `0x9aa885ae…2170`, bloc 67 240 574, succès). Description publique assumant que nous mesurons
+et publions, y compris sur OKX.AI.
+
+**Ce que l'entrée coûte réellement, mesuré pas à pas :**
+
+| étape | constat |
+|---|---|
+| Enregistrement de l'identité | **gratuit** — gas payé par le paymaster d'OKX, notre solde OKB est resté à 0 |
+| Fiche publique de l'acheteur | **vide** (`okx.ai/agents/10579`) — seuls les vendeurs sont au catalogue |
+| Statut d'approbation | « Review not submitted » — la revue sous 24 h ne concerne pas les acheteurs |
+| Approvisionnement | achat de 10 € en USDG sur OKX Europe (**refusé une fois par la banque**, passé au 2ᵉ essai), retrait X Layer à **0,0018 $ de frais**, arrivée vérifiée on-chain |
+| Conversion imposée | USDG → USDT obligatoire (voir ci-dessus), 2 USDG → 2,0016 USDT, impact −0,03 % |
+| Publication d'une tâche | **on-chain et gratuite** (tx `0x9bd753da…8741`, bloc 67 245 265, succès, gas sponsorisé) ; **elle ne finance pas l'escrow** — les soldes n'ont pas bougé |
+
+**Deux observations de fond sur la profondeur de preuve :**
+
+1. **Une tâche assignée à un prestataire désigné n'apparaît pas dans le flux public.** Notre tâche
+   est absente des 98 entrées listées sur `okx.ai/tasks`. Combinée à la fiche acheteur vide, la
+   conclusion est nette : **côté acheteur, rien n'est public** — ni le profil, ni la transaction.
+   Un tiers ne peut pas reconstituer ce qu'un acheteur a commandé, payé ou contesté.
+2. **Étalonnage des compteurs, partiellement concluant.** Entre deux captures encadrant notre
+   publication : `tasksPosted` **+4** (dont la nôtre), `tasksCompleted` **+3**, `tasksOpen`
+   **+0** (une tâche désignée n'est pas « ouverte »), `totalVolume` **+0,29964 $**. Notre escrow
+   n'étant pas financé, ces +0,30 $ viennent des 3 tâches complétées par d'autres : soit un
+   **ticket moyen réel d'environ 0,10 $ par tâche complétée**. La mesure est polluée par
+   l'activité concurrente — c'est la limite de l'étalonnage par injection sur une place vivante.
+
+**Le rythme observé de la plateforme**, accessoirement : ~4 publications et ~3 complétions en
+quelques minutes, pour trente centimes de volume.
+
+**Le concurrent trouvé en chemin.** L'ASP **Janus Research & Audit (#3895)**, 100 % d'avis
+positifs, vend dix services d'audit en escrow, dont **« Research Claim Verification » à 0,10 $** —
+« vérifie des affirmations contre des sources et les étiquette verified / unsupported /
+contradicted / stale / unverifiable ». C'est notre métier, vendu dix centimes. C'est le prix de
+marché observé du livrable jugeable sur cette place, et il faut le regarder en face.
+
 ## 7. Ce que l'expérience établit pour notre positionnement
 
 L'expérience visait à mesurer **la profondeur de preuve** offerte à chaque étape. Verdict :
