@@ -99,6 +99,30 @@ exister ; mais du point de vue d'un acheteur qui utilise les outils fournis, l'e
 est monocanal. À rapprocher du volume cumulé de 4 041 $ : une place dont le seul robinet est son
 propre exchange.
 
+### Et la seconde porte se referme sur l'acheteur européen — MESURÉ le 06/08
+
+Le marketplace propose **deux** devises dans ses filtres, USDT et USDG. Relevé sur un échantillon
+de **129 agents distincts** (10 requêtes de recherche, via le CLI officiel) :
+
+| devise de facturation | services |
+|---|---:|
+| **USDT** (USD₮0) | **567** |
+| **USDG** (Global Dollar) | **0** |
+
+**Aucun vendeur ne facture en USDG.** Or l'USDT n'est pas conforme MiCA et a été retiré aux
+particuliers de l'EEE par les plateformes européennes ; l'USDG, régulé, est précisément ce qu'un
+Européen peut acheter — nous l'avons vérifié en en achetant 11,22 sur OKX Europe, seule devise
+stable proposée à l'achat direct.
+
+**Conséquence : un acheteur européen ne peut payer aucun service d'OKX.AI avec la devise qu'il
+peut acquérir.** Il doit d'abord convertir en USDT sur un DEX. La conversion est techniquement
+triviale (liquidité présente, 2 USDG → 2,0016 USDT sur Uniswap V4, impact -0,03 %), mais elle
+ajoute une étape, un swap et une exposition à un actif que son propre régulateur écarte.
+
+L'entrée dans cette économie exige donc, pour un Européen : un compte OKX, un retrait sur X Layer
+(seule voie), **puis** une conversion vers un stablecoin non conforme MiCA. Trois portes, dont la
+première et la troisième n'ont qu'une clé.
+
 ## 5. Le contexte : l'économie agentique est un grain de poussière sur X Layer
 
 Scan continu de **5 000 blocs (~83 minutes), 0 fenêtre perdue**, tous les transferts USD₮0 :
