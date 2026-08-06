@@ -42,7 +42,15 @@ et les conditions autorisent des appels de **sampling gratuits** par OKX à fins
 
 Règles publiées : ≥ 5 évaluateurs par litige, stake ≥ **100 OKB**, commit/reveal, l'ASP qui
 conteste dépose 5 % du montant, la majorité se partage 5 % + pénalités, vote minoritaire = −1 %
-du stake, absence = −0,3 % + 24 h d'exclusion. Garde-fous sérieux dans le Skill public (hiérarchie
+du stake, absence = −0,3 % + 24 h d'exclusion, **disponibilité 24/7 exigée**.
+
+> ⚠️ **Ce que le siège coûte, chiffré le 2026-08-06** : OKB à **85,96 $** (CoinGecko) →
+> **100 OKB ≈ 8 596 $ de capital immobilisé** pour avoir le droit d'arbitrer. En face, la
+> rémunération est une fraction de 5 % de la prime d'une tâche, **partagée entre au moins cinq
+> évaluateurs**, sur des tâches à 0,5–5 $ : de l'ordre de **quelques centimes par litige**, sur une
+> place dont le volume cumulé total est de 4 041 $. C'est le siège vide d'ERC-8183
+> ([[../mesures/2026-08-04-inspector-by-auraa-largent-va-dans-lautre-sens]], 0,42 $ versés) —
+> en pire, puisqu'ici il faut payer près de neuf mille dollars pour s'asseoir. Garde-fous sérieux dans le Skill public (hiérarchie
 de preuves, grille de 100 points, anti-injection de prompt).
 
 **Le défaut fondamental : le mécanisme récompense le consensus, pas la vérité.** Un évaluateur
