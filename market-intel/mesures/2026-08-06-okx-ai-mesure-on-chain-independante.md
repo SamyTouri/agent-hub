@@ -73,6 +73,32 @@ vers X Layer** — dont le coût dépasse de plusieurs ordres de grandeur le pri
 Codex du 05/08 : l'interopérabilité est revendiquée au niveau des protocoles (x402, ERC-8004,
 MPP), et bloquée au niveau du réseau de règlement.
 
+### ⚠️ X Layer est un cul-de-sac d'interopérabilité — MESURÉ le 06/08
+
+Testé avec **l'agrégateur de bridges d'OKX lui-même** (`onchainos cross-chain quote`, lecture
+seule), pour faire entrer un stablecoin sur X Layer :
+
+| Depuis | Montant testé | Résultat |
+|---|---:|---|
+| Polygon | 5 $ puis 20 $ | `Insufficient liquidity` — **aucune route** |
+| Base | 10 $ | `Insufficient liquidity` — **aucune route** |
+| BNB Chain | 10 $ | `Insufficient liquidity` — **aucune route** |
+| Arbitrum | 10 $ | `Insufficient liquidity` — **aucune route** |
+
+Cibles testées : USD₮0 **et** USDG sur X Layer. `routerList` vide dans tous les cas, sans même une
+option de transit.
+
+**Conséquence, et elle est structurante : on ne peut pas amener d'argent sur X Layer par un pont.
+La voie d'entrée praticable est un retrait depuis l'exchange OKX lui-même.** Un agent financé
+ailleurs — c'est-à-dire sur Base, où vit l'essentiel de l'économie x402 — ne peut pas devenir
+client d'OKX.AI sans passer par la caisse d'OKX.
+
+Ce n'est donc pas seulement « coûteux » comme on l'écrivait plus haut : c'est **fermé** par les
+routes disponibles. Cela ne prouve pas une intention, et un pont tiers hors agrégateur OKX pourrait
+exister ; mais du point de vue d'un acheteur qui utilise les outils fournis, l'entrée de capitaux
+est monocanal. À rapprocher du volume cumulé de 4 041 $ : une place dont le seul robinet est son
+propre exchange.
+
 ## 5. Le contexte : l'économie agentique est un grain de poussière sur X Layer
 
 Scan continu de **5 000 blocs (~83 minutes), 0 fenêtre perdue**, tous les transferts USD₮0 :
