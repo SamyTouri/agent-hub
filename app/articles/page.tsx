@@ -83,12 +83,12 @@ export default function ArticlesPage() {
               <time dateTime={a.date}>{a.readable}</time> · {a.tags.join(' · ')}
             </p>
             <h2 style={{ fontSize: 23, margin: '0 0 10px', lineHeight: 1.3 }}>
-              <a href={`/articles/${a.slug}/`} style={{ ...link, textDecoration: 'none' }}>
+              <a href={`/articles/${a.slug}`} style={{ ...link, textDecoration: 'none' }}>
                 {a.title}
               </a>
             </h2>
             <p style={{ margin: '0 0 14px', fontSize: 16 }}>{a.deck}</p>
-            <a href={`/articles/${a.slug}/`} style={{ ...link, fontSize: 15 }}>
+            <a href={`/articles/${a.slug}`} style={{ ...link, fontSize: 15 }}>
               Read the investigation →
             </a>
           </article>
