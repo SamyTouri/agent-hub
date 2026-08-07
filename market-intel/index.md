@@ -51,6 +51,7 @@ toute la base.**
 | **Ce que le terrain dit de l'écart paiement/livraison** | [[2026-08-04-le-terrain-nomme-notre-couche]] |
 | **Qui occupe ce terrain, et dans quel état** | [[qui-tient-le-terrain-de-la-livraison]] |
 | **Pourquoi se méfier d'un chiffre qu'on nous donne** | [[date-de-plateforme-est-une-declaration]] · [[volume-brut-nest-pas-revenu]] · [[controle-du-filtre]] |
+| ⭐ **COMMENT RELIER UNE TRANSACTION À UN AGENT — la règle de jointure du produit** | [[hierarchie-des-identifiants]] |
 | **Le marché HUMAIN de l'assurance IA — couches, acheteurs, moments de décision** | [[couches-assurance-agentique]] |
 | Les chiffres du marché humain (étude UK) et les contrats publics réels | [[2026-08-04-marche-britannique-assurance-ia]] · [[2026-08-04-achats-publics-assurance-ia]] |
 | Microsoft/IBM/Palo Alto/PwC — qui vend quoi, et pourquoi on ne les affronte pas | [[assurance-ia-entreprise]] |
@@ -105,6 +106,11 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
 - **[[couches-assurance-agentique]]** — le marché humain n'achète pas « de la confiance » mais des
   réductions de risque à des moments différents : trois régimes, six couches, et le mécanisme
   économique (valeur de la preuve ≈ probabilité d'échec évitée × coût de l'échec)
+- ⭐ **[[hierarchie-des-identifiants]]** — **la règle de jointure du produit**, écrite le 07/08 :
+  si le fait s'attache à la transaction et non à l'agent, quel identifiant porte le lien ?
+  L'adresse d'abord (elle est *dans* la transaction), l'URL en dernier (elle est déclarative) ;
+  la signature prouve un contrôle, pas une identité ; et un lien se retire là où une fusion ne se
+  défait pas. À lire avant toute décision de stockage ou de modèle de données.
 
 ## Mesures — ce qu'on a compté soi-même
 
