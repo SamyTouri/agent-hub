@@ -14,6 +14,12 @@
 >
 > Le seul code de publication Moltbook qui existe vit dans `.exchange/codex/` (`moltbook-client.mjs`,
 > `send-replies-round3.mjs`) et n'est pas suivi par Git.
+>
+> **Ajout du 2026-08-07 — à lire avant toute publication** : la section
+> **« Distribution »** (plus bas) porte le résultat d'une enquête de trois jours. Elle établit que
+> **`verified` ne garantit pas la distribution**, donne la procédure obligatoire, la liste des pièges
+> qui coûtent une journée de quota, et **le changement de stratégie qui en découle : commenter est le
+> levier, publier ne l'est pas.**
 
 Routine horaire exécutée par une tâche planifiée Claude Code. Mission : entretenir la
 présence d'Agent Reputation (agentreputation.dev) auprès des agents, répondre aux
@@ -369,6 +375,62 @@ habituel et le signaler dans le log.
 - Max 1 lien par réponse. Jamais de dénigrement de concurrents. Pas de pub brute.
 - Rate limits Moltbook : 1 post/30 min, 50 commentaires/jour — nos plafonds : 5
   réponses/run, 1 post/jour.
+
+## Distribution — ce qui a été mesuré les 04→07/08/2026, et qui change la stratégie
+
+**Le fait central : `verified` ne garantit PAS la distribution.** Un billet peut être accepté,
+passer le défi, afficher `verification_status: verified`, figurer dans l'index de recherche — et
+n'apparaître dans **aucun** tri de son forum. Mesuré trois fois sur nos propres billets, avec un
+trou net dans la séquence chronologique (billets présents à 06:18:49 et 06:46:20, le nôtre de
+06:42:26 absent).
+
+**Ce n'est pas propre à nous.** `Christine` a publié la même mesure et lui a donné son nom :
+l'**acceptance-visibility delta** — *« Seven out of ten posts my agent wrote last month never
+appeared in any feed. The API returned HTTP 201 […] nothing from our account existed »*, **57 % de
+ses écritures réussies invisibles**. Voir aussi `lunanova0302` (le défi est niché dans l'objet créé,
+à côté d'un message joyeux), `vina` (la vérification est **terminale**, une seule tentative) et
+`AiiCLI` (cooldown de 30 min).
+
+### ⭐ Le changement de stratégie qui en découle
+
+**Commenter est le levier ; publier ne l'est pas.** Les commentaires ne sont pas soumis au quota
+quotidien, ils sont distribués de façon fiable, et ce sont eux qui ont produit **toutes** nos
+avancées relationnelles. Comparaison des comptes dont les billets passent : karma **908 à 5 792** et
+**684 à 7 844 commentaires**, contre **60 et 69** chez nous.
+
+> **Règle : l'effort par défaut va dans les fils des autres. Le billet est un jalon, pas le canal.**
+
+### Procédure de publication — obligatoire, dans cet ordre
+
+1. **`dry_run` d'abord.** Il valide le contenu **sans rien consommer**.
+2. Publier via `.exchange/codex/mb-publish-verify.mjs`, **sauver la réponse brute avant tout**.
+3. Résoudre le défi — il se **lit**, il ne se parse pas (casse alternée, nombres en toutes lettres,
+   habillage homard ; l'arithmétique est triviale). Fenêtre de **5 minutes**, **une seule chance**.
+4. Relire le statut.
+5. ⭐ **Vérifier la présence dans le fil.** Ce n'est pas une confirmation de forme — **c'est la seule
+   mesure qui compte**, et elle peut échouer alors que tout le reste est vert. Relever à +5, +15 et
+   +30 min, avec l'horodatage du plus ancien billet du tri pour prouver que la fenêtre couvre le nôtre.
+
+### Pièges mesurés, à ne jamais réapprendre
+
+- **Une tentative ÉCHOUÉE consomme le quota du jour.** Un `403: request failed` a brûlé la journée du
+  05/08 sans créer de billet, tout en enregistrant l'empreinte du contenu.
+- **Un 403 générique ne veut pas dire « réessayer »** : vérifier d'abord si le billet existe
+  (profil → `recentPosts`, et les fils). Sinon on brûle une empreinte pour rien.
+- Réécrire le contenu change l'empreinte mais **ne rend pas le quota**.
+- L'outil `moltbook_create_post` attend **`submolt_name`**, pas `subreddit`.
+- Un **commentaire `pending` reste visible dans son fil** ; un **billet `pending` n'existe nulle
+  part**. La boucle de retour enseigne donc le contraire de la vérité.
+
+### Hypothèse en cours de test — quota glissant de 24 h
+
+Nos trois billets non distribués sont tous postérieurs à l'apparition du quota « un billet public par
+jour » ; les deux distribués le précèdent ; et les deux derniers tombent dans une fenêtre glissante
+de 24 h (17 h puis 23 h 15 d'écart). **Prédiction falsifiable** : publier **plus de 24 h après le
+précédent** doit passer. À trancher au prochain envoi ; si l'échec persiste, remonter au karma.
+
+**En attendant : espacer les billets de plus de 24 h, et ne jamais publier deux fois dans la même
+journée.**
 
 ## Log — `.outreach/log/YYYY-MM-DD.md` (append)
 
