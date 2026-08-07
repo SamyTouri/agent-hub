@@ -190,9 +190,15 @@ séparé de la plateforme neutre* — sort **renforcée** de la conclusion :
 
 ## 6. Corrections actées au corpus (05/08)
 
-- ⚠️ **« Aucune mission de valeur ne peut passer par ACP »** → remplacer par : *aucune mission de
-  valeur ne s'y achète en escrow ; le rail n'a pas de plafond, et le flux subscriptions (jusqu'à
-  199 $/mois listés) échappe à notre série de dépôts.*
+- ⛔ **« Aucune mission de valeur ne peut passer par ACP »** → la réserve posée ici le 05/08 (« le
+  flux subscriptions échappe à notre série de dépôts ») est **levée et corrigée le 07/08** par
+  [[2026-08-07-le-flux-subscriptions-acp-mesure]] : l'argent des abonnements transite par le
+  contrat Core et **était déjà dans la série**. Trois mois d'abonnements = **3,32 $**, maximum
+  **1,54 $**, les forfaits à 199 $/mois listés n'ont jamais été vendus. Formulation désormais
+  défendable **sans réserve, sur les trois canaux** : *aucune mission de valeur ne s'achète sur
+  ACP — ni en escrow, ni en abonnement, ni en paiement direct ; le rail n'a pas de plafond, la
+  demande en a un, à 10 $.* Canal nouveau à déclarer désormais : le paiement direct hors escrow
+  (`FundTransferHook`), **1 140,67 $ cumulés dont 87,7 % circulaires**.
 - ⚠️ **« ClawBoost »** : introuvable sous ce nom par deux sondes indépendantes (web + Moltbook).
   Le nom vient de la cartographie Codex (clawboost.dev). Ne pas l'utiliser publiquement avant
   revérification directe de l'URL.
@@ -203,8 +209,13 @@ séparé de la plateforme neutre* — sort **renforcée** de la conclusion :
 
 ## 7. Ce qui reste ouvert après cette conclusion
 
-1. **Mesurer le flux subscriptions ACP** (SubscriptionHook) — condition pour réaffirmer ou lever
-   le « plafond de fait à 10 $ ».
+1. ~~Mesurer le flux subscriptions ACP~~ — **FAIT le 07/08**
+   ([[2026-08-07-le-flux-subscriptions-acp-mesure]]) : **3,32 $ en trois mois**, le plafond de
+   fait à 10 $ est confirmé et couvre maintenant toute la surface on-chain d'ACP. Reste ouvert de
+   ce chantier : ⚠️ **août décroche** (20,25 $ en 7 jours contre 1 072 $ en juillet) — à
+   remesurer début septembre avant de continuer à décrire la v2 comme « en croissance » ; et
+   **qui sont `0x64a27d4b` et `0xd655a3aa`**, deux adresses qui se renvoient 50 $ et pèsent
+   87,6 % du canal de paiement direct.
 2. ~~Sonder OKX AI marketplace~~ — **FAIT le 05/08 au soir** par l'audit Codex ([[okx-ai]]) :
    4 035,77 $ cumulés, échantillon public dominé par le micro-paiement x402, arbitrage staké
    construit mais sans activité agrégée publique. Le verdict global est renforcé. Reste ouvert :

@@ -22,6 +22,7 @@ toute la base.**
 | **TOUS les protocoles qui emploient des évaluateurs, leurs règles de paiement, leurs listes** | [[2026-08-04-marche-des-evaluateurs-tous-protocoles]] |
 | ⭐⭐ **COMBIEN LE SIÈGE D'ÉVALUATEUR A RÉELLEMENT PAYÉ** (0,42 $, mesuré on-chain) | [[2026-08-04-inspector-by-auraa-largent-va-dans-lautre-sens]] |
 | ⭐⭐ **QUELLE EST LA TAILLE RÉELLE DU COMMERCE ENTRE AGENTS, MOIS PAR MOIS** | [[2026-08-04-le-sequestre-acp-de-1-16-million-a-neuf-dollars]] |
+| ⭐⭐⭐ **LES ABONNEMENTS ACP, ET TOUT CE QUI NE PASSE PAS PAR L'ESCROW** (angle mort refermé) | [[2026-08-07-le-flux-subscriptions-acp-mesure]] |
 | ⭐⭐⭐ **POURQUOI LE MARCHÉ A GONFLÉ PUIS CHUTÉ — le programme, le distributeur, la flotte** | [[2026-08-05-le-22-mars-anatomie-dune-bulle-subventionnee]] |
 | **Combien d'agents ERC-8004, et combien de validateurs (zéro)** | [[2026-08-04-erc-8004-sur-base-la-liste-des-validateurs-est-vide]] |
 | **Peut-on vendre un jury à la Kleros dans ERC-8183** | [[2026-08-04-kleros-comme-produit-lobjection-du-financement]] |
@@ -130,6 +131,12 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
   524 entreprises, ~2,9 Md£ de CA estimé — et pourquoi aucun de ces chiffres n'est notre TAM
 - [[2026-08-04-achats-publics-assurance-ia]] — ⚠️ RAPPORTÉ : les contrats attribués (FCA 280 k£,
   National Highways 120 k£…) — un budget existe pour l'institutionnel, pas prouvé pour nous
+- ⭐⭐⭐ **[[2026-08-07-le-flux-subscriptions-acp-mesure]]** — l'angle mort du 5 août refermé :
+  **trois mois d'abonnements ACP ont rapporté 3,32 $** (20 activations, la plus chère à 1,54 $,
+  les forfaits à 199 $ jamais vendus), l'argent des abonnements était **déjà dans notre série** —
+  mais un canal que nous n'avions jamais regardé, le paiement direct hors escrow, porte
+  **1 140,67 $ dont 87,7 % circulent en aller-retour entre deux adresses**. Juillet reproduit à
+  30 centimes près, **aucun dépôt au-dessus de 10 $ sur 14 357**, et ⚠️ **août décroche**
 - ⭐ **[[2026-08-06-okx-ai-mesure-on-chain-independante]]** — la vitrine contre la chaîne : 21 711
   usages affichés, **4,78 $ détenus, 0,04 $ encaissés en 83 min** ; le rail OKX est captif de
   X Layer ; les micro-paiements de ce réseau sont des bots, pas des agents
