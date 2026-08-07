@@ -32,6 +32,7 @@ toute la base.**
 | Le concurrent le plus proche de notre produit | [[agentpulse]] |
 | **OKX.AI — la marketplace institutionnelle complète, auditée le 05/08** | [[okx-ai]] |
 | ⭐ **CE QU'OKX.AI AFFICHE vs CE QUE LA CHAÎNE MONTRE (mesuré par nous)** | [[2026-08-06-okx-ai-mesure-on-chain-independante]] |
+| 🔴 **EXPÉRIENCE EN COURS — une tâche payante est publiée et attend** | [[experience-okx-en-cours]] |
 | La plateforme mesurée et les défauts de ses données | [[virtuals-acp]] |
 | Un interlocuteur du terrain et ce qu'il nous a corrigé | [[markus-dropspace]] |
 | Une anomalie non expliquée | [[les-201-acheteurs]] · [[deux-grappes-anormales-verification-on-chain]] |
@@ -183,6 +184,10 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
   Inspector by AURAA, le modèle Kleros comme produit, la reconstruction de la liste ERC-8004, et
   l'article. Contient les réponses aux deux questions techniques de Samy sur les chaînes et sur le
   lien 8183/8004.
+- 🔴 **[[experience-okx-en-cours]]** — **une tâche payante de 0,10 $ est publiée sur OKX.AI et
+  attend son prestataire.** Identité, jobId, lignes de base pour l'étalonnage, les deux issues
+  possibles, où vivent les outils (hors dépôt), et les défauts d'outillage à ne pas
+  re-diagnostiquer. À ouvrir avant de reprendre l'expérience.
 - **[[qui-paie-un-dossier-preuve-fonctionnement]]** — la thèse falsifiable côté humain : un
   dossier de preuve borné pour une décision concrète, avec son protocole de test en cinq
   décisions réelles. HYPOTHÈSE À TESTER — aucune volonté de payer mesurée.
