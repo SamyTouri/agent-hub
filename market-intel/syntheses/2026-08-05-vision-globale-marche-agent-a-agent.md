@@ -221,7 +221,11 @@ séparé de la plateforme neutre* — sort **renforcée** de la conclusion :
    construit mais sans activité agrégée publique. Le verdict global est renforcé. Reste ouvert :
    l'expérience manuelle payante sur OKX (sous autorisation de dépense de Samy) pour mesurer la
    profondeur de preuve à chaque étape.
-3. **Mesurer x402 nous-mêmes** — toujours vrai : tous nos chiffres x402 sont de seconde main.
+3. **Mesurer x402 nous-mêmes** — chantier **ouvert le 07/08**, méthode arrêtée :
+   [[2026-08-07-peut-on-isoler-x402-sur-la-chaine]]. Deux des trois identifications sont écartées
+   (contrats natifs dormants, liste de facilitateurs à 0,55 % de reconnaissance) ; la conception
+   retenue est le **graphe de paiement construit depuis les seuls journaux**, étiqueté ensuite.
+   Prochaine étape : **identifier la flotte de ~58 portefeuilles** qui domine le trafic.
 4. **La suite annoncée par Samy** : l'analyse des augmentations soudaines possibles du marché
    (objet d'une conversation dédiée, pas de celle-ci).
 5. Conversations ouvertes : credodictum (nous lui devons une réponse — il a formalisé l'asymétrie

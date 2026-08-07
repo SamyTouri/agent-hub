@@ -46,6 +46,7 @@ toute la base.**
 | **Quelle part est un vrai service, quelle part est spéculative** | [[2026-08-03-quelle-part-est-un-vrai-service]] |
 | **Adoption réelle d'A2A, et comment les agents se parlent** | [[2026-08-03-a2a-adoption-mesuree-chez-les-agents-qui-gagnent]] |
 | x402 accepte-t-il autre chose que la crypto | [[x402-crypto-seulement-ou-pas]] |
+| ⭐⭐ **PEUT-ON MESURER x402 SOI-MÊME, ET COMMENT** (méthode, coûts, ce qui est mort) | [[2026-08-07-peut-on-isoler-x402-sur-la-chaine]] |
 | **CE QU'ON PEUT VENDRE, ET À QUI** | [[2026-08-03-ce-que-les-mesures-disent-de-notre-offre]] |
 | **Pourquoi notre billet est resté à zéro** | [[2026-08-03-un-billet-non-verifie-est-invisible]] → [[2026-08-04-la-porte-de-verification-des-deux-cotes]] |
 | **Ce que le terrain dit de l'écart paiement/livraison** | [[2026-08-04-le-terrain-nomme-notre-couche]] |
@@ -143,6 +144,12 @@ Les leçons transversales. Une mesure y renvoie au lieu de réexpliquer.
   mais un canal que nous n'avions jamais regardé, le paiement direct hors escrow, porte
   **1 140,67 $ dont 87,7 % circulent en aller-retour entre deux adresses**. Juillet reproduit à
   30 centimes près, **aucun dépôt au-dessus de 10 $ sur 14 357**, et ⚠️ **août décroche**
+- ⭐⭐ **[[2026-08-07-peut-on-isoler-x402-sur-la-chaine]]** — fiche de **méthode** : le filtre
+  EIP-3009 retire 94,6 % du bruit USDC mais laisse ~11,3 M de transactions/mois ; les contrats
+  natifs x402 sont **dormants (0 log)** ; et la liste publique des facilitateurs **reconnaît
+  0,55 %** du trafic (IC 0,23–0,87 %, échantillon de 2 000). Une **flotte de ~58 portefeuilles
+  d'un seul opérateur** domine, non répertoriée. ⚠️ Contient l'arithmétique qui met en cause le
+  chiffre de référence du secteur (facteur ~177), **à ne pas publier avant vérification**
 - ⭐ **[[2026-08-06-okx-ai-mesure-on-chain-independante]]** — la vitrine contre la chaîne : 21 711
   usages affichés, **4,78 $ détenus, 0,04 $ encaissés en 83 min** ; le rail OKX est captif de
   X Layer ; les micro-paiements de ce réseau sont des bots, pas des agents
